@@ -41,14 +41,14 @@
     },
     "platformConfig": {
         "macos": {
-            "bundleId": "com.example.obs-plugintemplate"
+            "bundleId": "com.royshilkrot.obs-localvocal"
         }
     },
-    "name": "obs-plugintemplate",
-    "version": "1.0.0",
-    "author": "Your Name Here",
-    "website": "https://example.com",
-    "email": "me@example.com",
+    "name": "obs-localvocal",
+    "version": "0.0.1",
+    "author": "Roy Shilkrot",
+    "website": "https://github.com/royshil/obs-localvocal",
+    "email": "roy.shil@gmail.com",
     "uuids": {
         "macosPackage": "00000000-0000-0000-0000-000000000000",
         "macosInstaller": "00000000-0000-0000-0000-000000000000",
