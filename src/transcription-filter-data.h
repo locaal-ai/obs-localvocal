@@ -13,13 +13,6 @@
 
 #define MAX_PREPROC_CHANNELS 2
 
-// buffer size in msec
-#define BUFFER_SIZE_MSEC 1010
-// at 16Khz, 1010 msec is 16160 frames
-#define WHISPER_FRAME_SIZE 16160
-// overlap in msec
-#define OVERLAP_SIZE_MSEC 340
-
 #define MT_ obs_module_text
 
 struct transcription_filter_data {
@@ -55,6 +48,13 @@ struct transcription_filter_data {
 	int log_level;
 	bool log_words;
 	bool active;
+
+	// Text source to output the subtitles
+	obs_weak_source_t *text_source;
+	char *text_source_name;
+	std::unique_ptr<std::mutex> text_source_mutex;
+	// Callback to set the text in the output text source (subtitles)
+	std::function<void(const std::string &str)> setTextCallback;
 
 	// Use std for thread and mutex
 	std::thread whisper_thread;
