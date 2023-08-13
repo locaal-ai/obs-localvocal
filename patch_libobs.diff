@@ -1,0 +1,20 @@
+diff --git a/libobs/CMakeLists.txt b/libobs/CMakeLists.txt
+index d2e2671..5a9242a 100644
+--- a/libobs/CMakeLists.txt
++++ b/libobs/CMakeLists.txt
+@@ -263,6 +263,7 @@ set(public_headers
+     graphics/vec3.h
+     graphics/vec4.h
+     media-io/audio-io.h
++    media-io/audio-resampler.h
+     media-io/frame-rate.h
+     media-io/media-io-defs.h
+     media-io/video-io.h
+@@ -287,6 +288,7 @@ set(public_headers
+     util/base.h
+     util/bmem.h
+     util/c99defs.h
++    util/circlebuf.h
+     util/darray.h
+     util/profiler.h
+     util/sse-intrin.h
