@@ -7,6 +7,8 @@
 #include "whisper-language.h"
 #include "model-utils/model-downloader.h"
 
+#include <algorithm>
+
 inline enum speaker_layout convert_speaker_layout(uint8_t channels)
 {
 	switch (channels) {
@@ -452,22 +454,19 @@ obs_properties_t *transcription_filter_properties(void *data)
 	obs_property_t *whisper_language_select_list =
 		obs_properties_add_list(whisper_params_group, "whisper_language_select", "Language",
 					OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_STRING);
-	// sort the languages by name using a sorting function
-	std::vector<std::pair<std::string, std::string>> whisper_available_lang_vector;
+	// sort the languages by flipping the map
+	std::map<std::string, std::string> whisper_available_lang_flip;
 	for (auto const &pair : whisper_available_lang) {
-		whisper_available_lang_vector.push_back(pair);
+		whisper_available_lang_flip[pair.second] = pair.first;
 	}
-	std::sort(whisper_available_lang_vector.begin(), whisper_available_lang_vector.end(),
-		  [](const std::pair<std::string, std::string> &a,
-		     const std::pair<std::string, std::string> &b) { return a.second < b.second; });
 	// iterate over all available languages and add them to the list
-	for (auto const &pair : whisper_available_lang_vector) {
+	for (auto const &pair : whisper_available_lang_flip) {
 		// Capitalize the language name
-		std::string language_name = pair.second;
-		language_name[0] = toupper(language_name[0]);
+		std::string language_name = pair.first;
+		language_name[0] = (char)toupper(language_name[0]);
 
 		obs_property_list_add_string(whisper_language_select_list, language_name.c_str(),
-					     pair.first.c_str());
+					     pair.second.c_str());
 	}
 
 	obs_property_t *whisper_sampling_method_list = obs_properties_add_list(

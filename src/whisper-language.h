@@ -6,6 +6,10 @@
 
 static const std::map<std::string, std::string> whisper_available_lang = {
 	{
+		"auto",
+		"auto",
+	},
+	{
 		"en",
 		"english",
 	},
