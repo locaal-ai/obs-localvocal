@@ -5,6 +5,7 @@
 #include "transcription-filter-data.h"
 #include "whisper-processing.h"
 #include "whisper-language.h"
+#include "model-utils/model-downloader.h"
 
 inline enum speaker_layout convert_speaker_layout(uint8_t channels)
 {
@@ -220,24 +221,24 @@ void transcription_filter_update(void *data, obs_data_t *s)
 		gf->whisper_model_path = bstrdup(new_model_path);
 
 		// check if the model exists, if not, download it
-		// if (!check_if_model_exists(gf->whisper_model_path)) {
-		// 	obs_log(LOG_ERROR, "Whisper model does not exist");
-		// download_model_with_ui_dialog(
-		// 	gf->whisper_model_path, [gf](int download_status) {
-		// 		if (download_status == 0) {
-		// 			obs_log(LOG_INFO, "Model download complete");
-		// 			gf->whisper_context = init_whisper_context(
-		// 				gf->whisper_model_path);
-		// 			gf->whisper_thread = std::thread(whisper_loop, gf);
-		// 		} else {
-		// 			obs_log(LOG_ERROR, "Model download failed");
-		// 		}
-		// 	});
-		// } else {
-		// Model exists, just load it
-		gf->whisper_context = init_whisper_context(gf->whisper_model_path);
-		gf->whisper_thread = std::thread(whisper_loop, gf);
-		// }
+		if (!check_if_model_exists(gf->whisper_model_path)) {
+			obs_log(LOG_ERROR, "Whisper model does not exist");
+			download_model_with_ui_dialog(
+				gf->whisper_model_path, [gf](int download_status) {
+					if (download_status == 0) {
+						obs_log(LOG_INFO, "Model download complete");
+						gf->whisper_context = init_whisper_context(
+							gf->whisper_model_path);
+						gf->whisper_thread = std::thread(whisper_loop, gf);
+					} else {
+						obs_log(LOG_ERROR, "Model download failed");
+					}
+				});
+		} else {
+			// Model exists, just load it
+			gf->whisper_context = init_whisper_context(gf->whisper_model_path);
+			gf->whisper_thread = std::thread(whisper_loop, gf);
+		}
 	}
 
 	std::lock_guard<std::mutex> lock(*gf->whisper_ctx_mutex);
@@ -250,6 +251,7 @@ void transcription_filter_update(void *data, obs_data_t *s)
 	gf->whisper_params.initial_prompt = obs_data_get_string(s, "initial_prompt");
 	gf->whisper_params.n_threads = (int)obs_data_get_int(s, "n_threads");
 	gf->whisper_params.n_max_text_ctx = (int)obs_data_get_int(s, "n_max_text_ctx");
+	gf->whisper_params.translate = obs_data_get_bool(s, "translate");
 	gf->whisper_params.no_context = obs_data_get_bool(s, "no_context");
 	gf->whisper_params.single_segment = obs_data_get_bool(s, "single_segment");
 	gf->whisper_params.print_special = obs_data_get_bool(s, "print_special");
@@ -390,6 +392,7 @@ void transcription_filter_defaults(obs_data_t *s)
 	obs_data_set_default_string(s, "initial_prompt", "");
 	obs_data_set_default_int(s, "n_threads", 4);
 	obs_data_set_default_int(s, "n_max_text_ctx", 16384);
+	obs_data_set_default_bool(s, "translate", false);
 	obs_data_set_default_bool(s, "no_context", true);
 	obs_data_set_default_bool(s, "single_segment", true);
 	obs_data_set_default_bool(s, "print_special", false);
@@ -471,6 +474,7 @@ obs_properties_t *transcription_filter_properties(void *data)
 	// int offset_ms;          // start offset in ms
 	// int duration_ms;        // audio duration to process in ms
 	// bool translate;
+	obs_properties_add_bool(whisper_params_group, "translate", "translate");
 	// bool no_context;        // do not use past transcription (if any) as initial prompt for the decoder
 	obs_properties_add_bool(whisper_params_group, "no_context", "no_context");
 	// bool single_segment;    // force single segment output (useful for streaming)

@@ -33,7 +33,6 @@ struct transcription_filter_data {
 
 	/* PCM buffers */
 	float *copy_buffers[MAX_PREPROC_CHANNELS];
-	DARRAY(float) copy_output_buffers[MAX_PREPROC_CHANNELS];
 	struct circlebuf info_buffer;
 	struct circlebuf input_buffers[MAX_PREPROC_CHANNELS];
 

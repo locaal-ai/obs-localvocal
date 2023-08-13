@@ -247,11 +247,6 @@ void process_audio_from_buffer(struct transcription_filter_data *gf)
 						  gf->log_level != LOG_DEBUG);
 	}
 
-	// copy output buffer before potentially modifying it
-	for (size_t c = 0; c < gf->channels; c++) {
-		da_copy_array(gf->copy_output_buffers[c], gf->copy_buffers[c], gf->last_num_frames);
-	}
-
 	if (!skipped_inference) {
 		// run inference
 		const struct DetectionResultWithText inference_result =
