@@ -6,7 +6,6 @@
 #include "whisper-processing.h"
 #include "whisper-language.h"
 
-
 inline enum speaker_layout convert_speaker_layout(uint8_t channels)
 {
 	switch (channels) {
@@ -167,9 +166,7 @@ void transcription_filter_update(void *data, obs_data_t *s)
 	struct transcription_filter_data *gf =
 		static_cast<struct transcription_filter_data *>(data);
 
-	gf->filler_p_threshold = (float)obs_data_get_double(s, "filler_p_threshold");
 	gf->log_level = (int)obs_data_get_int(s, "log_level");
-	gf->do_silence = obs_data_get_bool(s, "do_silence");
 	gf->vad_enabled = obs_data_get_bool(s, "vad_enabled");
 	gf->log_words = obs_data_get_bool(s, "log_words");
 
@@ -381,8 +378,6 @@ void transcription_filter_deactivate(void *data)
 
 void transcription_filter_defaults(obs_data_t *s)
 {
-	obs_data_set_default_double(s, "filler_p_threshold", 0.75);
-	obs_data_set_default_bool(s, "do_silence", true);
 	obs_data_set_default_bool(s, "vad_enabled", true);
 	obs_data_set_default_int(s, "log_level", LOG_DEBUG);
 	obs_data_set_default_bool(s, "log_words", true);
@@ -419,16 +414,13 @@ obs_properties_t *transcription_filter_properties(void *data)
 {
 	obs_properties_t *ppts = obs_properties_create();
 
-	obs_properties_add_float_slider(ppts, "filler_p_threshold", "filler_p_threshold", 0.0f,
-					1.0f, 0.05f);
-	obs_properties_add_bool(ppts, "do_silence", "do_silence");
-	obs_properties_add_bool(ppts, "vad_enabled", "vad_enabled");
-	obs_property_t *list = obs_properties_add_list(ppts, "log_level", "log_level",
+	obs_properties_add_bool(ppts, "vad_enabled", "VAD Enabled");
+	obs_property_t *list = obs_properties_add_list(ppts, "log_level", "Log level",
 						       OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_INT);
 	obs_property_list_add_int(list, "DEBUG", LOG_DEBUG);
 	obs_property_list_add_int(list, "INFO", LOG_INFO);
 	obs_property_list_add_int(list, "WARNING", LOG_WARNING);
-	obs_properties_add_bool(ppts, "log_words", "log_words");
+	obs_properties_add_bool(ppts, "log_words", "Log output words");
 
 	obs_property_t *sources = obs_properties_add_list(ppts, "subtitle_sources",
 							  "subtitle_sources", OBS_COMBO_TYPE_LIST,

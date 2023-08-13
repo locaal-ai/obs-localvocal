@@ -4,6 +4,7 @@
 
 #include "plugin-support.h"
 #include "transcription-filter-data.h"
+#include "whisper-processing.h"
 
 #include <algorithm>
 #include <cctype>
@@ -286,12 +287,15 @@ void process_audio_from_buffer(struct transcription_filter_data *gf)
 			"audio processing took too long (%d ms), reducing overlap to %lu ms",
 			(int)duration, gf->overlap_ms);
 	} else if (!skipped_inference) {
-		// try to increase overlap up to 75% of the segment
-		gf->overlap_ms = std::min((uint64_t)gf->overlap_ms + 10,
-					  (uint64_t)((float)new_frames_from_infos_ms * 0.75f));
-		gf->overlap_frames = gf->overlap_ms * gf->sample_rate / 1000;
-		obs_log(gf->log_level, "audio processing took %d ms, increasing overlap to %lu ms",
-			(int)duration, gf->overlap_ms);
+		if (gf->overlap_ms < OVERLAP_SIZE_MSEC) {
+			// try to increase overlap up to OVERLAP_SIZE_MSEC
+			gf->overlap_ms = std::min((uint64_t)gf->overlap_ms + 10,
+						  (uint64_t)OVERLAP_SIZE_MSEC);
+			gf->overlap_frames = gf->overlap_ms * gf->sample_rate / 1000;
+			obs_log(gf->log_level,
+				"audio processing took %d ms, increasing overlap to %lu ms",
+				(int)duration, gf->overlap_ms);
+		}
 	}
 }
 
