@@ -247,7 +247,6 @@ void transcription_filter_update(void *data, obs_data_t *s)
 		(whisper_sampling_strategy)obs_data_get_int(s, "whisper_sampling_method"));
 	gf->whisper_params.duration_ms = BUFFER_SIZE_MSEC;
 	gf->whisper_params.language = obs_data_get_string(s, "whisper_language_select");
-	gf->whisper_params.translate = false;
 	gf->whisper_params.initial_prompt = obs_data_get_string(s, "initial_prompt");
 	gf->whisper_params.n_threads = (int)obs_data_get_int(s, "n_threads");
 	gf->whisper_params.n_max_text_ctx = (int)obs_data_get_int(s, "n_max_text_ctx");
@@ -453,9 +452,21 @@ obs_properties_t *transcription_filter_properties(void *data)
 	obs_property_t *whisper_language_select_list =
 		obs_properties_add_list(whisper_params_group, "whisper_language_select", "Language",
 					OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_STRING);
-	// iterate over all available languages in whisper_available_lang map<string, string>
+	// sort the languages by name using a sorting function
+	std::vector<std::pair<std::string, std::string>> whisper_available_lang_vector;
 	for (auto const &pair : whisper_available_lang) {
-		obs_property_list_add_string(whisper_language_select_list, pair.second.c_str(),
+		whisper_available_lang_vector.push_back(pair);
+	}
+	std::sort(whisper_available_lang_vector.begin(), whisper_available_lang_vector.end(),
+		  [](const std::pair<std::string, std::string> &a,
+		     const std::pair<std::string, std::string> &b) { return a.second < b.second; });
+	// iterate over all available languages and add them to the list
+	for (auto const &pair : whisper_available_lang_vector) {
+		// Capitalize the language name
+		std::string language_name = pair.second;
+		language_name[0] = toupper(language_name[0]);
+
+		obs_property_list_add_string(whisper_language_select_list, language_name.c_str(),
 					     pair.first.c_str());
 	}
 

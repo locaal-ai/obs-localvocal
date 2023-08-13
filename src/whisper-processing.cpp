@@ -263,7 +263,7 @@ void process_audio_from_buffer(struct transcription_filter_data *gf)
 		if (gf->log_words) {
 			obs_log(LOG_INFO, "skipping inference");
 		}
-    gf->setTextCallback("");
+		gf->setTextCallback("");
 	}
 
 	// end of timer
