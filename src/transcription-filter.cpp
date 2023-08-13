@@ -40,8 +40,7 @@ bool add_sources_to_list(void *list_property, obs_source_t *source)
 
 	obs_property_t *sources = (obs_property_t *)list_property;
 	const char *name = obs_source_get_name(source);
-	const char *uuid = obs_source_get_uuid(source);
-	obs_property_list_add_string(sources, name, uuid);
+	obs_property_list_add_string(sources, name, name);
 	return true;
 }
 
@@ -139,6 +138,29 @@ void transcription_filter_destroy(void *data)
 	bfree(gf);
 }
 
+void acquire_weak_text_source_ref(struct transcription_filter_data *gf)
+{
+	if (!gf->text_source_name) {
+		obs_log(LOG_ERROR, "text_source_name is null");
+		return;
+	}
+
+	std::lock_guard<std::mutex> lock(*gf->text_source_mutex);
+
+	// acquire a weak ref to the new text source
+	obs_source_t *source = obs_get_source_by_name(gf->text_source_name);
+	if (source) {
+		gf->text_source = obs_source_get_weak_source(source);
+		obs_source_release(source);
+		if (!gf->text_source) {
+			obs_log(LOG_ERROR, "failed to get weak source for text source %s",
+				gf->text_source_name);
+		}
+	} else {
+		obs_log(LOG_ERROR, "text source '%s' not found", gf->text_source_name);
+	}
+}
+
 void transcription_filter_update(void *data, obs_data_t *s)
 {
 	struct transcription_filter_data *gf =
@@ -154,10 +176,10 @@ void transcription_filter_update(void *data, obs_data_t *s)
 	const char *text_source_name = obs_data_get_string(s, "subtitle_sources");
 	obs_weak_source_t *old_weak_text_source = NULL;
 
-	gf->text_source_mutex->lock();
 	if (strcmp(text_source_name, "none") == 0 || strcmp(text_source_name, "(null)") == 0) {
 		// new selected text source is not valid, release the old one
 		if (gf->text_source) {
+			std::lock_guard<std::mutex> lock(*gf->text_source_mutex);
 			old_weak_text_source = gf->text_source;
 			gf->text_source = nullptr;
 		}
@@ -167,32 +189,17 @@ void transcription_filter_update(void *data, obs_data_t *s)
 		}
 	} else {
 		// new selected text source is valid, check if it's different from the old one
-		obs_log(LOG_INFO, "selected text source uuid: %s", text_source_name);
-		obs_log(LOG_INFO, "current text source uuid: %s", gf->text_source_name);
-		if (gf->text_source_name == nullptr || strcmp(text_source_name, gf->text_source_name) != 0) {
+		if (gf->text_source_name == nullptr ||
+		    strcmp(text_source_name, gf->text_source_name) != 0) {
 			// new text source is different from the old one, release the old one
-			obs_log(LOG_INFO, "new text '%s' source is different from the old one (%s)",
-				text_source_name, gf->text_source_name);
 			if (gf->text_source) {
+				std::lock_guard<std::mutex> lock(*gf->text_source_mutex);
 				old_weak_text_source = gf->text_source;
 				gf->text_source = nullptr;
 			}
 			gf->text_source_name = bstrdup(text_source_name);
-			// acquire a weak ref to the new text source
-			obs_source_t* source = obs_get_source_by_uuid(text_source_name);
-			if (source) {
-				gf->text_source = obs_source_get_weak_source(source);
-				obs_source_release(source);
-				if (!gf->text_source) {
-					obs_log(LOG_ERROR, "failed to get weak source for text source %s",
-						text_source_name);
-				}
-			} else {
-				obs_log(LOG_ERROR, "text source '%s' not found", text_source_name);
-			}
 		}
 	}
-	gf->text_source_mutex->unlock();
 
 	if (old_weak_text_source) {
 		obs_weak_source_release(old_weak_text_source);
@@ -323,7 +330,10 @@ void *transcription_filter_create(obs_data_t *settings, obs_source_t *filter)
 
 	// set the callback to set the text in the output text source (subtitles)
 	gf->setTextCallback = [gf](const std::string &str) {
-		obs_log(LOG_INFO, "Setting text to %s", str.c_str());
+		if (!gf->text_source) {
+			// attempt to acquire a weak ref to the text source if it's yet available
+			acquire_weak_text_source_ref(gf);
+		}
 
 		std::lock_guard<std::mutex> lock(*gf->text_source_mutex);
 
@@ -395,7 +405,7 @@ void transcription_filter_defaults(obs_data_t *s)
 	obs_data_set_default_double(s, "thold_ptsum", 0.01);
 	obs_data_set_default_int(s, "max_len", 0);
 	obs_data_set_default_bool(s, "split_on_word", false);
-	obs_data_set_default_int(s, "max_tokens", 3);
+	obs_data_set_default_int(s, "max_tokens", 32);
 	obs_data_set_default_bool(s, "speed_up", false);
 	obs_data_set_default_bool(s, "suppress_blank", false);
 	obs_data_set_default_bool(s, "suppress_non_speech_tokens", true);
