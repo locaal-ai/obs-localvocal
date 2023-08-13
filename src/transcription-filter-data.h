@@ -10,6 +10,10 @@
 
 #include <thread>
 #include <memory>
+#include <mutex>
+#include <condition_variable>
+#include <functional>
+#include <string>
 
 #define MAX_PREPROC_CHANNELS 2
 

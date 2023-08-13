@@ -5,6 +5,9 @@
 #include "plugin-support.h"
 #include "transcription-filter-data.h"
 
+#include <algorithm>
+#include <cctype>
+
 #define VAD_THOLD 0.0001f
 #define FREQ_THOLD 100.0f
 

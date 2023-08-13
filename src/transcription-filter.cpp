@@ -6,6 +6,7 @@
 #include "whisper-processing.h"
 #include "whisper-language.h"
 
+
 inline enum speaker_layout convert_speaker_layout(uint8_t channels)
 {
 	switch (channels) {
