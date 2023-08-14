@@ -22,10 +22,17 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 OBS_DECLARE_MODULE()
 OBS_MODULE_USE_DEFAULT_LOCALE(PLUGIN_NAME, "en-US")
 
+MODULE_EXPORT const char *obs_module_description(void)
+{
+	return obs_module_text("LocalVocalPlugin");
+}
+
+extern struct obs_source_info transcription_filter_info;
+
 bool obs_module_load(void)
 {
-	obs_log(LOG_INFO, "plugin loaded successfully (version %s)",
-		PLUGIN_VERSION);
+	obs_register_source(&transcription_filter_info);
+	blog(LOG_INFO, "plugin loaded successfully (version %s)", PLUGIN_VERSION);
 	return true;
 }
 
