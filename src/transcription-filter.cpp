@@ -328,6 +328,8 @@ void *transcription_filter_create(obs_data_t *settings, obs_source_t *filter)
 	gf->wshiper_thread_cv =
 		std::unique_ptr<std::condition_variable>(new std::condition_variable());
 	gf->text_source_mutex = std::unique_ptr<std::mutex>(new std::mutex());
+	gf->text_source = nullptr;
+	gf->text_source_name = nullptr;
 
 	// set the callback to set the text in the output text source (subtitles)
 	gf->setTextCallback = [gf](const std::string &str) {
@@ -426,9 +428,12 @@ obs_properties_t *transcription_filter_properties(void *data)
 	obs_property_list_add_int(list, "WARNING", LOG_WARNING);
 	obs_properties_add_bool(ppts, "log_words", "Log output words");
 
-	obs_property_t *sources = obs_properties_add_list(ppts, "subtitle_sources",
-							  "subtitle_sources", OBS_COMBO_TYPE_LIST,
-							  OBS_COMBO_FORMAT_STRING);
+	obs_property_t *sources =
+		obs_properties_add_list(ppts, "subtitle_sources", "Subtitles Text Source",
+					OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_STRING);
+	// Add "none" option
+	obs_property_list_add_string(sources, "None / No output", "none");
+	// Add text sources
 	obs_enum_sources(add_sources_to_list, sources);
 
 	// Add a list of available whisper models to download
