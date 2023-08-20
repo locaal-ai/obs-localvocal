@@ -230,7 +230,8 @@ void transcription_filter_update(void *data, obs_data_t *s)
 				gf->whisper_model_path, [gf](int download_status) {
 					if (download_status == 0) {
 						obs_log(LOG_INFO, "Model download complete");
-						gf->whisper_context = init_whisper_context(gf->whisper_model_path);
+						gf->whisper_context = init_whisper_context(
+							gf->whisper_model_path);
 						gf->whisper_thread = std::thread(whisper_loop, gf);
 					} else {
 						obs_log(LOG_ERROR, "Model download failed");
