@@ -206,8 +206,9 @@ void transcription_filter_update(void *data, obs_data_t *s)
 		obs_weak_source_release(old_weak_text_source);
 	}
 
-	const char *new_model_path = obs_data_get_string(s, "whisper_model_path");
-	if (strcmp(new_model_path, gf->whisper_model_path.c_str()) != 0) {
+	std::string new_model_path = obs_data_get_string(s, "whisper_model_path");
+
+	if (new_model_path != gf->whisper_model_path) {
 		// model path changed, reload the model
 		obs_log(LOG_INFO, "model path changed, reloading model");
 		if (gf->whisper_context != nullptr) {
@@ -220,7 +221,7 @@ void transcription_filter_update(void *data, obs_data_t *s)
 		if (gf->whisper_thread.joinable()) {
 			gf->whisper_thread.join();
 		}
-		gf->whisper_model_path = bstrdup(new_model_path);
+		gf->whisper_model_path = new_model_path;
 
 		// check if the model exists, if not, download it
 		if (!check_if_model_exists(gf->whisper_model_path)) {
@@ -229,8 +230,7 @@ void transcription_filter_update(void *data, obs_data_t *s)
 				gf->whisper_model_path, [gf](int download_status) {
 					if (download_status == 0) {
 						obs_log(LOG_INFO, "Model download complete");
-						gf->whisper_context = init_whisper_context(
-							gf->whisper_model_path);
+						gf->whisper_context = init_whisper_context(gf->whisper_model_path);
 						gf->whisper_thread = std::thread(whisper_loop, gf);
 					} else {
 						obs_log(LOG_ERROR, "Model download failed");
@@ -321,8 +321,6 @@ void *transcription_filter_create(obs_data_t *settings, obs_source_t *filter)
 
 	gf->resampler = audio_resampler_create(&dst, &src);
 
-	gf->active = true;
-
 	gf->whisper_buf_mutex = std::unique_ptr<std::mutex>(new std::mutex());
 	gf->whisper_ctx_mutex = std::unique_ptr<std::mutex>(new std::mutex());
 	gf->wshiper_thread_cv =
@@ -340,12 +338,11 @@ void *transcription_filter_create(obs_data_t *settings, obs_source_t *filter)
 
 		std::lock_guard<std::mutex> lock(*gf->text_source_mutex);
 
-		obs_weak_source_t *text_source = gf->text_source;
-		if (!text_source) {
+		if (!gf->text_source) {
 			obs_log(LOG_ERROR, "text_source is null");
 			return;
 		}
-		auto target = obs_weak_source_get_source(text_source);
+		auto target = obs_weak_source_get_source(gf->text_source);
 		if (!target) {
 			obs_log(LOG_ERROR, "text_source target is null");
 			return;
@@ -361,6 +358,8 @@ void *transcription_filter_create(obs_data_t *settings, obs_source_t *filter)
 
 	// start the thread
 	gf->whisper_thread = std::thread(whisper_loop, gf);
+
+	gf->active = true;
 
 	return gf;
 }
