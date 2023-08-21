@@ -169,10 +169,12 @@ void transcription_filter_update(void *data, obs_data_t *s)
 	struct transcription_filter_data *gf =
 		static_cast<struct transcription_filter_data *>(data);
 
+	obs_log(LOG_INFO, "transcription_filter_update");
 	gf->log_level = (int)obs_data_get_int(s, "log_level");
 	gf->vad_enabled = obs_data_get_bool(s, "vad_enabled");
 	gf->log_words = obs_data_get_bool(s, "log_words");
 
+	obs_log(LOG_INFO, "transcription_filter: update text source");
 	// update the text source
 	const char *text_source_name = obs_data_get_string(s, "subtitle_sources");
 	obs_weak_source_t *old_weak_text_source = NULL;
@@ -203,9 +205,12 @@ void transcription_filter_update(void *data, obs_data_t *s)
 	}
 
 	if (old_weak_text_source) {
+		obs_log(LOG_INFO, "releasing old text source");
 		obs_weak_source_release(old_weak_text_source);
 	}
 
+	obs_log(LOG_INFO, "transcription_filter: update whisper model");
+	// update the whisper model path
 	std::string new_model_path = obs_data_get_string(s, "whisper_model_path");
 
 	if (new_model_path != gf->whisper_model_path) {
@@ -244,6 +249,7 @@ void transcription_filter_update(void *data, obs_data_t *s)
 		}
 	}
 
+	obs_log(LOG_INFO, "transcription_filter: update whisper params");
 	std::lock_guard<std::mutex> lock(*gf->whisper_ctx_mutex);
 
 	gf->whisper_params = whisper_full_default_params(
@@ -308,9 +314,10 @@ void *transcription_filter_create(obs_data_t *settings, obs_source_t *filter)
 
 	gf->overlap_ms = OVERLAP_SIZE_MSEC;
 	gf->overlap_frames = (size_t)((float)gf->sample_rate / (1000.0f / (float)gf->overlap_ms));
-	obs_log(LOG_INFO, "transcription_filter filter: channels %d, frames %d, sample_rate %d",
+	obs_log(LOG_INFO, "transcription_filter: channels %d, frames %d, sample_rate %d",
 		(int)gf->channels, (int)gf->frames, gf->sample_rate);
 
+	obs_log(LOG_INFO, "transcription_filter: setup audio resampler");
 	struct resample_info src, dst;
 	src.samples_per_sec = gf->sample_rate;
 	src.format = AUDIO_FORMAT_FLOAT_PLANAR;
@@ -322,6 +329,7 @@ void *transcription_filter_create(obs_data_t *settings, obs_source_t *filter)
 
 	gf->resampler = audio_resampler_create(&dst, &src);
 
+	obs_log(LOG_INFO, "transcription_filter: setup mutexes and condition variables");
 	gf->whisper_buf_mutex = std::unique_ptr<std::mutex>(new std::mutex());
 	gf->whisper_ctx_mutex = std::unique_ptr<std::mutex>(new std::mutex());
 	gf->wshiper_thread_cv =
@@ -330,6 +338,7 @@ void *transcription_filter_create(obs_data_t *settings, obs_source_t *filter)
 	gf->text_source = nullptr;
 	gf->text_source_name = nullptr;
 
+	obs_log(LOG_INFO, "transcription_filter: setup callback");
 	// set the callback to set the text in the output text source (subtitles)
 	gf->setTextCallback = [gf](const std::string &str) {
 		if (!gf->text_source) {
@@ -354,9 +363,11 @@ void *transcription_filter_create(obs_data_t *settings, obs_source_t *filter)
 		obs_source_release(target);
 	};
 
+	obs_log(LOG_INFO, "transcription_filter: run update");
 	// get the settings updated on the filter data struct
 	transcription_filter_update(gf, settings);
 
+	obs_log(LOG_INFO, "transcription_filter: start whisper thread");
 	// start the thread
 	gf->whisper_thread = std::thread(whisper_loop, gf);
 
