@@ -68,6 +68,11 @@ struct obs_audio_data *transcription_filter_filter_audio(void *data, struct obs_
 		return audio;
 	}
 
+	if (!gf->whisper_buf_mutex || !gf->whisper_ctx_mutex) {
+		obs_log(LOG_ERROR, "whisper mutexes are null");
+		return audio;
+	}
+
 	{
 		std::lock_guard<std::mutex> lock(*gf->whisper_buf_mutex); // scoped lock
 		obs_log(gf->log_level,
@@ -187,6 +192,10 @@ void transcription_filter_update(void *data, obs_data_t *s)
 	if (strcmp(text_source_name, "none") == 0 || strcmp(text_source_name, "(null)") == 0) {
 		// new selected text source is not valid, release the old one
 		if (gf->text_source) {
+			if (!gf->text_source_mutex) {
+				obs_log(LOG_ERROR, "text_source_mutex is null");
+				return;
+			}
 			std::lock_guard<std::mutex> lock(*gf->text_source_mutex);
 			old_weak_text_source = gf->text_source;
 			gf->text_source = nullptr;
@@ -201,6 +210,10 @@ void transcription_filter_update(void *data, obs_data_t *s)
 		    strcmp(text_source_name, gf->text_source_name) != 0) {
 			// new text source is different from the old one, release the old one
 			if (gf->text_source) {
+				if (!gf->text_source_mutex) {
+					obs_log(LOG_ERROR, "text_source_mutex is null");
+					return;
+				}
 				std::lock_guard<std::mutex> lock(*gf->text_source_mutex);
 				old_weak_text_source = gf->text_source;
 				gf->text_source = nullptr;
@@ -223,6 +236,10 @@ void transcription_filter_update(void *data, obs_data_t *s)
 		obs_log(LOG_INFO, "model path changed, reloading model");
 		if (gf->whisper_context != nullptr) {
 			// acquire the mutex before freeing the context
+			if (!gf->whisper_ctx_mutex || !gf->wshiper_thread_cv) {
+				obs_log(LOG_ERROR, "whisper_ctx_mutex is null");
+				return;
+			}
 			std::lock_guard<std::mutex> lock(*gf->whisper_ctx_mutex);
 			whisper_free(gf->whisper_context);
 			gf->whisper_context = nullptr;
@@ -252,6 +269,11 @@ void transcription_filter_update(void *data, obs_data_t *s)
 			gf->whisper_context = init_whisper_context(gf->whisper_model_path);
 			gf->whisper_thread = std::thread(whisper_loop, gf);
 		}
+	}
+
+	if (!gf->whisper_ctx_mutex) {
+		obs_log(LOG_ERROR, "whisper_ctx_mutex is null");
+		return;
 	}
 
 	obs_log(LOG_INFO, "transcription_filter: update whisper params");
@@ -345,6 +367,11 @@ void *transcription_filter_create(obs_data_t *settings, obs_source_t *filter)
 	obs_log(LOG_INFO, "transcription_filter: setup callback");
 	// set the callback to set the text in the output text source (subtitles)
 	gf->setTextCallback = [gf](const std::string &str) {
+		if (!gf->text_source_mutex) {
+			obs_log(LOG_ERROR, "text_source_mutex is null");
+			return;
+		}
+
 		if (!gf->text_source) {
 			// attempt to acquire a weak ref to the text source if it's yet available
 			acquire_weak_text_source_ref(gf);
