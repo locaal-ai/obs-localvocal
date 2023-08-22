@@ -330,11 +330,10 @@ void *transcription_filter_create(obs_data_t *settings, obs_source_t *filter)
 	gf->resampler = audio_resampler_create(&dst, &src);
 
 	obs_log(LOG_INFO, "transcription_filter: setup mutexes and condition variables");
-	gf->whisper_buf_mutex = std::unique_ptr<std::mutex>(new std::mutex());
-	gf->whisper_ctx_mutex = std::unique_ptr<std::mutex>(new std::mutex());
-	gf->wshiper_thread_cv =
-		std::unique_ptr<std::condition_variable>(new std::condition_variable());
-	gf->text_source_mutex = std::unique_ptr<std::mutex>(new std::mutex());
+	gf->whisper_buf_mutex.reset(new std::mutex());
+	gf->whisper_ctx_mutex.reset(new std::mutex());
+	gf->wshiper_thread_cv.reset(new std::condition_variable());
+	gf->text_source_mutex.reset(new std::mutex());
 	gf->text_source = nullptr;
 	gf->text_source_name = nullptr;
 
