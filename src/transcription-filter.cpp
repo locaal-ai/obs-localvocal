@@ -138,6 +138,11 @@ void transcription_filter_destroy(void *data)
 	}
 	circlebuf_free(&gf->info_buffer);
 
+	delete gf->whisper_buf_mutex;
+	delete gf->whisper_ctx_mutex;
+	delete gf->wshiper_thread_cv;
+	delete gf->text_source_mutex;
+
 	bfree(gf);
 }
 
@@ -330,10 +335,10 @@ void *transcription_filter_create(obs_data_t *settings, obs_source_t *filter)
 	gf->resampler = audio_resampler_create(&dst, &src);
 
 	obs_log(LOG_INFO, "transcription_filter: setup mutexes and condition variables");
-	gf->whisper_buf_mutex.reset(new std::mutex());
-	gf->whisper_ctx_mutex.reset(new std::mutex());
-	gf->wshiper_thread_cv.reset(new std::condition_variable());
-	gf->text_source_mutex.reset(new std::mutex());
+	gf->whisper_buf_mutex = new std::mutex();
+	gf->whisper_ctx_mutex = new std::mutex();
+	gf->wshiper_thread_cv = new std::condition_variable();
+	gf->text_source_mutex = new std::mutex();
 	gf->text_source = nullptr;
 	gf->text_source_name = nullptr;
 

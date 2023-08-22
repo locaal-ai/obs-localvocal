@@ -55,16 +55,16 @@ struct transcription_filter_data {
 	// Text source to output the subtitles
 	obs_weak_source_t *text_source;
 	char *text_source_name;
-	std::unique_ptr<std::mutex> text_source_mutex;
+	std::mutex *text_source_mutex;
 	// Callback to set the text in the output text source (subtitles)
 	std::function<void(const std::string &str)> setTextCallback;
 
 	// Use std for thread and mutex
 	std::thread whisper_thread;
 
-	std::unique_ptr<std::mutex> whisper_buf_mutex;
-	std::unique_ptr<std::mutex> whisper_ctx_mutex;
-	std::unique_ptr<std::condition_variable> wshiper_thread_cv;
+	std::mutex *whisper_buf_mutex;
+	std::mutex *whisper_ctx_mutex;
+	std::condition_variable *wshiper_thread_cv;
 };
 
 // Audio packet info
