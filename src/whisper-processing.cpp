@@ -254,16 +254,16 @@ void process_audio_from_buffer(struct transcription_filter_data *gf)
 
 		if (inference_result.result == DETECTION_RESULT_SPEECH) {
 			// output inference result to a text source
-			gf->setTextCallback(inference_result.text);
+			set_text_callback(gf, inference_result.text);
 		} else if (inference_result.result == DETECTION_RESULT_SILENCE) {
 			// output inference result to a text source
-			gf->setTextCallback("[silence]");
+			set_text_callback(gf, "[silence]");
 		}
 	} else {
 		if (gf->log_words) {
 			obs_log(LOG_INFO, "skipping inference");
 		}
-		gf->setTextCallback("");
+		set_text_callback(gf, "");
 	}
 
 	// end of timer

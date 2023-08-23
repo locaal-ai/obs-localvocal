@@ -73,4 +73,6 @@ struct transcription_filter_audio_info {
 	uint64_t timestamp;
 };
 
+void set_text_callback(struct transcription_filter_data *gf, const std::string &str);
+
 #endif /* TRANSCRIPTION_FILTER_DATA_H */

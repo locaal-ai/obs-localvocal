@@ -174,6 +174,35 @@ void acquire_weak_text_source_ref(struct transcription_filter_data *gf)
 	}
 }
 
+void set_text_callback(struct transcription_filter_data *gf, const std::string &str)
+{
+	if (!gf->text_source_mutex) {
+		obs_log(LOG_ERROR, "text_source_mutex is null");
+		return;
+	}
+
+	if (!gf->text_source) {
+		// attempt to acquire a weak ref to the text source if it's yet available
+		acquire_weak_text_source_ref(gf);
+	}
+
+	std::lock_guard<std::mutex> lock(*gf->text_source_mutex);
+
+	if (!gf->text_source) {
+		obs_log(LOG_ERROR, "text_source is null");
+		return;
+	}
+	auto target = obs_weak_source_get_source(gf->text_source);
+	if (!target) {
+		obs_log(LOG_ERROR, "text_source target is null");
+		return;
+	}
+	auto text_settings = obs_source_get_settings(target);
+	obs_data_set_string(text_settings, "text", str.c_str());
+	obs_source_update(target, text_settings);
+	obs_source_release(target);
+};
+
 void transcription_filter_update(void *data, obs_data_t *s)
 {
 	struct transcription_filter_data *gf =
@@ -363,36 +392,6 @@ void *transcription_filter_create(obs_data_t *settings, obs_source_t *filter)
 	gf->text_source_mutex = new std::mutex();
 	gf->text_source = nullptr;
 	gf->text_source_name = nullptr;
-
-	obs_log(LOG_INFO, "transcription_filter: setup callback");
-	// set the callback to set the text in the output text source (subtitles)
-	gf->setTextCallback = [gf](const std::string &str) {
-		if (!gf->text_source_mutex) {
-			obs_log(LOG_ERROR, "text_source_mutex is null");
-			return;
-		}
-
-		if (!gf->text_source) {
-			// attempt to acquire a weak ref to the text source if it's yet available
-			acquire_weak_text_source_ref(gf);
-		}
-
-		std::lock_guard<std::mutex> lock(*gf->text_source_mutex);
-
-		if (!gf->text_source) {
-			obs_log(LOG_ERROR, "text_source is null");
-			return;
-		}
-		auto target = obs_weak_source_get_source(gf->text_source);
-		if (!target) {
-			obs_log(LOG_ERROR, "text_source target is null");
-			return;
-		}
-		auto text_settings = obs_source_get_settings(target);
-		obs_data_set_string(text_settings, "text", str.c_str());
-		obs_source_update(target, text_settings);
-		obs_source_release(target);
-	};
 
 	obs_log(LOG_INFO, "transcription_filter: run update");
 	// get the settings updated on the filter data struct
