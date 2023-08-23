@@ -297,6 +297,11 @@ void process_audio_from_buffer(struct transcription_filter_data *gf)
 
 void whisper_loop(void *data)
 {
+	if (data == nullptr) {
+		obs_log(LOG_ERROR, "whisper_loop: data is null");
+		return;
+	}
+
 	struct transcription_filter_data *gf =
 		static_cast<struct transcription_filter_data *>(data);
 	const size_t segment_size = gf->frames * sizeof(float);

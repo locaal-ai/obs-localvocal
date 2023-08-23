@@ -399,10 +399,12 @@ void *transcription_filter_create(obs_data_t *settings, obs_source_t *filter)
 
 	obs_log(LOG_INFO, "transcription_filter: start whisper thread");
 	// start the thread
-	gf->whisper_thread = std::thread(whisper_loop, gf);
+	std::thread new_whisper_thread(whisper_loop, gf);
+	gf->whisper_thread.swap(new_whisper_thread);
 
 	gf->active = true;
 
+	obs_log(LOG_INFO, "transcription_filter: filter created.");
 	return gf;
 }
 
