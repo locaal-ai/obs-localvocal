@@ -215,10 +215,11 @@ void transcription_filter_update(void *data, obs_data_t *s)
 
 	obs_log(LOG_INFO, "transcription_filter: update text source");
 	// update the text source
-	const char *text_source_name = obs_data_get_string(s, "subtitle_sources");
+	const char *new_text_source_name = obs_data_get_string(s, "subtitle_sources");
 	obs_weak_source_t *old_weak_text_source = NULL;
 
-	if (strcmp(text_source_name, "none") == 0 || strcmp(text_source_name, "(null)") == 0) {
+	if (strcmp(new_text_source_name, "none") == 0 ||
+	    strcmp(new_text_source_name, "(null)") == 0 || strcmp(new_text_source_name, "") == 0) {
 		// new selected text source is not valid, release the old one
 		if (gf->text_source) {
 			if (!gf->text_source_mutex) {
@@ -236,7 +237,7 @@ void transcription_filter_update(void *data, obs_data_t *s)
 	} else {
 		// new selected text source is valid, check if it's different from the old one
 		if (gf->text_source_name == nullptr ||
-		    strcmp(text_source_name, gf->text_source_name) != 0) {
+		    strcmp(new_text_source_name, gf->text_source_name) != 0) {
 			// new text source is different from the old one, release the old one
 			if (gf->text_source) {
 				if (!gf->text_source_mutex) {
@@ -247,7 +248,7 @@ void transcription_filter_update(void *data, obs_data_t *s)
 				old_weak_text_source = gf->text_source;
 				gf->text_source = nullptr;
 			}
-			gf->text_source_name = bstrdup(text_source_name);
+			gf->text_source_name = bstrdup(new_text_source_name);
 		}
 	}
 
@@ -288,7 +289,8 @@ void transcription_filter_update(void *data, obs_data_t *s)
 						obs_log(LOG_INFO, "Model download complete");
 						gf->whisper_context = init_whisper_context(
 							gf->whisper_model_path);
-						gf->whisper_thread = std::thread(whisper_loop, gf);
+						std::thread new_whisper_thread(whisper_loop, gf);
+						gf->whisper_thread.swap(new_whisper_thread);
 					} else {
 						obs_log(LOG_ERROR, "Model download failed");
 					}
@@ -296,7 +298,8 @@ void transcription_filter_update(void *data, obs_data_t *s)
 		} else {
 			// Model exists, just load it
 			gf->whisper_context = init_whisper_context(gf->whisper_model_path);
-			gf->whisper_thread = std::thread(whisper_loop, gf);
+			std::thread new_whisper_thread(whisper_loop, gf);
+			gf->whisper_thread.swap(new_whisper_thread);
 		}
 	}
 
@@ -391,7 +394,7 @@ void *transcription_filter_create(obs_data_t *settings, obs_source_t *filter)
 	gf->wshiper_thread_cv = new std::condition_variable();
 	gf->text_source_mutex = new std::mutex();
 	gf->text_source = nullptr;
-	gf->text_source_name = nullptr;
+	gf->text_source_name = bstrdup(obs_data_get_string(settings, "subtitle_sources"));
 
 	obs_log(LOG_INFO, "transcription_filter: run update");
 	// get the settings updated on the filter data struct
