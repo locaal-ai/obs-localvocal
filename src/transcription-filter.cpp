@@ -208,10 +208,10 @@ void transcription_filter_update(void *data, obs_data_t *s)
 {
 	obs_log(LOG_INFO, "transcription_filter_update");
 
-    if (!data) {
-        obs_log(LOG_ERROR, "transcription_filter_update: data is null");
-        return;
-    }
+	if (!data) {
+		obs_log(LOG_ERROR, "transcription_filter_update: data is null");
+		return;
+	}
 
 	struct transcription_filter_data *gf =
 		static_cast<struct transcription_filter_data *>(data);
