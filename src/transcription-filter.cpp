@@ -101,10 +101,11 @@ const char *transcription_filter_name(void *unused)
 
 void transcription_filter_destroy(void *data)
 {
+	obs_log(LOG_INFO, "transcription_filter_destroy");
+
 	struct transcription_filter_data *gf =
 		static_cast<struct transcription_filter_data *>(data);
 
-	obs_log(LOG_INFO, "transcription_filter_destroy");
 	{
 		std::lock_guard<std::mutex> lock(*gf->whisper_ctx_mutex);
 		if (gf->whisper_context != nullptr) {
@@ -205,10 +206,16 @@ void set_text_callback(struct transcription_filter_data *gf, const std::string &
 
 void transcription_filter_update(void *data, obs_data_t *s)
 {
+	obs_log(LOG_INFO, "transcription_filter_update");
+
+    if (!data) {
+        obs_log(LOG_ERROR, "transcription_filter_update: data is null");
+        return;
+    }
+
 	struct transcription_filter_data *gf =
 		static_cast<struct transcription_filter_data *>(data);
 
-	obs_log(LOG_INFO, "transcription_filter_update");
 	gf->log_level = (int)obs_data_get_int(s, "log_level");
 	gf->vad_enabled = obs_data_get_bool(s, "vad_enabled");
 	gf->log_words = obs_data_get_bool(s, "log_words");
@@ -343,7 +350,7 @@ void transcription_filter_update(void *data, obs_data_t *s)
 void *transcription_filter_create(obs_data_t *settings, obs_source_t *filter)
 {
 	struct transcription_filter_data *gf = static_cast<struct transcription_filter_data *>(
-		bmalloc(sizeof(struct transcription_filter_data)));
+		bzalloc(sizeof(struct transcription_filter_data)));
 
 	// Get the number of channels for the input source
 	gf->channels = audio_output_get_channels(obs_get_audio());
