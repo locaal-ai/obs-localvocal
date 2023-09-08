@@ -503,6 +503,7 @@ obs_properties_t *transcription_filter_properties(void *data)
 	obs_property_set_modified_callback(subs_output, [](obs_properties_t *props,
 							   obs_property_t *property,
 							   obs_data_t *settings) {
+		UNUSED_PARAMETER(property);
 		const char *new_output = obs_data_get_string(settings, "subtitle_sources");
 		if (strcmp(new_output, "text_file") == 0) {
 			// Show the output filename selection input
