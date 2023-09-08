@@ -72,6 +72,7 @@ bool vad_simple(float *pcmf32, size_t pcm32f_size, uint32_t sample_rate, float v
 
 struct whisper_context *init_whisper_context(const std::string &model_path)
 {
+	obs_log(LOG_INFO, "Loading whisper model from %s", model_path.c_str());
 	struct whisper_context *ctx = whisper_init_from_file(obs_module_file(model_path.c_str()));
 	if (ctx == nullptr) {
 		obs_log(LOG_ERROR, "Failed to load whisper model");
@@ -254,16 +255,16 @@ void process_audio_from_buffer(struct transcription_filter_data *gf)
 
 		if (inference_result.result == DETECTION_RESULT_SPEECH) {
 			// output inference result to a text source
-			gf->setTextCallback(inference_result.text);
+			set_text_callback(gf, inference_result.text);
 		} else if (inference_result.result == DETECTION_RESULT_SILENCE) {
 			// output inference result to a text source
-			gf->setTextCallback("[silence]");
+			set_text_callback(gf, "[silence]");
 		}
 	} else {
 		if (gf->log_words) {
 			obs_log(LOG_INFO, "skipping inference");
 		}
-		gf->setTextCallback("");
+		set_text_callback(gf, "");
 	}
 
 	// end of timer
@@ -297,6 +298,11 @@ void process_audio_from_buffer(struct transcription_filter_data *gf)
 
 void whisper_loop(void *data)
 {
+	if (data == nullptr) {
+		obs_log(LOG_ERROR, "whisper_loop: data is null");
+		return;
+	}
+
 	struct transcription_filter_data *gf =
 		static_cast<struct transcription_filter_data *>(data);
 	const size_t segment_size = gf->frames * sizeof(float);
