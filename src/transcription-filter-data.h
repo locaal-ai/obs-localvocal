@@ -58,8 +58,8 @@ struct transcription_filter_data {
 	std::mutex *text_source_mutex = nullptr;
 	// Callback to set the text in the output text source (subtitles)
 	std::function<void(const std::string &str)> setTextCallback;
-    // Output file path to write the subtitles
-    std::string output_file_path;
+	// Output file path to write the subtitles
+	std::string output_file_path;
 
 	// Use std for thread and mutex
 	std::thread whisper_thread;

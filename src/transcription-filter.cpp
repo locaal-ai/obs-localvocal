@@ -177,38 +177,38 @@ void acquire_weak_text_source_ref(struct transcription_filter_data *gf)
 
 void set_text_callback(struct transcription_filter_data *gf, const std::string &str)
 {
-    if (gf->output_file_path != "") {
-        // Write to file, do not append
-        std::ofstream output_file(gf->output_file_path, std::ios::out | std::ios::trunc);
-        output_file << str;
-        output_file.close();
-    } else {
-        if (!gf->text_source_mutex) {
-            obs_log(LOG_ERROR, "text_source_mutex is null");
-            return;
-        }
+	if (gf->output_file_path != "") {
+		// Write to file, do not append
+		std::ofstream output_file(gf->output_file_path, std::ios::out | std::ios::trunc);
+		output_file << str;
+		output_file.close();
+	} else {
+		if (!gf->text_source_mutex) {
+			obs_log(LOG_ERROR, "text_source_mutex is null");
+			return;
+		}
 
-        if (!gf->text_source) {
-            // attempt to acquire a weak ref to the text source if it's yet available
-            acquire_weak_text_source_ref(gf);
-        }
+		if (!gf->text_source) {
+			// attempt to acquire a weak ref to the text source if it's yet available
+			acquire_weak_text_source_ref(gf);
+		}
 
-        std::lock_guard<std::mutex> lock(*gf->text_source_mutex);
+		std::lock_guard<std::mutex> lock(*gf->text_source_mutex);
 
-        if (!gf->text_source) {
-            obs_log(LOG_ERROR, "text_source is null");
-            return;
-        }
-        auto target = obs_weak_source_get_source(gf->text_source);
-        if (!target) {
-            obs_log(LOG_ERROR, "text_source target is null");
-            return;
-        }
-        auto text_settings = obs_source_get_settings(target);
-        obs_data_set_string(text_settings, "text", str.c_str());
-        obs_source_update(target, text_settings);
-        obs_source_release(target);
-    }
+		if (!gf->text_source) {
+			obs_log(LOG_ERROR, "text_source is null");
+			return;
+		}
+		auto target = obs_weak_source_get_source(gf->text_source);
+		if (!target) {
+			obs_log(LOG_ERROR, "text_source target is null");
+			return;
+		}
+		auto text_settings = obs_source_get_settings(target);
+		obs_data_set_string(text_settings, "text", str.c_str());
+		obs_source_update(target, text_settings);
+		obs_source_release(target);
+	}
 };
 
 void transcription_filter_update(void *data, obs_data_t *s)
@@ -228,8 +228,7 @@ void transcription_filter_update(void *data, obs_data_t *s)
 
 	if (strcmp(new_text_source_name, "none") == 0 ||
 	    strcmp(new_text_source_name, "(null)") == 0 ||
-        strcmp(new_text_source_name, "text_file") == 0 ||
-        strlen(new_text_source_name) == 0) {
+	    strcmp(new_text_source_name, "text_file") == 0 || strlen(new_text_source_name) == 0) {
 		// new selected text source is not valid, release the old one
 		if (gf->text_source) {
 			if (!gf->text_source_mutex) {
@@ -244,11 +243,11 @@ void transcription_filter_update(void *data, obs_data_t *s)
 			bfree(gf->text_source_name);
 			gf->text_source_name = nullptr;
 		}
-        if (strcmp(new_text_source_name, "text_file") == 0) {
-            gf->output_file_path = obs_data_get_string(s, "subtitle_output_filename");
-        } else {
-            gf->output_file_path = "";
-        }
+		if (strcmp(new_text_source_name, "text_file") == 0) {
+			gf->output_file_path = obs_data_get_string(s, "subtitle_output_filename");
+		} else {
+			gf->output_file_path = "";
+		}
 	} else {
 		// new selected text source is valid, check if it's different from the old one
 		if (gf->text_source_name == nullptr ||
@@ -498,19 +497,24 @@ obs_properties_t *transcription_filter_properties(void *data)
 	// Add text sources
 	obs_enum_sources(add_sources_to_list, subs_output);
 
-    obs_properties_add_path(ppts, "subtitle_output_filename", "Output filename", OBS_PATH_FILE_SAVE, "Text (*.txt)", NULL);
+	obs_properties_add_path(ppts, "subtitle_output_filename", "Output filename",
+				OBS_PATH_FILE_SAVE, "Text (*.txt)", NULL);
 
-    obs_property_set_modified_callback(subs_output, [](obs_properties_t *props, obs_property_t *property, obs_data_t *settings) {
-        const char *new_output = obs_data_get_string(settings, "subtitle_sources");
-        if (strcmp(new_output, "text_file") == 0) {
-            // Show the output filename selection input
-            obs_property_set_visible(obs_properties_get(props, "subtitle_output_filename"), true);
-        } else {
-            // Hide the output filename selection input
-            obs_property_set_visible(obs_properties_get(props, "subtitle_output_filename"), false);
-        }
-        return true;
-    });
+	obs_property_set_modified_callback(subs_output, [](obs_properties_t *props,
+							   obs_property_t *property,
+							   obs_data_t *settings) {
+		const char *new_output = obs_data_get_string(settings, "subtitle_sources");
+		if (strcmp(new_output, "text_file") == 0) {
+			// Show the output filename selection input
+			obs_property_set_visible(
+				obs_properties_get(props, "subtitle_output_filename"), true);
+		} else {
+			// Hide the output filename selection input
+			obs_property_set_visible(
+				obs_properties_get(props, "subtitle_output_filename"), false);
+		}
+		return true;
+	});
 
 	// Add a list of available whisper models to download
 	obs_property_t *whisper_models_list =
