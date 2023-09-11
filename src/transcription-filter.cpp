@@ -243,10 +243,14 @@ void transcription_filter_update(void *data, obs_data_t *s)
 			bfree(gf->text_source_name);
 			gf->text_source_name = nullptr;
 		}
+		gf->output_file_path = "";
 		if (strcmp(new_text_source_name, "text_file") == 0) {
-			gf->output_file_path = obs_data_get_string(s, "subtitle_output_filename");
-		} else {
-			gf->output_file_path = "";
+			// set the output file path
+			const char *output_file_path =
+				obs_data_get_string(s, "subtitle_output_filename");
+			if (output_file_path != nullptr && strlen(output_file_path) > 0) {
+				gf->output_file_path = output_file_path;
+			}
 		}
 	} else {
 		// new selected text source is valid, check if it's different from the old one
