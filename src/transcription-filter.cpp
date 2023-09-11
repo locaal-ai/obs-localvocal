@@ -226,8 +226,7 @@ void transcription_filter_update(void *data, obs_data_t *s)
 	const char *new_text_source_name = obs_data_get_string(s, "subtitle_sources");
 	obs_weak_source_t *old_weak_text_source = NULL;
 
-	if (new_text_source_name == nullptr ||
-        strcmp(new_text_source_name, "none") == 0 ||
+	if (new_text_source_name == nullptr || strcmp(new_text_source_name, "none") == 0 ||
 	    strcmp(new_text_source_name, "(null)") == 0 ||
 	    strcmp(new_text_source_name, "text_file") == 0 || strlen(new_text_source_name) == 0) {
 		// new selected text source is not valid, release the old one
@@ -267,11 +266,11 @@ void transcription_filter_update(void *data, obs_data_t *s)
 				old_weak_text_source = gf->text_source;
 				gf->text_source = nullptr;
 			}
-            if (gf->text_source_name) {
-                // free the old text source name
-                bfree(gf->text_source_name);
-                gf->text_source_name = nullptr;
-            }
+			if (gf->text_source_name) {
+				// free the old text source name
+				bfree(gf->text_source_name);
+				gf->text_source_name = nullptr;
+			}
 			gf->text_source_name = bstrdup(new_text_source_name);
 		}
 	}
@@ -419,7 +418,7 @@ void *transcription_filter_create(obs_data_t *settings, obs_source_t *filter)
 	gf->text_source_mutex = new std::mutex();
 	gf->text_source = nullptr;
 	gf->text_source_name = bstrdup(obs_data_get_string(settings, "subtitle_sources"));
-    gf->output_file_path = std::string("");
+	gf->output_file_path = std::string("");
 
 	obs_log(gf->log_level, "transcription_filter: run update");
 	// get the settings updated on the filter data struct
