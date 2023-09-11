@@ -366,7 +366,7 @@ void transcription_filter_update(void *data, obs_data_t *s)
 void *transcription_filter_create(obs_data_t *settings, obs_source_t *filter)
 {
 	struct transcription_filter_data *gf = static_cast<struct transcription_filter_data *>(
-		bmalloc(sizeof(struct transcription_filter_data)));
+		bzalloc(sizeof(struct transcription_filter_data)));
 
 	// Get the number of channels for the input source
 	gf->channels = audio_output_get_channels(obs_get_audio());
@@ -387,7 +387,7 @@ void *transcription_filter_create(obs_data_t *settings, obs_source_t *filter)
 	}
 
 	gf->context = filter;
-	gf->whisper_model_path = obs_data_get_string(settings, "whisper_model_path");
+	gf->whisper_model_path = std::string(obs_data_get_string(settings, "whisper_model_path"));
 	gf->whisper_context = init_whisper_context(gf->whisper_model_path);
 	if (gf->whisper_context == nullptr) {
 		obs_log(LOG_ERROR, "Failed to load whisper model");
