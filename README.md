@@ -77,3 +77,22 @@ Use the CI scripts again, for example:
 ```
 
 The build should exist in the `./release` folder off the root. You can manually install the files in the OBS directory.
+
+#### Building with CUDA support on Windows
+
+To build with CUDA support on Windows, you need to install the CUDA toolkit from NVIDIA. The CUDA toolkit is available for download from [here](https://developer.nvidia.com/cuda-downloads).
+
+After installing the CUDA toolkit, you need to set variables to point CMake to the CUDA toolkit installation directory. For example, if you have installed the CUDA toolkit in `C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.4`, you need to set `CUDA_TOOLKIT_ROOT_DIR` to `C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.4` and `LOCALVOCAL_WITH_CUDA` to `ON` when running `.github/scripts/Build-Windows.ps1`.
+
+For example
+```powershell
+> .github/scripts/Build-Windows.ps1 -Target x64 -ExtraCmakeFlags "-D LOCALVOCAL_WITH_CUDA=ON -D CUDA_TOOLKIT_ROOT_DIR='C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.4'"
+```
+
+You will need to copy a few CUDA .dll files to the location of the plugin .dll for it to run. The required .dll files from CUDA (which are located in the `bin` folder of the CUDA toolkit installation directory) are:
+
+- `cudart64_NN.dll`
+- `cublas64_NN.dll`
+- `cublasLt64_NN.dll`
+
+where `NN` is the CUDA version number. For example, if you have installed CUDA 11.4 then `NN` is likely `11`.
