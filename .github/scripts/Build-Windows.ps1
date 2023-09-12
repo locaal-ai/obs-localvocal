@@ -6,7 +6,8 @@ param(
     [string] $Configuration = 'RelWithDebInfo',
     [switch] $SkipAll,
     [switch] $SkipBuild,
-    [switch] $SkipDeps
+    [switch] $SkipDeps,
+    [string] $ExtraCmakeArgs
 )
 
 $ErrorActionPreference = 'Stop'
@@ -56,7 +57,8 @@ function Build {
     if ( ! ( ( $SkipAll ) -or ( $SkipBuild ) ) ) {
         Ensure-Location $ProjectRoot
 
-        $CmakeArgs = @()
+        # take cmake args from $ExtraCmakeArgs
+        $CmakeArgs = @($ExtraCmakeArgs)
         $CmakeBuildArgs = @()
         $CmakeInstallArgs = @()
 

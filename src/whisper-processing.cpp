@@ -78,6 +78,7 @@ struct whisper_context *init_whisper_context(const std::string &model_path)
 		obs_log(LOG_ERROR, "Failed to load whisper model");
 		return nullptr;
 	}
+	obs_log(LOG_INFO, "Whisper model loaded: %s", whisper_print_system_info());
 	return ctx;
 }
 
