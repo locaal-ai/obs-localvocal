@@ -16,8 +16,7 @@ endif()
 # if on Windows - download OpenBLAS prebuilt binaries
 if(WIN32)
   if(LOCALVOCAL_WITH_CUDA)
-    ## Build with CUDA
-    # Check that CUDA_TOOLKIT_ROOT_DIR is set
+    # Build with CUDA Check that CUDA_TOOLKIT_ROOT_DIR is set
     if(NOT DEFINED CUDA_TOOLKIT_ROOT_DIR)
       message(FATAL_ERROR "CUDA_TOOLKIT_ROOT_DIR is not set. Please set it to the root directory of your CUDA "
                           "installation.")
@@ -26,17 +25,17 @@ if(WIN32)
     set(WHISPER_ADDITIONAL_ENV "CUDAToolkit_ROOT=${CUDA_TOOLKIT_ROOT_DIR}")
     set(WHISPER_ADDITIONAL_CMAKE_ARGS -DWHISPER_CUBLAS=ON -DCMAKE_GENERATOR_TOOLSET=cuda=${CUDA_TOOLKIT_ROOT_DIR})
   else(LOCALVOCAL_WITH_CUDA)
-    ## Build with OpenBLAS
+    # Build with OpenBLAS
     set(OpenBLAS_URL "https://github.com/xianyi/OpenBLAS/releases/download/v0.3.24/OpenBLAS-0.3.24-x64.zip")
     set(OpenBLAS_SHA256 "8E777E406BA7030D21ADB18683D6175E4FA5ADACFBC09982C01E81245B348132")
     ExternalProject_Add(
-        OpenBLAS
-        URL ${OpenBLAS_URL}
-        URL_HASH SHA256=${OpenBLAS_SHA256}
-        DOWNLOAD_NO_PROGRESS true
-        CONFIGURE_COMMAND ""
-        BUILD_COMMAND ""
-        INSTALL_COMMAND ${CMAKE_COMMAND} -E copy_directory <SOURCE_DIR> <INSTALL_DIR>)
+      OpenBLAS
+      URL ${OpenBLAS_URL}
+      URL_HASH SHA256=${OpenBLAS_SHA256}
+      DOWNLOAD_NO_PROGRESS true
+      CONFIGURE_COMMAND ""
+      BUILD_COMMAND ""
+      INSTALL_COMMAND ${CMAKE_COMMAND} -E copy_directory <SOURCE_DIR> <INSTALL_DIR>)
     ExternalProject_Get_Property(OpenBLAS INSTALL_DIR)
     set(OpenBLAS_DIR ${INSTALL_DIR})
     set(WHISPER_ADDITIONAL_ENV "OPENBLAS_PATH=${OpenBLAS_DIR}")
