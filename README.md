@@ -13,6 +13,13 @@
 
 LocalVocal live-streaming AI assistant plugin allows you to transcribe, locally on your machine, audio speech into text and perform various language processing functions on the text using AI / LLMs (Large Language Models). ✅ No GPU required, ✅ no cloud costs, ✅ no network and ✅ no downtime! Privacy first - all data stays on your machine.
 
+<div align="center">
+  <a href="https://youtu.be/5XqTMqpui3Q" target="_blank">
+    <img width="50%" src="https://github-production-user-asset-6210df.s3.amazonaws.com/441170/267728411-334551b8-6a7f-42bf-8434-6ad6b512a401.jpeg" />
+  </a><br/>
+  https://youtu.be/5XqTMqpui3Q
+</div>
+
 Current Features:
 - Transcribe audio to text in real time in 100 languages
 - Display captions on screen using text sources
