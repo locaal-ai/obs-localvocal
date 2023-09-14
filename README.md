@@ -23,6 +23,8 @@ LocalVocal live-streaming AI assistant plugin allows you to transcribe, locally 
 Current Features:
 - Transcribe audio to text in real time in 100 languages
 - Display captions on screen using text sources
+- Send captions to a file (which can be read by external sources)
+- Send captions on a RTMP stream to e.g. YouTube, Twitch
 
 Roadmap:
 - Remove unwanted words from the transcription
