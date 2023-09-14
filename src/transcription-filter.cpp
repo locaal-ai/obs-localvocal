@@ -1,4 +1,5 @@
 #include <obs-module.h>
+#include <obs-frontend-api.h>
 
 #include "plugin-support.h"
 #include "transcription-filter.h"
@@ -177,6 +178,13 @@ void acquire_weak_text_source_ref(struct transcription_filter_data *gf)
 
 void set_text_callback(struct transcription_filter_data *gf, const std::string &str)
 {
+	if (gf->caption_to_stream) {
+		obs_output_t *streaming_output = obs_frontend_get_streaming_output();
+		if (streaming_output) {
+			obs_output_output_caption_text1(streaming_output, str.c_str());
+			obs_output_release(streaming_output);
+		}
+	}
 	if (gf->output_file_path != "" && !gf->text_source_name) {
 		// Write to file, do not append
 		std::ofstream output_file(gf->output_file_path, std::ios::out | std::ios::trunc);
@@ -220,6 +228,7 @@ void transcription_filter_update(void *data, obs_data_t *s)
 	gf->log_level = (int)obs_data_get_int(s, "log_level");
 	gf->vad_enabled = obs_data_get_bool(s, "vad_enabled");
 	gf->log_words = obs_data_get_bool(s, "log_words");
+	gf->caption_to_stream = obs_data_get_bool(s, "caption_to_stream");
 
 	obs_log(gf->log_level, "transcription_filter: update text source");
 	// update the text source
@@ -454,8 +463,9 @@ void transcription_filter_deactivate(void *data)
 void transcription_filter_defaults(obs_data_t *s)
 {
 	obs_data_set_default_bool(s, "vad_enabled", true);
-	obs_data_set_default_int(s, "log_level", LOG_INFO);
+	obs_data_set_default_int(s, "log_level", LOG_DEBUG);
 	obs_data_set_default_bool(s, "log_words", true);
+	obs_data_set_default_bool(s, "caption_to_stream", false);
 	obs_data_set_default_string(s, "whisper_model_path", "models/ggml-tiny.en.bin");
 	obs_data_set_default_string(s, "whisper_language_select", "en");
 	obs_data_set_default_string(s, "subtitle_sources", "none");
@@ -497,6 +507,7 @@ obs_properties_t *transcription_filter_properties(void *data)
 	obs_property_list_add_int(list, "INFO", LOG_INFO);
 	obs_property_list_add_int(list, "WARNING", LOG_WARNING);
 	obs_properties_add_bool(ppts, "log_words", "Log output words");
+	obs_properties_add_bool(ppts, "caption_to_stream", "Stream captions");
 
 	obs_property_t *subs_output =
 		obs_properties_add_list(ppts, "subtitle_sources", "Subtitles Output",
