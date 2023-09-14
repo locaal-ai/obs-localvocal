@@ -50,6 +50,7 @@ struct transcription_filter_data {
 	bool vad_enabled;
 	int log_level;
 	bool log_words;
+	bool caption_to_stream;
 	bool active = false;
 
 	// Text source to output the subtitles
