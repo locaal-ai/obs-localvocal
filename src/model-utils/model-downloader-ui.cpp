@@ -14,9 +14,9 @@ size_t write_data(void *ptr, size_t size, size_t nmemb, FILE *stream)
 	return written;
 }
 
-ModelDownloader::ModelDownloader(
-	const std::string &model_name,
-	download_finished_callback_t download_finished_callback_, QWidget *parent)
+ModelDownloader::ModelDownloader(const std::string &model_name,
+				 download_finished_callback_t download_finished_callback_,
+				 QWidget *parent)
 	: QDialog(parent), download_finished_callback(download_finished_callback_)
 {
 	this->setWindowTitle("LocalVocal: Downloading model...");
@@ -66,17 +66,17 @@ ModelDownloader::ModelDownloader(
 
 void ModelDownloader::closeEvent(QCloseEvent *e)
 {
-   if (!this->mPrepareToClose)
-      e->ignore();
-   else
-      QDialog::closeEvent(e);
+	if (!this->mPrepareToClose)
+		e->ignore();
+	else
+		QDialog::closeEvent(e);
 }
 
 void ModelDownloader::close()
 {
-   this->mPrepareToClose = true;
+	this->mPrepareToClose = true;
 
-   QDialog::close();
+	QDialog::close();
 }
 
 void ModelDownloader::update_progress(int progress)
@@ -84,7 +84,7 @@ void ModelDownloader::update_progress(int progress)
 	this->progress_bar->setValue(progress);
 }
 
-void ModelDownloader::download_finished(const std::string& path)
+void ModelDownloader::download_finished(const std::string &path)
 {
 	// Call the callback with the path to the downloaded model
 	this->download_finished_callback(0, path);
@@ -119,13 +119,14 @@ ModelDownloadWorker::ModelDownloadWorker(const std::string &model_name_)
 
 void ModelDownloadWorker::download_model()
 {
-	char* module_config_path = obs_module_get_config_path(obs_current_module(), "models");
+	char *module_config_path = obs_module_get_config_path(obs_current_module(), "models");
 	// Check if the config folder exists
 	if (!std::filesystem::exists(module_config_path)) {
 		obs_log(LOG_WARNING, "Config folder does not exist: %s", module_config_path);
 		// Create the config folder
 		if (!std::filesystem::create_directories(module_config_path)) {
-			obs_log(LOG_ERROR, "Failed to create config folder: %s", module_config_path);
+			obs_log(LOG_ERROR, "Failed to create config folder: %s",
+				module_config_path);
 			emit download_error("Failed to create config folder.");
 			return;
 		}

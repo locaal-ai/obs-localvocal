@@ -317,7 +317,8 @@ void transcription_filter_update(void *data, obs_data_t *s)
 		if (model_file_found == "") {
 			obs_log(LOG_WARNING, "Whisper model does not exist");
 			download_model_with_ui_dialog(
-				gf->whisper_model_path, [gf](int download_status, const std::string &path) {
+				gf->whisper_model_path,
+				[gf](int download_status, const std::string &path) {
 					if (download_status == 0) {
 						obs_log(LOG_INFO, "Model download complete");
 						gf->whisper_context = init_whisper_context(path);

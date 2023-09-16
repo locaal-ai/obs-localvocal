@@ -22,7 +22,7 @@ public slots:
 
 signals:
 	void download_progress(int progress);
-	void download_finished(const std::string& path);
+	void download_finished(const std::string &path);
 	void download_error(const std::string &reason);
 
 private:
@@ -41,7 +41,7 @@ public:
 
 public slots:
 	void update_progress(int progress);
-	void download_finished(const std::string& path);
+	void download_finished(const std::string &path);
 	void show_error(const std::string &reason);
 
 protected:
