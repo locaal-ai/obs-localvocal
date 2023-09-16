@@ -77,9 +77,6 @@ struct obs_audio_data *transcription_filter_filter_audio(void *data, struct obs_
 
 	{
 		std::lock_guard<std::mutex> lock(*gf->whisper_buf_mutex); // scoped lock
-		obs_log(gf->log_level,
-			"pushing %lu frames to input buffer. current size: %lu (bytes)",
-			(size_t)(audio->frames), gf->input_buffers[0].size);
 		// push back current audio data to input circlebuf
 		for (size_t c = 0; c < gf->channels; c++) {
 			circlebuf_push_back(&gf->input_buffers[c], audio->data[c],
@@ -229,6 +226,9 @@ void transcription_filter_update(void *data, obs_data_t *s)
 	gf->vad_enabled = obs_data_get_bool(s, "vad_enabled");
 	gf->log_words = obs_data_get_bool(s, "log_words");
 	gf->caption_to_stream = obs_data_get_bool(s, "caption_to_stream");
+	bool step_by_step_processing = obs_data_get_bool(s, "step_by_step_processing");
+	gf->step_size_msec = step_by_step_processing ? (int)obs_data_get_int(s, "step_size_msec")
+						     : BUFFER_SIZE_MSEC;
 
 	obs_log(gf->log_level, "transcription_filter: update text source");
 	// update the text source
@@ -382,6 +382,10 @@ void *transcription_filter_create(obs_data_t *settings, obs_source_t *filter)
 	gf->sample_rate = audio_output_get_sample_rate(obs_get_audio());
 	gf->frames = (size_t)((float)gf->sample_rate / (1000.0f / (float)BUFFER_SIZE_MSEC));
 	gf->last_num_frames = 0;
+	bool step_by_step_processing = obs_data_get_bool(settings, "step_by_step_processing");
+	gf->step_size_msec = step_by_step_processing
+				     ? (int)obs_data_get_int(settings, "step_size_msec")
+				     : BUFFER_SIZE_MSEC;
 
 	for (size_t i = 0; i < MAX_AUDIO_CHANNELS; i++) {
 		circlebuf_init(&gf->input_buffers[i]);
@@ -469,6 +473,8 @@ void transcription_filter_defaults(obs_data_t *s)
 	obs_data_set_default_string(s, "whisper_model_path", "models/ggml-tiny.en.bin");
 	obs_data_set_default_string(s, "whisper_language_select", "en");
 	obs_data_set_default_string(s, "subtitle_sources", "none");
+	obs_data_set_default_bool(s, "step_by_step_processing", false);
+	obs_data_set_default_int(s, "step_size_msec", 1000);
 
 	// Whisper parameters
 	obs_data_set_default_int(s, "whisper_sampling_method", WHISPER_SAMPLING_BEAM_SEARCH);
@@ -508,6 +514,20 @@ obs_properties_t *transcription_filter_properties(void *data)
 	obs_property_list_add_int(list, "WARNING", LOG_WARNING);
 	obs_properties_add_bool(ppts, "log_words", "Log output words");
 	obs_properties_add_bool(ppts, "caption_to_stream", "Stream captions");
+	obs_property_t *step_by_step_processing =
+		obs_properties_add_bool(ppts, "step_by_step_processing", "Step-by-step processing");
+	obs_properties_add_int_slider(ppts, "step_size_msec", "Step size (ms)", 500,
+				      BUFFER_SIZE_MSEC, 50);
+
+	obs_property_set_modified_callback(step_by_step_processing, [](obs_properties_t *props,
+								       obs_property_t *property,
+								       obs_data_t *settings) {
+		UNUSED_PARAMETER(property);
+		// Show/Hide the step size input
+		obs_property_set_visible(obs_properties_get(props, "step_size_msec"),
+					 obs_data_get_bool(settings, "step_by_step_processing"));
+		return true;
+	});
 
 	obs_property_t *subs_output =
 		obs_properties_add_list(ppts, "subtitle_sources", "Subtitles Output",

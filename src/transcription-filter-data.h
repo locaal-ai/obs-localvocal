@@ -30,6 +30,8 @@ struct transcription_filter_data {
 	size_t overlap_ms;
 	// How many frames were processed in the last whisper frame (this is dynamic)
 	size_t last_num_frames;
+	// Milliseconds per processing step (e.g. rest of the whisper buffer may be filled with silence)
+	size_t step_size_msec;
 
 	/* PCM buffers */
 	float *copy_buffers[MAX_PREPROC_CHANNELS];
