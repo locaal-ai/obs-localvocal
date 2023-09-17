@@ -73,7 +73,7 @@ bool vad_simple(float *pcmf32, size_t pcm32f_size, uint32_t sample_rate, float v
 struct whisper_context *init_whisper_context(const std::string &model_path)
 {
 	obs_log(LOG_INFO, "Loading whisper model from %s", model_path.c_str());
-	struct whisper_context *ctx = whisper_init_from_file(obs_module_file(model_path.c_str()));
+	struct whisper_context *ctx = whisper_init_from_file(model_path.c_str());
 	if (ctx == nullptr) {
 		obs_log(LOG_ERROR, "Failed to load whisper model");
 		return nullptr;

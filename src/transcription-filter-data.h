@@ -40,7 +40,7 @@ struct transcription_filter_data {
 	audio_resampler_t *resampler = nullptr;
 
 	/* whisper */
-	std::string whisper_model_path = "models/ggml-tiny.en.bin";
+	std::string whisper_model_path;
 	struct whisper_context *whisper_context = nullptr;
 	whisper_full_params whisper_params;
 
