@@ -27,7 +27,7 @@ if(WIN32)
   else(LOCALVOCAL_WITH_CUDA)
     # Build with OpenBLAS
     set(OpenBLAS_URL "https://github.com/xianyi/OpenBLAS/releases/download/v0.3.24/OpenBLAS-0.3.24-x64.zip")
-    set(OpenBLAS_SHA256 "8E777E406BA7030D21ADB18683D6175E4FA5ADACFBC09982C01E81245B348132")
+    set(OpenBLAS_SHA256 "6335128ee7117ea2dd2f5f96f76dafc17256c85992637189a2d5f6da0c608163")
     ExternalProject_Add(
       OpenBLAS
       URL ${OpenBLAS_URL}

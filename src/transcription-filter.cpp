@@ -313,14 +313,15 @@ void transcription_filter_update(void *data, obs_data_t *s)
 		gf->whisper_model_path = new_model_path;
 
 		// check if the model exists, if not, download it
-		if (!check_if_model_exists(gf->whisper_model_path)) {
-			obs_log(LOG_ERROR, "Whisper model does not exist");
+		std::string model_file_found = find_model_file(gf->whisper_model_path);
+		if (model_file_found == "") {
+			obs_log(LOG_WARNING, "Whisper model does not exist");
 			download_model_with_ui_dialog(
-				gf->whisper_model_path, [gf](int download_status) {
+				gf->whisper_model_path,
+				[gf](int download_status, const std::string &path) {
 					if (download_status == 0) {
 						obs_log(LOG_INFO, "Model download complete");
-						gf->whisper_context = init_whisper_context(
-							gf->whisper_model_path);
+						gf->whisper_context = init_whisper_context(path);
 						std::thread new_whisper_thread(whisper_loop, gf);
 						gf->whisper_thread.swap(new_whisper_thread);
 					} else {
@@ -329,7 +330,7 @@ void transcription_filter_update(void *data, obs_data_t *s)
 				});
 		} else {
 			// Model exists, just load it
-			gf->whisper_context = init_whisper_context(gf->whisper_model_path);
+			gf->whisper_context = init_whisper_context(model_file_found);
 			std::thread new_whisper_thread(whisper_loop, gf);
 			gf->whisper_thread.swap(new_whisper_thread);
 		}
@@ -374,8 +375,8 @@ void transcription_filter_update(void *data, obs_data_t *s)
 
 void *transcription_filter_create(obs_data_t *settings, obs_source_t *filter)
 {
-	struct transcription_filter_data *gf = static_cast<struct transcription_filter_data *>(
-		bzalloc(sizeof(struct transcription_filter_data)));
+	void *p = bzalloc(sizeof(struct transcription_filter_data));
+	struct transcription_filter_data *gf = new (p) transcription_filter_data;
 
 	// Get the number of channels for the input source
 	gf->channels = audio_output_get_channels(obs_get_audio());
@@ -396,12 +397,7 @@ void *transcription_filter_create(obs_data_t *settings, obs_source_t *filter)
 	}
 
 	gf->context = filter;
-	gf->whisper_model_path = std::string(obs_data_get_string(settings, "whisper_model_path"));
-	gf->whisper_context = init_whisper_context(gf->whisper_model_path);
-	if (gf->whisper_context == nullptr) {
-		obs_log(LOG_ERROR, "Failed to load whisper model");
-		return nullptr;
-	}
+	gf->whisper_model_path = ""; // The update function will set the model path
 
 	gf->overlap_ms = OVERLAP_SIZE_MSEC;
 	gf->overlap_frames = (size_t)((float)gf->sample_rate / (1000.0f / (float)gf->overlap_ms));
@@ -432,11 +428,6 @@ void *transcription_filter_create(obs_data_t *settings, obs_source_t *filter)
 	obs_log(gf->log_level, "transcription_filter: run update");
 	// get the settings updated on the filter data struct
 	transcription_filter_update(gf, settings);
-
-	obs_log(gf->log_level, "transcription_filter: start whisper thread");
-	// start the thread
-	std::thread new_whisper_thread(whisper_loop, gf);
-	gf->whisper_thread.swap(new_whisper_thread);
 
 	gf->active = true;
 
