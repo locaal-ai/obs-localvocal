@@ -95,7 +95,7 @@ After installing the CUDA toolkit, you need to set variables to point CMake to t
 
 For example
 ```powershell
-> .github/scripts/Build-Windows.ps1 -Target x64 -ExtraCmakeFlags "-D LOCALVOCAL_WITH_CUDA=ON -D CUDA_TOOLKIT_ROOT_DIR='C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.4'"
+.github/scripts/Build-Windows.ps1 -Target x64 -ExtraCmakeArgs '-D','LOCALVOCAL_WITH_CUDA=ON','-D',"CUDA_TOOLKIT_ROOT_DIR='C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.2'"
 ```
 
 You will need to copy a few CUDA .dll files to the location of the plugin .dll for it to run. The required .dll files from CUDA (which are located in the `bin` folder of the CUDA toolkit installation directory) are:
@@ -104,4 +104,4 @@ You will need to copy a few CUDA .dll files to the location of the plugin .dll f
 - `cublas64_NN.dll`
 - `cublasLt64_NN.dll`
 
-where `NN` is the CUDA version number. For example, if you have installed CUDA 11.4 then `NN` is likely `11`.
+where `NN` is the CUDA major version number. For example, if you have installed CUDA 12.2 as in example above, then `NN` is `12`.

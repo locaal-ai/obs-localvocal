@@ -3,6 +3,8 @@
 
 #include <obs-module.h>
 
+#include <filesystem>
+
 const std::string MODEL_BASE_PATH = "https://huggingface.co/ggerganov/whisper.cpp";
 const std::string MODEL_PREFIX = "resolve/main/";
 
@@ -12,14 +14,17 @@ size_t write_data(void *ptr, size_t size, size_t nmemb, FILE *stream)
 	return written;
 }
 
-ModelDownloader::ModelDownloader(
-	const std::string &model_name,
-	std::function<void(int download_status)> download_finished_callback_, QWidget *parent)
+ModelDownloader::ModelDownloader(const std::string &model_name,
+				 download_finished_callback_t download_finished_callback_,
+				 QWidget *parent)
 	: QDialog(parent), download_finished_callback(download_finished_callback_)
 {
-	this->setWindowTitle("Downloading model...");
+	this->setWindowTitle("LocalVocal: Downloading model...");
 	this->setWindowFlags(Qt::Dialog | Qt::WindowTitleHint | Qt::CustomizeWindowHint);
 	this->setFixedSize(300, 100);
+	// Bring the dialog to the front
+	this->activateWindow();
+	this->raise();
 
 	this->layout = new QVBoxLayout(this);
 
@@ -59,24 +64,32 @@ ModelDownloader::ModelDownloader(
 	this->download_thread->start();
 }
 
+void ModelDownloader::closeEvent(QCloseEvent *e)
+{
+	if (!this->mPrepareToClose)
+		e->ignore();
+	else
+		QDialog::closeEvent(e);
+}
+
+void ModelDownloader::close()
+{
+	this->mPrepareToClose = true;
+
+	QDialog::close();
+}
+
 void ModelDownloader::update_progress(int progress)
 {
 	this->progress_bar->setValue(progress);
 }
 
-void ModelDownloader::download_finished()
+void ModelDownloader::download_finished(const std::string &path)
 {
-	this->setWindowTitle("Download finished!");
-	this->progress_bar->setValue(100);
-	this->progress_bar->setFormat("Download finished!");
-	this->progress_bar->setAlignment(Qt::AlignCenter);
-	this->progress_bar->setStyleSheet("QProgressBar::chunk { background-color: #05B8CC; }");
-	// Add a button to close the dialog
-	QPushButton *close_button = new QPushButton("Close", this);
-	this->layout->addWidget(close_button);
-	connect(close_button, &QPushButton::clicked, this, &ModelDownloader::close);
-	// Call the callback
-	this->download_finished_callback(0);
+	// Call the callback with the path to the downloaded model
+	this->download_finished_callback(0, path);
+	// Close the dialog
+	this->close();
 }
 
 void ModelDownloader::show_error(const std::string &reason)
@@ -96,7 +109,7 @@ void ModelDownloader::show_error(const std::string &reason)
 	QPushButton *close_button = new QPushButton("Close", this);
 	this->layout->addWidget(close_button);
 	connect(close_button, &QPushButton::clicked, this, &ModelDownloader::close);
-	this->download_finished_callback(1);
+	this->download_finished_callback(1, "");
 }
 
 ModelDownloadWorker::ModelDownloadWorker(const std::string &model_name_)
@@ -106,9 +119,23 @@ ModelDownloadWorker::ModelDownloadWorker(const std::string &model_name_)
 
 void ModelDownloadWorker::download_model()
 {
-	std::string module_data_dir = obs_get_module_data_path(obs_current_module());
-	// join the directory and the filename using the platform-specific separator
-	std::string model_save_path = module_data_dir + "/" + this->model_name;
+	char *module_config_path = obs_module_get_config_path(obs_current_module(), "models");
+	// Check if the config folder exists
+	if (!std::filesystem::exists(module_config_path)) {
+		obs_log(LOG_WARNING, "Config folder does not exist: %s", module_config_path);
+		// Create the config folder
+		if (!std::filesystem::create_directories(module_config_path)) {
+			obs_log(LOG_ERROR, "Failed to create config folder: %s",
+				module_config_path);
+			emit download_error("Failed to create config folder.");
+			return;
+		}
+	}
+
+	char *model_save_path_str =
+		obs_module_get_config_path(obs_current_module(), this->model_name.c_str());
+	std::string model_save_path(model_save_path_str);
+	bfree(model_save_path_str);
 	obs_log(LOG_INFO, "Model save path: %s", model_save_path.c_str());
 
 	// extract filename from path in this->modle_name
@@ -143,11 +170,11 @@ void ModelDownloadWorker::download_model()
 		}
 		curl_easy_cleanup(curl);
 		fclose(fp);
+		emit download_finished(model_save_path);
 	} else {
 		obs_log(LOG_ERROR, "Failed to initialize curl.");
 		emit download_error("Failed to initialize curl.");
 	}
-	emit download_finished();
 }
 
 int ModelDownloadWorker::progress_callback(void *clientp, curl_off_t dltotal, curl_off_t dlnow,
@@ -168,9 +195,13 @@ int ModelDownloadWorker::progress_callback(void *clientp, curl_off_t dltotal, cu
 
 ModelDownloader::~ModelDownloader()
 {
-	this->download_thread->quit();
-	this->download_thread->wait();
-	delete this->download_thread;
+	if (this->download_thread != nullptr) {
+		if (this->download_thread->isRunning()) {
+			this->download_thread->quit();
+			this->download_thread->wait();
+		}
+		delete this->download_thread;
+	}
 	delete this->download_worker;
 }
 
