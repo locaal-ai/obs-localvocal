@@ -148,7 +148,7 @@ struct DetectionResultWithText run_whisper_inference(struct transcription_filter
 				to_timestamp(t1).c_str(), sentence_p, text_lower.c_str());
 		}
 
-		if (text_lower.empty()) {
+		if (text_lower.empty() || text_lower == ".") {
 			return {DETECTION_RESULT_SILENCE, ""};
 		}
 
@@ -160,68 +160,66 @@ void process_audio_from_buffer(struct transcription_filter_data *gf)
 {
 	uint32_t num_new_frames_from_infos = 0;
 	uint64_t start_timestamp = 0;
+	bool last_step_in_segment = false;
 
 	{
 		// scoped lock the buffer mutex
 		std::lock_guard<std::mutex> lock(*gf->whisper_buf_mutex);
 
-		// We need (gf->frames - gf->overlap_frames) new frames to run inference,
-		// except for the first segment, where we need the whole gf->frames frames
-		size_t how_many_frames_needed = gf->frames - gf->overlap_frames;
-		if (gf->last_num_frames == 0) {
-			how_many_frames_needed = gf->frames;
-		}
+		// We need (gf->frames - gf->last_num_frames) new frames for a full segment,
+		const size_t remaining_frames_to_full_segment = gf->frames - gf->last_num_frames;
 
 		// pop infos from the info buffer and mark the beginning timestamp from the first
 		// info as the beginning timestamp of the segment
 		struct transcription_filter_audio_info info_from_buf = {0};
-		while (gf->info_buffer.size >= sizeof(struct transcription_filter_audio_info)) {
-			circlebuf_pop_front(&gf->info_buffer, &info_from_buf,
-					    sizeof(struct transcription_filter_audio_info));
+		const size_t size_of_audio_info = sizeof(struct transcription_filter_audio_info);
+		while (gf->info_buffer.size >= size_of_audio_info) {
+			circlebuf_pop_front(&gf->info_buffer, &info_from_buf, size_of_audio_info);
 			num_new_frames_from_infos += info_from_buf.frames;
 			if (start_timestamp == 0) {
 				start_timestamp = info_from_buf.timestamp;
 			}
-			obs_log(gf->log_level, "popped %d frames from info buffer, %lu needed",
-				num_new_frames_from_infos, how_many_frames_needed);
 			// Check if we're within the needed segment length
-			if (num_new_frames_from_infos > how_many_frames_needed) {
+			if (num_new_frames_from_infos > remaining_frames_to_full_segment) {
 				// too big, push the last info into the buffer's front where it was
 				num_new_frames_from_infos -= info_from_buf.frames;
-				circlebuf_push_front(
-					&gf->info_buffer, &info_from_buf,
-					sizeof(struct transcription_filter_audio_info));
+				circlebuf_push_front(&gf->info_buffer, &info_from_buf,
+						     size_of_audio_info);
+				last_step_in_segment =
+					true; // this is the final step in the segment
 				break;
 			}
 		}
 
+		obs_log(gf->log_level,
+			"with %lu remaining to full segment, popped %d info-frames, pushing into buffer at %lu",
+			remaining_frames_to_full_segment, num_new_frames_from_infos,
+			gf->last_num_frames);
+
 		/* Pop from input circlebuf */
 		for (size_t c = 0; c < gf->channels; c++) {
-			if (gf->last_num_frames > 0) {
-				// move overlap frames from the end of the last copy_buffers to the beginning
-				memcpy(gf->copy_buffers[c],
-				       gf->copy_buffers[c] + gf->last_num_frames -
-					       gf->overlap_frames,
-				       gf->overlap_frames * sizeof(float));
-				// copy new data to the end of copy_buffers[c]
-				circlebuf_pop_front(&gf->input_buffers[c],
-						    gf->copy_buffers[c] + gf->overlap_frames,
-						    num_new_frames_from_infos * sizeof(float));
-			} else {
-				// Very first time, just copy data to copy_buffers[c]
-				circlebuf_pop_front(&gf->input_buffers[c], gf->copy_buffers[c],
-						    num_new_frames_from_infos * sizeof(float));
-			}
+			// Push the new data to the end of the existing buffer copy_buffers[c]
+			circlebuf_pop_front(&gf->input_buffers[c],
+					    gf->copy_buffers[c] + gf->last_num_frames,
+					    num_new_frames_from_infos * sizeof(float));
 		}
-		obs_log(gf->log_level,
-			"popped %u frames from input buffer. input_buffer[0] size is %lu",
-			num_new_frames_from_infos, gf->input_buffers[0].size);
+	}
 
-		if (gf->last_num_frames > 0) {
-			gf->last_num_frames = num_new_frames_from_infos + gf->overlap_frames;
+	if (gf->last_num_frames > 0) {
+		gf->last_num_frames += num_new_frames_from_infos;
+		if (!last_step_in_segment) {
+			// Mid-segment process
+			obs_log(gf->log_level, "mid-segment, now %d frames left to full segment",
+				(int)(gf->frames - gf->last_num_frames));
 		} else {
-			gf->last_num_frames = num_new_frames_from_infos;
+			// Final step in segment
+			obs_log(gf->log_level, "full segment, %d frames to process",
+				(int)(gf->last_num_frames));
 		}
+	} else {
+		gf->last_num_frames = num_new_frames_from_infos;
+		obs_log(gf->log_level, "first segment, %d frames to process",
+			(int)(gf->last_num_frames));
 	}
 
 	obs_log(gf->log_level, "processing %d frames (%d ms), start timestamp %llu ",
@@ -271,28 +269,21 @@ void process_audio_from_buffer(struct transcription_filter_data *gf)
 	// end of timer
 	auto end = std::chrono::high_resolution_clock::now();
 	auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
-	const uint32_t new_frames_from_infos_ms =
-		num_new_frames_from_infos * 1000 /
-		gf->sample_rate; // number of frames in this packet
-	obs_log(gf->log_level, "audio processing of %u ms new data took %d ms",
-		new_frames_from_infos_ms, (int)duration);
+	const uint64_t last_num_frames_ms = gf->last_num_frames * 1000 / gf->sample_rate;
+	obs_log(gf->log_level, "audio processing of %lu ms data took %d ms", last_num_frames_ms,
+		(int)duration);
 
-	if (duration > new_frames_from_infos_ms) {
-		// try to decrease overlap down to minimum of 100 ms
-		gf->overlap_ms = std::max((uint64_t)gf->overlap_ms - 10, (uint64_t)100);
-		gf->overlap_frames = gf->overlap_ms * gf->sample_rate / 1000;
-		obs_log(gf->log_level,
-			"audio processing took too long (%d ms), reducing overlap to %lu ms",
-			(int)duration, gf->overlap_ms);
-	} else if (!skipped_inference) {
-		if (gf->overlap_ms < OVERLAP_SIZE_MSEC) {
-			// try to increase overlap up to OVERLAP_SIZE_MSEC
-			gf->overlap_ms = std::min((uint64_t)gf->overlap_ms + 10,
-						  (uint64_t)OVERLAP_SIZE_MSEC);
-			gf->overlap_frames = gf->overlap_ms * gf->sample_rate / 1000;
-			obs_log(gf->log_level,
-				"audio processing took %d ms, increasing overlap to %lu ms",
-				(int)duration, gf->overlap_ms);
+	if (last_step_in_segment) {
+		for (size_t c = 0; c < gf->channels; c++) {
+			// This is the last step in the segment - reset the copy buffer (include overlap frames)
+			// move overlap frames from the end of the last copy_buffers to the beginning
+			memcpy(gf->copy_buffers[c],
+			       gf->copy_buffers[c] + gf->last_num_frames - gf->overlap_frames,
+			       gf->overlap_frames * sizeof(float));
+			// zero out the rest of the buffer, just in case
+			memset(gf->copy_buffers[c] + gf->overlap_frames, 0,
+			       (gf->frames - gf->overlap_frames) * sizeof(float));
+			gf->last_num_frames = gf->overlap_frames;
 		}
 	}
 }
@@ -306,7 +297,6 @@ void whisper_loop(void *data)
 
 	struct transcription_filter_data *gf =
 		static_cast<struct transcription_filter_data *>(data);
-	const size_t segment_size = gf->frames * sizeof(float);
 
 	obs_log(LOG_INFO, "starting whisper thread");
 
@@ -327,6 +317,8 @@ void whisper_loop(void *data)
 				std::lock_guard<std::mutex> lock(*gf->whisper_buf_mutex);
 				input_buf_size = gf->input_buffers[0].size;
 			}
+			const size_t step_size_frames = gf->step_size_msec * gf->sample_rate / 1000;
+			const size_t segment_size = step_size_frames * sizeof(float);
 
 			if (input_buf_size >= segment_size) {
 				obs_log(gf->log_level,
