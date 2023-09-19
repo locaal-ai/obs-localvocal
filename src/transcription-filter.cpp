@@ -505,9 +505,10 @@ obs_properties_t *transcription_filter_properties(void *data)
 	obs_property_list_add_int(list, "WARNING", LOG_WARNING);
 	obs_properties_add_bool(ppts, "log_words", "Log output words");
 	obs_properties_add_bool(ppts, "caption_to_stream", "Stream captions");
-	obs_property_t *step_by_step_processing =
-		obs_properties_add_bool(ppts, "step_by_step_processing", "Step-by-step processing");
-	obs_properties_add_int_slider(ppts, "step_size_msec", "Step size (ms)", 500,
+	obs_property_t *step_by_step_processing = obs_properties_add_bool(
+		ppts, "step_by_step_processing",
+		"Step-by-step processing (⚠️ processing will increase)");
+	obs_properties_add_int_slider(ppts, "step_size_msec", "Step size (ms)", 1000,
 				      BUFFER_SIZE_MSEC, 50);
 
 	obs_property_set_modified_callback(step_by_step_processing, [](obs_properties_t *props,
