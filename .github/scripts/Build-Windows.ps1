@@ -7,7 +7,7 @@ param(
     [switch] $SkipAll,
     [switch] $SkipBuild,
     [switch] $SkipDeps,
-    [string] $ExtraCmakeArgs
+    [string[]] $ExtraCmakeArgs
 )
 
 $ErrorActionPreference = 'Stop'
@@ -58,7 +58,7 @@ function Build {
         Ensure-Location $ProjectRoot
 
         # take cmake args from $ExtraCmakeArgs
-        $CmakeArgs = @($ExtraCmakeArgs)
+        $CmakeArgs = $ExtraCmakeArgs
         $CmakeBuildArgs = @()
         $CmakeInstallArgs = @()
 
