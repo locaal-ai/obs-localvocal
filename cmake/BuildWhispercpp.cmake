@@ -106,6 +106,20 @@ if(WIN32)
     add_library(Whispercpp::OpenBLAS STATIC IMPORTED)
     set_target_properties(Whispercpp::OpenBLAS PROPERTIES IMPORTED_LOCATION ${OpenBLAS_DIR}/lib/libopenblas.dll.a)
     install(FILES ${OpenBLAS_DIR}/bin/libopenblas.dll DESTINATION "obs-plugins/64bit")
+  else(NOT LOCALVOCAL_WITH_CUDA)
+    # find the CUDA DLLs for cuBLAS in the bin directory of the CUDA installation
+    # e.g. cublas64_NN.dll
+    file(GLOB CUBLAS_DLLS "${CUDA_TOOLKIT_ROOT_DIR}/bin/cublas64_*.dll")
+    # find cublasLt DLL, e.g. cublasLt64_11.dll
+    file(GLOB CUBLASLT_DLLS "${CUDA_TOOLKIT_ROOT_DIR}/bin/cublasLt64_*.dll")
+    # find cudart DLL, e.g. cudart64_110.dll
+    file(GLOB CUDART_DLLS "${CUDA_TOOLKIT_ROOT_DIR}/bin/cudart64_*.dll")
+    # if any of the files cannot be found, abort
+    if(NOT CUBLAS_DLLS OR NOT CUBLASLT_DLLS OR NOT CUDART_DLLS)
+      message(FATAL_ERROR "Could not find cuBLAS, cuBLASLt or cuDART DLLs in ${CUDA_TOOLKIT_ROOT_DIR}/bin")
+    endif(NOT CUBLAS_DLLS OR NOT CUBLASLT_DLLS OR NOT CUDART_DLLS)
+    # copy the DLLs to the OBS plugin directory
+    install(FILES ${CUBLAS_DLLS} ${CUBLASLT_DLLS} ${CUDART_DLLS} DESTINATION "obs-plugins/64bit")
   endif(NOT LOCALVOCAL_WITH_CUDA)
 else()
   # on Linux and MacOS add the static Whisper library to the link line
