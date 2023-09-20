@@ -45,7 +45,7 @@ Check out our other plugins:
 If you like this work, which is given to you completely free of charge, please consider supporting it on GitHub: https://github.com/sponsors/royshil
 
 ## Download
-Check out the [latest releases](https://github.com/royshil/obs-urlsource/releases) for downloads and install instructions.
+Check out the [latest releases](https://github.com/royshil/obs-localvocal/releases) for downloads and install instructions.
 
 ## Building
 
