@@ -216,7 +216,8 @@ void set_text_callback(struct transcription_filter_data *gf, const std::string &
 	}
 };
 
-void shutdown_whisper_thread(struct transcription_filter_data *gf) {
+void shutdown_whisper_thread(struct transcription_filter_data *gf)
+{
 	if (gf->whisper_context != nullptr) {
 		// acquire the mutex before freeing the context
 		if (!gf->whisper_ctx_mutex || !gf->wshiper_thread_cv) {
@@ -328,9 +329,12 @@ void transcription_filter_update(void *data, obs_data_t *s)
 					gf->whisper_model_path,
 					[gf](int download_status, const std::string &path) {
 						if (download_status == 0) {
-							obs_log(LOG_INFO, "Model download complete");
-							gf->whisper_context = init_whisper_context(path);
-							std::thread new_whisper_thread(whisper_loop, gf);
+							obs_log(LOG_INFO,
+								"Model download complete");
+							gf->whisper_context =
+								init_whisper_context(path);
+							std::thread new_whisper_thread(whisper_loop,
+										       gf);
 							gf->whisper_thread.swap(new_whisper_thread);
 						} else {
 							obs_log(LOG_ERROR, "Model download failed");
@@ -344,7 +348,8 @@ void transcription_filter_update(void *data, obs_data_t *s)
 			}
 		} else {
 			// new model is local file, get file location from file property
-			std::string external_model_file_path = obs_data_get_string(s, "whisper_model_path_external");
+			std::string external_model_file_path =
+				obs_data_get_string(s, "whisper_model_path_external");
 			gf->whisper_context = init_whisper_context(external_model_file_path);
 			std::thread new_whisper_thread(whisper_loop, gf);
 			gf->whisper_thread.swap(new_whisper_thread);
@@ -582,33 +587,38 @@ obs_properties_t *transcription_filter_properties(void *data)
 	obs_property_list_add_string(whisper_models_list, "Small (Eng) 466Mb",
 				     "models/ggml-small.en.bin");
 	obs_property_list_add_string(whisper_models_list, "Small 466Mb", "models/ggml-small.bin");
-	obs_property_list_add_string(whisper_models_list, "Load external model file", "!!!external!!!");
+	obs_property_list_add_string(whisper_models_list, "Load external model file",
+				     "!!!external!!!");
 
 	// Add a file selection input to select an external model file
-	obs_property_t* whisper_model_path_external = obs_properties_add_path(ppts, "whisper_model_path_external", "External model file",
-				OBS_PATH_FILE, "Model (*.bin)", NULL);
+	obs_property_t *whisper_model_path_external =
+		obs_properties_add_path(ppts, "whisper_model_path_external", "External model file",
+					OBS_PATH_FILE, "Model (*.bin)", NULL);
 	// Hide the external model file selection input
 	obs_property_set_visible(obs_properties_get(ppts, "whisper_model_path_external"), false);
 
-	obs_property_set_modified_callback2(whisper_model_path_external, [](void* data, obs_properties_t *props,
-							   obs_property_t *property,
-							   obs_data_t *settings) {
-		UNUSED_PARAMETER(property);
-		UNUSED_PARAMETER(props);
-		struct transcription_filter_data *gf =
-			static_cast<struct transcription_filter_data *>(data);
-		shutdown_whisper_thread(gf);
-		std::string external_model_file_path = obs_data_get_string(settings, "whisper_model_path_external");
-		gf->whisper_context = init_whisper_context(external_model_file_path);
-		std::thread new_whisper_thread(whisper_loop, gf);
-		gf->whisper_thread.swap(new_whisper_thread);
-		return true;
-	}, gf);
+	obs_property_set_modified_callback2(
+		whisper_model_path_external,
+		[](void *data, obs_properties_t *props, obs_property_t *property,
+		   obs_data_t *settings) {
+			UNUSED_PARAMETER(property);
+			UNUSED_PARAMETER(props);
+			struct transcription_filter_data *gf =
+				static_cast<struct transcription_filter_data *>(data);
+			shutdown_whisper_thread(gf);
+			std::string external_model_file_path =
+				obs_data_get_string(settings, "whisper_model_path_external");
+			gf->whisper_context = init_whisper_context(external_model_file_path);
+			std::thread new_whisper_thread(whisper_loop, gf);
+			gf->whisper_thread.swap(new_whisper_thread);
+			return true;
+		},
+		gf);
 
 	// Add a callback to the model list to handle the external model file selection
 	obs_property_set_modified_callback(whisper_models_list, [](obs_properties_t *props,
-							   obs_property_t *property,
-							   obs_data_t *settings) {
+								   obs_property_t *property,
+								   obs_data_t *settings) {
 		UNUSED_PARAMETER(property);
 		// If the selected model is the external model, show the external model file selection
 		// input
