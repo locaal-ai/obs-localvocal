@@ -603,14 +603,14 @@ obs_properties_t *transcription_filter_properties(void *data)
 		   obs_data_t *settings) {
 			UNUSED_PARAMETER(property);
 			UNUSED_PARAMETER(props);
-			struct transcription_filter_data *gf =
+			struct transcription_filter_data *gf_ =
 				static_cast<struct transcription_filter_data *>(data);
-			shutdown_whisper_thread(gf);
+			shutdown_whisper_thread(gf_);
 			std::string external_model_file_path =
 				obs_data_get_string(settings, "whisper_model_path_external");
-			gf->whisper_context = init_whisper_context(external_model_file_path);
-			std::thread new_whisper_thread(whisper_loop, gf);
-			gf->whisper_thread.swap(new_whisper_thread);
+			gf_->whisper_context = init_whisper_context(external_model_file_path);
+			std::thread new_whisper_thread(whisper_loop, gf_);
+			gf_->whisper_thread.swap(new_whisper_thread);
 			return true;
 		},
 		gf);
