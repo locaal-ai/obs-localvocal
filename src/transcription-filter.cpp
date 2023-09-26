@@ -293,7 +293,7 @@ void transcription_filter_update(void *data, obs_data_t *s)
 	// update the whisper model path
 	std::string new_model_path = obs_data_get_string(s, "whisper_model_path");
 
-	if (new_model_path != gf->whisper_model_path) {
+	if (gf->whisper_model_path == nullptr || new_model_path != gf->whisper_model_path) {
 		// model path changed, reload the model
 		obs_log(LOG_INFO, "model path changed, reloading model");
 		if (gf->whisper_context != nullptr) {
@@ -310,7 +310,10 @@ void transcription_filter_update(void *data, obs_data_t *s)
 		if (gf->whisper_thread.joinable()) {
 			gf->whisper_thread.join();
 		}
-		gf->whisper_model_path = new_model_path;
+		if (gf->whisper_model_path != nullptr) {
+			bfree(gf->whisper_model_path);
+		}
+		gf->whisper_model_path = bstrdup(new_model_path.c_str());
 
 		// check if the model exists, if not, download it
 		std::string model_file_found = find_model_file(gf->whisper_model_path);
@@ -375,8 +378,7 @@ void transcription_filter_update(void *data, obs_data_t *s)
 
 void *transcription_filter_create(obs_data_t *settings, obs_source_t *filter)
 {
-	void *p = bzalloc(sizeof(struct transcription_filter_data));
-	struct transcription_filter_data *gf = new (p) transcription_filter_data;
+	struct transcription_filter_data *gf = new transcription_filter_data;
 
 	// Get the number of channels for the input source
 	gf->channels = audio_output_get_channels(obs_get_audio());
@@ -401,7 +403,7 @@ void *transcription_filter_create(obs_data_t *settings, obs_source_t *filter)
 	}
 
 	gf->context = filter;
-	gf->whisper_model_path = ""; // The update function will set the model path
+	gf->whisper_model_path = nullptr; // The update function will set the model path
 
 	gf->overlap_ms = OVERLAP_SIZE_MSEC;
 	gf->overlap_frames = (size_t)((float)gf->sample_rate / (1000.0f / (float)gf->overlap_ms));
