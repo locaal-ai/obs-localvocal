@@ -77,6 +77,13 @@ Use the CI scripts again
 $ ./.github/scripts/build-linux.sh
 ```
 
+Copy the results to the standard OBS folders on Ubuntu
+```sh
+$ sudo cp -R release/RelWithDebInfo/lib/* /usr/lib/x86_64-linux-gnu/
+$ sudo cp -R release/RelWithDebInfo/share/* /usr/share/
+```
+Note: The official [OBS plugins guide](https://obsproject.com/kb/plugins-guide) recommends adding plugins to the `~/.config/obs-studio/plugins` folder.
+
 ### Windows
 
 Use the CI scripts again, for example:
