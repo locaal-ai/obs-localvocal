@@ -1,11 +1,11 @@
-# LocalVocal - AI assistant OBS Plugin
+# LocalVocal - Speech AI assistant OBS Plugin
 
 <div align="center">
 
-[![GitHub](https://img.shields.io/github/license/royshil/obs-localvocal)](https://github.com/royshil/obs-localvocal/blob/main/LICENSE)
-[![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/royshil/obs-localvocal/push.yaml)](https://github.com/royshil/obs-localvocal/actions/workflows/push.yaml)
-[![Total downloads](https://img.shields.io/github/downloads/royshil/obs-localvocal/total)](https://github.com/royshil/obs-localvocal/releases)
-[![GitHub release (latest by date)](https://img.shields.io/github/v/release/royshil/obs-localvocal)](https://github.com/royshil/obs-localvocal/releases)
+[![GitHub](https://img.shields.io/github/license/obs-ai/obs-localvocal)](https://github.com/obs-ai/obs-localvocal/blob/main/LICENSE)
+[![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/obs-ai/obs-localvocal/push.yaml)](https://github.com/obs-ai/obs-localvocal/actions/workflows/push.yaml)
+[![Total downloads](https://img.shields.io/github/downloads/obs-ai/obs-localvocal/total)](https://github.com/obs-ai/obs-localvocal/releases)
+[![GitHub release (latest by date)](https://img.shields.io/github/v/release/obs-ai/obs-localvocal)](https://github.com/obs-ai/obs-localvocal/releases)
 
 </div>
 
@@ -27,10 +27,11 @@ Current Features:
 - Display captions on screen using text sources
 - Send captions to a file (which can be read by external sources)
 - Send captions on a RTMP stream to e.g. YouTube, Twitch
+- Bring your own Whisper model (GGML)
 
 Roadmap:
 - Remove unwanted words from the transcription
-- Translate captions in real time to 50 languages
+- Translate captions in real time to major languages
 - Summarize the text and show "highlights" on screen
 - Detect key moments in the stream and allow triggering events (like replay)
 - Detect emotions/sentiment and allow triggering events (like changing the scene or colors etc.)
@@ -41,11 +42,11 @@ It's using the [Whisper.cpp](https://github.com/ggerganov/whisper.cpp) project f
 
 Check out our other plugins:
 - [Background Removal](https://github.com/royshil/obs-backgroundremoval) removes background from webcam without a green screen.
-- 🚧 Experimental 🚧 [CleanStream](https://github.com/royshil/obs-cleanstream) for real-time filler word (uh,um) and profanity removal from live audio stream
-- [URL/API Source](https://github.com/royshil/obs-urlsource) that allows fetching live data from an API and displaying it in OBS.
+- 🚧 Experimental 🚧 [CleanStream](https://github.com/obs-ai/obs-cleanstream) for real-time filler word (uh,um) and profanity removal from live audio stream
+- [URL/API Source](https://github.com/obs-ai/obs-urlsource) that allows fetching live data from an API and displaying it in OBS.
 
 ## Download
-Check out the [latest releases](https://github.com/royshil/obs-localvocal/releases) for downloads and install instructions.
+Check out the [latest releases](https://github.com/obs-ai/obs-localvocal/releases) for downloads and install instructions.
 
 ## Building
 
