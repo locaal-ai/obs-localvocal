@@ -17,9 +17,12 @@ If this free plugin has been valuable to you consider adding a ⭐ to this GH re
 
 <div align="center">
   <a href="https://youtu.be/5XqTMqpui3Q" target="_blank">
-    <img width="50%" src="https://github-production-user-asset-6210df.s3.amazonaws.com/441170/267728411-334551b8-6a7f-42bf-8434-6ad6b512a401.jpeg" />
+    <img width="40%" src="https://github-production-user-asset-6210df.s3.amazonaws.com/441170/267728411-334551b8-6a7f-42bf-8434-6ad6b512a401.jpeg" />
+  </a>
+  <a href="https://youtu.be/Q34LQsx-nlg" target="_blank">
+    <img width="40%" src="https://github-production-user-asset-6210df.s3.amazonaws.com/441170/271725640-3e5edd4a-9d07-4d19-b631-c70f91c73c27.PNG" />
   </a><br/>
-  https://youtu.be/5XqTMqpui3Q
+  https://youtu.be/5XqTMqpui3Q & https://youtu.be/Q34LQsx-nlg
 </div>
 
 Current Features:
@@ -28,10 +31,10 @@ Current Features:
 - Send captions to a file (which can be read by external sources)
 - Send captions on a RTMP stream to e.g. YouTube, Twitch
 - Bring your own Whisper model (GGML)
+- Translate captions in real time to major languages
 
 Roadmap:
 - Remove unwanted words from the transcription
-- Translate captions in real time to major languages
 - Summarize the text and show "highlights" on screen
 - Detect key moments in the stream and allow triggering events (like replay)
 - Detect emotions/sentiment and allow triggering events (like changing the scene or colors etc.)
