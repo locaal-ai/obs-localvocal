@@ -10,6 +10,12 @@
 
 #include <algorithm>
 #include <fstream>
+#include <sstream>
+#include <iomanip>
+#include <bitset>
+#ifdef _WIN32
+#include <Windows.h>
+#endif
 
 inline enum speaker_layout convert_speaker_layout(uint8_t channels)
 {
@@ -175,6 +181,21 @@ void acquire_weak_text_source_ref(struct transcription_filter_data *gf)
 
 void set_text_callback(struct transcription_filter_data *gf, const std::string &str)
 {
+#ifdef _WIN32
+	// Russian UTF8 charset on Windows output has a bug, instead of 0xd? it outputs
+	// 0xf?, so we need to replace it. This doesn't affect any other charset, which
+	// outputs the correct UTF8 output. (Except maybe for Greek?)
+	std::string str_copy = str;
+	for (size_t i = 0; i < str_copy.size(); ++i) {
+		// if the char MSBs starts with 0xf replace the MSBs with 0xd
+		if ((str_copy.c_str()[i] & 0xf0) == 0xf0) {
+			str_copy[i] = (str_copy.c_str()[i] & 0x0f) | 0xd0;
+		}
+	}
+#else
+	std::string str_copy = str;
+#endif
+
 	if (gf->caption_to_stream) {
 		obs_output_t *streaming_output = obs_frontend_get_streaming_output();
 		if (streaming_output) {
@@ -210,7 +231,7 @@ void set_text_callback(struct transcription_filter_data *gf, const std::string &
 			return;
 		}
 		auto text_settings = obs_source_get_settings(target);
-		obs_data_set_string(text_settings, "text", str.c_str());
+		obs_data_set_string(text_settings, "text", str_copy.c_str());
 		obs_source_update(target, text_settings);
 		obs_source_release(target);
 	}
@@ -218,6 +239,7 @@ void set_text_callback(struct transcription_filter_data *gf, const std::string &
 
 void shutdown_whisper_thread(struct transcription_filter_data *gf)
 {
+	obs_log(gf->log_level, "shutdown_whisper_thread");
 	if (gf->whisper_context != nullptr) {
 		// acquire the mutex before freeing the context
 		if (!gf->whisper_ctx_mutex || !gf->wshiper_thread_cv) {
@@ -232,6 +254,28 @@ void shutdown_whisper_thread(struct transcription_filter_data *gf)
 	if (gf->whisper_thread.joinable()) {
 		gf->whisper_thread.join();
 	}
+	if (gf->whisper_model_path != nullptr) {
+		bfree(gf->whisper_model_path);
+		gf->whisper_model_path = nullptr;
+	}
+}
+
+void start_whisper_thread_with_path(struct transcription_filter_data *gf, const std::string &path)
+{
+	obs_log(gf->log_level, "start_whisper_thread_with_path: %s", path.c_str());
+	if (!gf->whisper_ctx_mutex) {
+		obs_log(LOG_ERROR, "cannot init whisper: whisper_ctx_mutex is null");
+		return;
+	}
+	std::lock_guard<std::mutex> lock(*gf->whisper_ctx_mutex);
+	if (gf->whisper_context != nullptr) {
+		obs_log(LOG_ERROR, "cannot init whisper: whisper_context is not null");
+		return;
+	}
+	gf->whisper_context = init_whisper_context(path);
+	gf->whisper_model_file_currently_loaded = path;
+	std::thread new_whisper_thread(whisper_loop, gf);
+	gf->whisper_thread.swap(new_whisper_thread);
 }
 
 void transcription_filter_update(void *data, obs_data_t *s)
@@ -239,8 +283,9 @@ void transcription_filter_update(void *data, obs_data_t *s)
 	struct transcription_filter_data *gf =
 		static_cast<struct transcription_filter_data *>(data);
 
-	obs_log(gf->log_level, "transcription_filter_update");
 	gf->log_level = (int)obs_data_get_int(s, "log_level");
+	obs_log(gf->log_level, "transcription_filter_update");
+
 	gf->vad_enabled = obs_data_get_bool(s, "vad_enabled");
 	gf->log_words = obs_data_get_bool(s, "log_words");
 	gf->caption_to_stream = obs_data_get_bool(s, "caption_to_stream");
@@ -310,20 +355,21 @@ void transcription_filter_update(void *data, obs_data_t *s)
 	obs_log(gf->log_level, "transcription_filter: update whisper model");
 	// update the whisper model path
 	std::string new_model_path = obs_data_get_string(s, "whisper_model_path");
+	const bool is_external_model = new_model_path.find("!!!external!!!") != std::string::npos;
 
 	if (gf->whisper_model_path == nullptr ||
-	    strcmp(new_model_path.c_str(), gf->whisper_model_path) != 0) {
+	    strcmp(new_model_path.c_str(), gf->whisper_model_path) != 0 || is_external_model) {
 		// model path changed, reload the model
-		obs_log(LOG_INFO, "model path changed, reloading model");
-		shutdown_whisper_thread(gf);
-		if (gf->whisper_model_path != nullptr) {
-			bfree(gf->whisper_model_path);
-		}
-		gf->whisper_model_path = bstrdup(new_model_path.c_str());
+		obs_log(gf->log_level, "model path changed from %s to %s", gf->whisper_model_path,
+			new_model_path.c_str());
 
 		// check if the new model is external file
-		if (new_model_path.find("!!!external!!!") == std::string::npos) {
+		if (!is_external_model) {
 			// new model is not external file
+			shutdown_whisper_thread(gf);
+
+			gf->whisper_model_path = bstrdup(new_model_path.c_str());
+
 			// check if the model exists, if not, download it
 			std::string model_file_found = find_model_file(gf->whisper_model_path);
 			if (model_file_found == "") {
@@ -334,29 +380,39 @@ void transcription_filter_update(void *data, obs_data_t *s)
 						if (download_status == 0) {
 							obs_log(LOG_INFO,
 								"Model download complete");
-							gf->whisper_context =
-								init_whisper_context(path);
-							std::thread new_whisper_thread(whisper_loop,
-										       gf);
-							gf->whisper_thread.swap(new_whisper_thread);
+							start_whisper_thread_with_path(gf, path);
 						} else {
 							obs_log(LOG_ERROR, "Model download failed");
 						}
 					});
 			} else {
 				// Model exists, just load it
-				gf->whisper_context = init_whisper_context(model_file_found);
-				std::thread new_whisper_thread(whisper_loop, gf);
-				gf->whisper_thread.swap(new_whisper_thread);
+				start_whisper_thread_with_path(gf, model_file_found);
 			}
 		} else {
-			// new model is local file, get file location from file property
+			// new model is external file, get file location from file property
 			std::string external_model_file_path =
 				obs_data_get_string(s, "whisper_model_path_external");
-			gf->whisper_context = init_whisper_context(external_model_file_path);
-			std::thread new_whisper_thread(whisper_loop, gf);
-			gf->whisper_thread.swap(new_whisper_thread);
+			if (external_model_file_path.empty()) {
+				obs_log(LOG_WARNING, "External model file path is empty");
+			} else {
+				// check if the external model file is not currently loaded
+				if (gf->whisper_model_file_currently_loaded ==
+				    external_model_file_path) {
+					obs_log(LOG_INFO, "External model file is already loaded");
+					return;
+				} else {
+					shutdown_whisper_thread(gf);
+					gf->whisper_model_path = bstrdup(new_model_path.c_str());
+					start_whisper_thread_with_path(gf,
+								       external_model_file_path);
+				}
+			}
 		}
+	} else {
+		// model path did not change
+		obs_log(LOG_INFO, "model path did not change: %s == %s", gf->whisper_model_path,
+			new_model_path.c_str());
 	}
 
 	if (!gf->whisper_ctx_mutex) {
@@ -409,6 +465,7 @@ void *transcription_filter_create(obs_data_t *settings, obs_source_t *filter)
 	gf->step_size_msec = step_by_step_processing
 				     ? (int)obs_data_get_int(settings, "step_size_msec")
 				     : BUFFER_SIZE_MSEC;
+	gf->log_level = (int)obs_data_get_int(settings, "log_level");
 
 	for (size_t i = 0; i < MAX_AUDIO_CHANNELS; i++) {
 		circlebuf_init(&gf->input_buffers[i]);
@@ -423,7 +480,6 @@ void *transcription_filter_create(obs_data_t *settings, obs_source_t *filter)
 	}
 
 	gf->context = filter;
-	gf->whisper_model_path = nullptr; // The update function will set the model path
 
 	gf->overlap_ms = OVERLAP_SIZE_MSEC;
 	gf->overlap_frames = (size_t)((float)gf->sample_rate / (1000.0f / (float)gf->overlap_ms));
@@ -450,6 +506,9 @@ void *transcription_filter_create(obs_data_t *settings, obs_source_t *filter)
 	gf->text_source = nullptr;
 	gf->text_source_name = bstrdup(obs_data_get_string(settings, "subtitle_sources"));
 	gf->output_file_path = std::string("");
+	gf->whisper_model_path = nullptr; // The update function will set the model path
+	gf->whisper_context = nullptr;
+	gf->whisper_model_file_currently_loaded = "";
 
 	obs_log(gf->log_level, "transcription_filter: run update");
 	// get the settings updated on the filter data struct
@@ -479,6 +538,8 @@ void transcription_filter_deactivate(void *data)
 
 void transcription_filter_defaults(obs_data_t *s)
 {
+	obs_log(LOG_INFO, "transcription_filter_defaults");
+
 	obs_data_set_default_bool(s, "vad_enabled", true);
 	obs_data_set_default_int(s, "log_level", LOG_DEBUG);
 	obs_data_set_default_bool(s, "log_words", true);
@@ -505,7 +566,7 @@ void transcription_filter_defaults(obs_data_t *s)
 	obs_data_set_default_double(s, "thold_pt", 0.01);
 	obs_data_set_default_double(s, "thold_ptsum", 0.01);
 	obs_data_set_default_int(s, "max_len", 0);
-	obs_data_set_default_bool(s, "split_on_word", false);
+	obs_data_set_default_bool(s, "split_on_word", true);
 	obs_data_set_default_int(s, "max_tokens", 32);
 	obs_data_set_default_bool(s, "speed_up", false);
 	obs_data_set_default_bool(s, "suppress_blank", false);
@@ -517,6 +578,8 @@ void transcription_filter_defaults(obs_data_t *s)
 
 obs_properties_t *transcription_filter_properties(void *data)
 {
+	obs_log(LOG_INFO, "transcription_filter_properties");
+
 	struct transcription_filter_data *gf =
 		static_cast<struct transcription_filter_data *>(data);
 
@@ -603,16 +666,12 @@ obs_properties_t *transcription_filter_properties(void *data)
 		whisper_model_path_external,
 		[](void *data_, obs_properties_t *props, obs_property_t *property,
 		   obs_data_t *settings) {
+			obs_log(LOG_INFO, "whisper_model_path_external modified");
 			UNUSED_PARAMETER(property);
 			UNUSED_PARAMETER(props);
 			struct transcription_filter_data *gf_ =
 				static_cast<struct transcription_filter_data *>(data_);
-			shutdown_whisper_thread(gf_);
-			std::string external_model_file_path =
-				obs_data_get_string(settings, "whisper_model_path_external");
-			gf_->whisper_context = init_whisper_context(external_model_file_path);
-			std::thread new_whisper_thread(whisper_loop, gf_);
-			gf_->whisper_thread.swap(new_whisper_thread);
+			transcription_filter_update(gf_, settings);
 			return true;
 		},
 		gf);
