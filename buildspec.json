@@ -45,13 +45,13 @@
         }
     },
     "name": "obs-localvocal",
-    "version": "0.0.3",
+    "version": "0.0.4",
     "author": "Roy Shilkrot",
-    "website": "https://github.com/royshil/obs-localvocal",
+    "website": "https://github.com/obs-ai/obs-localvocal",
     "email": "roy.shil@gmail.com",
     "uuids": {
-        "macosPackage": "00000000-0000-0000-0000-000000000000",
-        "macosInstaller": "00000000-0000-0000-0000-000000000000",
-        "windowsApp": "00000000-0000-0000-0000-000000000000"
+        "macosPackage": "CB66E5DF-FF45-4BEA-B38B-7AD3705860C9",
+        "macosInstaller": "3C40DDDE-95D7-4514-BFEF-D2B6E1ACB2EA",
+        "windowsApp": "EB43EE18-9B5C-465F-AA72-ABF5886AFF0D"
     }
 }
