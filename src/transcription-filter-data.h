@@ -43,6 +43,7 @@ struct transcription_filter_data {
 
 	/* whisper */
 	char *whisper_model_path = nullptr;
+	std::string whisper_model_file_currently_loaded = "";
 	struct whisper_context *whisper_context = nullptr;
 	whisper_full_params whisper_params;
 
@@ -50,7 +51,7 @@ struct transcription_filter_data {
 
 	bool do_silence;
 	bool vad_enabled;
-	int log_level;
+	int log_level = LOG_DEBUG;
 	bool log_words;
 	bool caption_to_stream;
 	bool active = false;
