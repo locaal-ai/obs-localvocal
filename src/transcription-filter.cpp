@@ -159,7 +159,7 @@ void transcription_filter_destroy(void *data)
 void acquire_weak_text_source_ref(struct transcription_filter_data *gf)
 {
 	if (!gf->text_source_name) {
-		obs_log(LOG_ERROR, "text_source_name is null");
+		obs_log(gf->log_level, "text_source_name is null");
 		return;
 	}
 
@@ -222,12 +222,12 @@ void set_text_callback(struct transcription_filter_data *gf, const std::string &
 		std::lock_guard<std::mutex> lock(*gf->text_source_mutex);
 
 		if (!gf->text_source) {
-			obs_log(LOG_ERROR, "text_source is null");
+			obs_log(gf->log_level, "text_source is null");
 			return;
 		}
 		auto target = obs_weak_source_get_source(gf->text_source);
 		if (!target) {
-			obs_log(LOG_ERROR, "text_source target is null");
+			obs_log(gf->log_level, "text_source target is null");
 			return;
 		}
 		auto text_settings = obs_source_get_settings(target);
@@ -454,6 +454,8 @@ void transcription_filter_update(void *data, obs_data_t *s)
 
 void *transcription_filter_create(obs_data_t *settings, obs_source_t *filter)
 {
+	obs_log(LOG_INFO, "transcription filter create");
+
 	struct transcription_filter_data *gf = new transcription_filter_data;
 
 	// Get the number of channels for the input source
@@ -503,12 +505,19 @@ void *transcription_filter_create(obs_data_t *settings, obs_source_t *filter)
 	gf->whisper_ctx_mutex = new std::mutex();
 	gf->wshiper_thread_cv = new std::condition_variable();
 	gf->text_source_mutex = new std::mutex();
+	obs_log(gf->log_level, "transcription_filter: clear text source data");
 	gf->text_source = nullptr;
-	gf->text_source_name = bstrdup(obs_data_get_string(settings, "subtitle_sources"));
+	const char* subtitle_sources = obs_data_get_string(settings, "subtitle_sources");
+	if (subtitle_sources != nullptr) {
+		gf->text_source_name = bstrdup(subtitle_sources);
+	} else {
+		gf->text_source_name = nullptr;
+	}
+	obs_log(gf->log_level, "transcription_filter: clear paths and whisper context");
+	gf->whisper_model_file_currently_loaded = "";
 	gf->output_file_path = std::string("");
 	gf->whisper_model_path = nullptr; // The update function will set the model path
 	gf->whisper_context = nullptr;
-	gf->whisper_model_file_currently_loaded = "";
 
 	obs_log(gf->log_level, "transcription_filter: run update");
 	// get the settings updated on the filter data struct
@@ -585,18 +594,18 @@ obs_properties_t *transcription_filter_properties(void *data)
 
 	obs_properties_t *ppts = obs_properties_create();
 
-	obs_properties_add_bool(ppts, "vad_enabled", "VAD Enabled");
-	obs_property_t *list = obs_properties_add_list(ppts, "log_level", "Log level",
+	obs_properties_add_bool(ppts, "vad_enabled", MT_("vad_enabled"));
+	obs_property_t *list = obs_properties_add_list(ppts, "log_level", MT_("log_level"),
 						       OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_INT);
 	obs_property_list_add_int(list, "DEBUG", LOG_DEBUG);
 	obs_property_list_add_int(list, "INFO", LOG_INFO);
 	obs_property_list_add_int(list, "WARNING", LOG_WARNING);
-	obs_properties_add_bool(ppts, "log_words", "Log output words");
-	obs_properties_add_bool(ppts, "caption_to_stream", "Stream captions");
+	obs_properties_add_bool(ppts, "log_words", MT_("log_words"));
+	obs_properties_add_bool(ppts, "caption_to_stream", MT_("caption_to_stream"));
 	obs_property_t *step_by_step_processing = obs_properties_add_bool(
 		ppts, "step_by_step_processing",
-		"Step-by-step processing (⚠️ processing will increase)");
-	obs_properties_add_int_slider(ppts, "step_size_msec", "Step size (ms)", 1000,
+		MT_("step_by_step_processing"));
+	obs_properties_add_int_slider(ppts, "step_size_msec", MT_("step_size_msec"), 1000,
 				      BUFFER_SIZE_MSEC, 50);
 
 	obs_property_set_modified_callback(step_by_step_processing, [](obs_properties_t *props,
@@ -610,15 +619,15 @@ obs_properties_t *transcription_filter_properties(void *data)
 	});
 
 	obs_property_t *subs_output =
-		obs_properties_add_list(ppts, "subtitle_sources", "Subtitles Output",
+		obs_properties_add_list(ppts, "subtitle_sources", MT_("subtitle_sources"),
 					OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_STRING);
 	// Add "none" option
-	obs_property_list_add_string(subs_output, "None / No output", "none");
-	obs_property_list_add_string(subs_output, "Text File output", "text_file");
+	obs_property_list_add_string(subs_output, MT_("none_no_output"), "none");
+	obs_property_list_add_string(subs_output, MT_("text_file_output"), "text_file");
 	// Add text sources
 	obs_enum_sources(add_sources_to_list, subs_output);
 
-	obs_properties_add_path(ppts, "subtitle_output_filename", "Output filename",
+	obs_properties_add_path(ppts, "subtitle_output_filename", MT_("output_filename"),
 				OBS_PATH_FILE_SAVE, "Text (*.txt)", NULL);
 
 	obs_property_set_modified_callback(subs_output, [](obs_properties_t *props,
@@ -640,7 +649,7 @@ obs_properties_t *transcription_filter_properties(void *data)
 
 	// Add a list of available whisper models to download
 	obs_property_t *whisper_models_list =
-		obs_properties_add_list(ppts, "whisper_model_path", "Whisper Model",
+		obs_properties_add_list(ppts, "whisper_model_path", MT_("whisper_model"),
 					OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_STRING);
 
 	obs_property_list_add_string(whisper_models_list, "Tiny (Eng) 75Mb",
@@ -657,7 +666,7 @@ obs_properties_t *transcription_filter_properties(void *data)
 
 	// Add a file selection input to select an external model file
 	obs_property_t *whisper_model_path_external =
-		obs_properties_add_path(ppts, "whisper_model_path_external", "External model file",
+		obs_properties_add_path(ppts, "whisper_model_path_external", MT_("external_model_file"),
 					OBS_PATH_FILE, "Model (*.bin)", NULL);
 	// Hide the external model file selection input
 	obs_property_set_visible(obs_properties_get(ppts, "whisper_model_path_external"), false);
@@ -695,12 +704,12 @@ obs_properties_t *transcription_filter_properties(void *data)
 	});
 
 	obs_properties_t *whisper_params_group = obs_properties_create();
-	obs_properties_add_group(ppts, "whisper_params_group", "Whisper Parameters",
+	obs_properties_add_group(ppts, "whisper_params_group", MT_("whisper_parameters"),
 				 OBS_GROUP_NORMAL, whisper_params_group);
 
 	// Add language selector
 	obs_property_t *whisper_language_select_list =
-		obs_properties_add_list(whisper_params_group, "whisper_language_select", "Language",
+		obs_properties_add_list(whisper_params_group, "whisper_language_select", MT_("language"),
 					OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_STRING);
 	// sort the languages by flipping the map
 	std::map<std::string, std::string> whisper_available_lang_flip;
@@ -718,65 +727,65 @@ obs_properties_t *transcription_filter_properties(void *data)
 	}
 
 	obs_property_t *whisper_sampling_method_list = obs_properties_add_list(
-		whisper_params_group, "whisper_sampling_method", "whisper_sampling_method",
+		whisper_params_group, "whisper_sampling_method", MT_("whisper_sampling_method"),
 		OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_INT);
 	obs_property_list_add_int(whisper_sampling_method_list, "Beam search",
 				  WHISPER_SAMPLING_BEAM_SEARCH);
 	obs_property_list_add_int(whisper_sampling_method_list, "Greedy", WHISPER_SAMPLING_GREEDY);
 
 	// int n_threads;
-	obs_properties_add_int_slider(whisper_params_group, "n_threads", "n_threads", 1, 8, 1);
+	obs_properties_add_int_slider(whisper_params_group, "n_threads", MT_("n_threads"), 1, 8, 1);
 	// int n_max_text_ctx;     // max tokens to use from past text as prompt for the decoder
-	obs_properties_add_int_slider(whisper_params_group, "n_max_text_ctx", "n_max_text_ctx", 0,
+	obs_properties_add_int_slider(whisper_params_group, "n_max_text_ctx", MT_("n_max_text_ctx"), 0,
 				      16384, 100);
 	// int offset_ms;          // start offset in ms
 	// int duration_ms;        // audio duration to process in ms
 	// bool translate;
-	obs_properties_add_bool(whisper_params_group, "translate", "translate");
+	obs_properties_add_bool(whisper_params_group, "translate", MT_("translate"));
 	// bool no_context;        // do not use past transcription (if any) as initial prompt for the decoder
-	obs_properties_add_bool(whisper_params_group, "no_context", "no_context");
+	obs_properties_add_bool(whisper_params_group, "no_context", MT_("no_context"));
 	// bool single_segment;    // force single segment output (useful for streaming)
-	obs_properties_add_bool(whisper_params_group, "single_segment", "single_segment");
+	obs_properties_add_bool(whisper_params_group, "single_segment", MT_("single_segment"));
 	// bool print_special;     // print special tokens (e.g. <SOT>, <EOT>, <BEG>, etc.)
-	obs_properties_add_bool(whisper_params_group, "print_special", "print_special");
+	obs_properties_add_bool(whisper_params_group, "print_special", MT_("print_special"));
 	// bool print_progress;    // print progress information
-	obs_properties_add_bool(whisper_params_group, "print_progress", "print_progress");
+	obs_properties_add_bool(whisper_params_group, "print_progress", MT_("print_progress"));
 	// bool print_realtime;    // print results from within whisper.cpp (avoid it, use callback instead)
-	obs_properties_add_bool(whisper_params_group, "print_realtime", "print_realtime");
+	obs_properties_add_bool(whisper_params_group, "print_realtime", MT_("print_realtime"));
 	// bool print_timestamps;  // print timestamps for each text segment when printing realtime
-	obs_properties_add_bool(whisper_params_group, "print_timestamps", "print_timestamps");
+	obs_properties_add_bool(whisper_params_group, "print_timestamps", MT_("print_timestamps"));
 	// bool  token_timestamps; // enable token-level timestamps
-	obs_properties_add_bool(whisper_params_group, "token_timestamps", "token_timestamps");
+	obs_properties_add_bool(whisper_params_group, "token_timestamps", MT_("token_timestamps"));
 	// float thold_pt;         // timestamp token probability threshold (~0.01)
-	obs_properties_add_float_slider(whisper_params_group, "thold_pt", "thold_pt", 0.0f, 1.0f,
+	obs_properties_add_float_slider(whisper_params_group, "thold_pt", MT_("thold_pt"), 0.0f, 1.0f,
 					0.05f);
 	// float thold_ptsum;      // timestamp token sum probability threshold (~0.01)
-	obs_properties_add_float_slider(whisper_params_group, "thold_ptsum", "thold_ptsum", 0.0f,
+	obs_properties_add_float_slider(whisper_params_group, "thold_ptsum", MT_("thold_ptsum"), 0.0f,
 					1.0f, 0.05f);
 	// int   max_len;          // max segment length in characters
-	obs_properties_add_int_slider(whisper_params_group, "max_len", "max_len", 0, 100, 1);
+	obs_properties_add_int_slider(whisper_params_group, "max_len", MT_("max_len"), 0, 100, 1);
 	// bool  split_on_word;    // split on word rather than on token (when used with max_len)
-	obs_properties_add_bool(whisper_params_group, "split_on_word", "split_on_word");
+	obs_properties_add_bool(whisper_params_group, "split_on_word", MT_("split_on_word"));
 	// int   max_tokens;       // max tokens per segment (0 = no limit)
-	obs_properties_add_int_slider(whisper_params_group, "max_tokens", "max_tokens", 0, 100, 1);
+	obs_properties_add_int_slider(whisper_params_group, "max_tokens", MT_("max_tokens"), 0, 100, 1);
 	// bool speed_up;          // speed-up the audio by 2x using Phase Vocoder
-	obs_properties_add_bool(whisper_params_group, "speed_up", "speed_up");
+	obs_properties_add_bool(whisper_params_group, "speed_up", MT_("speed_up"));
 	// const char * initial_prompt;
-	obs_properties_add_text(whisper_params_group, "initial_prompt", "initial_prompt",
+	obs_properties_add_text(whisper_params_group, "initial_prompt", MT_("initial_prompt"),
 				OBS_TEXT_DEFAULT);
 	// bool suppress_blank
-	obs_properties_add_bool(whisper_params_group, "suppress_blank", "suppress_blank");
+	obs_properties_add_bool(whisper_params_group, "suppress_blank", MT_("suppress_blank"));
 	// bool suppress_non_speech_tokens
 	obs_properties_add_bool(whisper_params_group, "suppress_non_speech_tokens",
-				"suppress_non_speech_tokens");
+				MT_("suppress_non_speech_tokens"));
 	// float temperature
-	obs_properties_add_float_slider(whisper_params_group, "temperature", "temperature", 0.0f,
+	obs_properties_add_float_slider(whisper_params_group, "temperature", MT_("temperature"), 0.0f,
 					1.0f, 0.05f);
 	// float max_initial_ts
-	obs_properties_add_float_slider(whisper_params_group, "max_initial_ts", "max_initial_ts",
+	obs_properties_add_float_slider(whisper_params_group, "max_initial_ts", MT_("max_initial_ts"),
 					0.0f, 1.0f, 0.05f);
 	// float length_penalty
-	obs_properties_add_float_slider(whisper_params_group, "length_penalty", "length_penalty",
+	obs_properties_add_float_slider(whisper_params_group, "length_penalty", MT_("length_penalty"),
 					-1.0f, 1.0f, 0.1f);
 
 	UNUSED_PARAMETER(data);
