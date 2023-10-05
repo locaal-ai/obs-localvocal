@@ -60,7 +60,7 @@ bool vad_simple(float *pcmf32, size_t pcm32f_size, uint32_t sample_rate, float v
 
 	if (verbose) {
 		obs_log(LOG_INFO, "%s: energy_all: %f, vad_thold: %f, freq_thold: %f", __func__,
-		     energy_all, vad_thold, freq_thold);
+			energy_all, vad_thold, freq_thold);
 	}
 
 	if (energy_all < vad_thold) {
