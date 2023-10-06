@@ -43,7 +43,6 @@ struct transcription_filter_data {
 
 	/* whisper */
 	char *whisper_model_path = nullptr;
-	std::string whisper_model_file_currently_loaded = "";
 	struct whisper_context *whisper_context = nullptr;
 	whisper_full_params whisper_params;
 
@@ -63,7 +62,8 @@ struct transcription_filter_data {
 	// Callback to set the text in the output text source (subtitles)
 	std::function<void(const std::string &str)> setTextCallback;
 	// Output file path to write the subtitles
-	std::string output_file_path;
+	std::string output_file_path = "";
+	std::string whisper_model_file_currently_loaded = "";
 
 	// Use std for thread and mutex
 	std::thread whisper_thread;
