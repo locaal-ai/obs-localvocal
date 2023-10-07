@@ -15,8 +15,8 @@
 // Taken from https://github.com/ggerganov/whisper.cpp/blob/master/examples/stream/stream.cpp
 std::string to_timestamp(int64_t t)
 {
-	int64_t sec = t / 100;
-	int64_t msec = t - sec * 100;
+	int64_t sec = t / 1000;
+	int64_t msec = t - sec * 1000;
 	int64_t min = sec / 60;
 	sec = sec - min * 60;
 
@@ -82,17 +82,6 @@ struct whisper_context *init_whisper_context(const std::string &model_path)
 	return ctx;
 }
 
-enum DetectionResult {
-	DETECTION_RESULT_UNKNOWN = 0,
-	DETECTION_RESULT_SILENCE = 1,
-	DETECTION_RESULT_SPEECH = 2,
-};
-
-struct DetectionResultWithText {
-	DetectionResult result;
-	std::string text;
-};
-
 struct DetectionResultWithText run_whisper_inference(struct transcription_filter_data *gf,
 						     const float *pcm32f_data, size_t pcm32f_size)
 {
@@ -103,8 +92,17 @@ struct DetectionResultWithText run_whisper_inference(struct transcription_filter
 	std::lock_guard<std::mutex> lock(*gf->whisper_ctx_mutex);
 	if (gf->whisper_context == nullptr) {
 		obs_log(LOG_WARNING, "whisper context is null");
-		return {DETECTION_RESULT_UNKNOWN, ""};
+		return {DETECTION_RESULT_UNKNOWN, "", 0, 0};
 	}
+
+	// set duration in ms
+	const uint64_t duration_ms = (uint64_t)(pcm32f_size * 1000 / WHISPER_SAMPLE_RATE);
+	// Get the duration in ms since the beginning of the stream (gf->start_timestamp_ms)
+	const uint64_t offset_ms =
+		(uint64_t)(std::chrono::duration_cast<std::chrono::milliseconds>(
+				   std::chrono::system_clock::now().time_since_epoch())
+				   .count() -
+			   gf->start_timestamp_ms);
 
 	// run the inference
 	int whisper_full_result = -1;
@@ -115,17 +113,17 @@ struct DetectionResultWithText run_whisper_inference(struct transcription_filter
 		obs_log(LOG_ERROR, "Whisper exception: %s. Filter restart is required", e.what());
 		whisper_free(gf->whisper_context);
 		gf->whisper_context = nullptr;
-		return {DETECTION_RESULT_UNKNOWN, ""};
+		return {DETECTION_RESULT_UNKNOWN, "", 0, 0};
 	}
 
 	if (whisper_full_result != 0) {
 		obs_log(LOG_WARNING, "failed to process audio, error %d", whisper_full_result);
-		return {DETECTION_RESULT_UNKNOWN, ""};
+		return {DETECTION_RESULT_UNKNOWN, "", 0, 0};
 	} else {
 		const int n_segment = 0;
 		const char *text = whisper_full_get_segment_text(gf->whisper_context, n_segment);
-		const int64_t t0 = whisper_full_get_segment_t0(gf->whisper_context, n_segment);
-		const int64_t t1 = whisper_full_get_segment_t1(gf->whisper_context, n_segment);
+		const int64_t t0 = offset_ms;
+		const int64_t t1 = offset_ms + duration_ms;
 
 		float sentence_p = 0.0f;
 		const int n_tokens = whisper_full_n_tokens(gf->whisper_context, n_segment);
@@ -149,10 +147,10 @@ struct DetectionResultWithText run_whisper_inference(struct transcription_filter
 		}
 
 		if (text_lower.empty() || text_lower == ".") {
-			return {DETECTION_RESULT_SILENCE, ""};
+			return {DETECTION_RESULT_SILENCE, "", 0, 0};
 		}
 
-		return {DETECTION_RESULT_SPEECH, text_lower};
+		return {DETECTION_RESULT_SPEECH, text_lower, offset_ms, offset_ms + duration_ms};
 	}
 }
 
@@ -254,16 +252,16 @@ void process_audio_from_buffer(struct transcription_filter_data *gf)
 
 		if (inference_result.result == DETECTION_RESULT_SPEECH) {
 			// output inference result to a text source
-			set_text_callback(gf, inference_result.text);
+			set_text_callback(gf, inference_result);
 		} else if (inference_result.result == DETECTION_RESULT_SILENCE) {
 			// output inference result to a text source
-			set_text_callback(gf, "[silence]");
+			set_text_callback(gf, {inference_result.result, "[silence]", 0, 0});
 		}
 	} else {
 		if (gf->log_words) {
 			obs_log(LOG_INFO, "skipping inference");
 		}
-		set_text_callback(gf, "");
+		set_text_callback(gf, {DETECTION_RESULT_UNKNOWN, "[skip]", 0, 0});
 	}
 
 	// end of timer
