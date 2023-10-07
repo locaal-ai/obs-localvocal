@@ -593,18 +593,18 @@ void *transcription_filter_create(obs_data_t *settings, obs_source_t *filter)
 	obs_frontend_add_event_callback(
 		[](enum obs_frontend_event event, void *private_data) {
 			if (event == OBS_FRONTEND_EVENT_RECORDING_STARTING) {
-				struct transcription_filter_data *gf =
+				struct transcription_filter_data *gf_ =
 					static_cast<struct transcription_filter_data *>(
 						private_data);
-				if (gf->save_srt && gf->save_only_while_recording) {
-					obs_log(gf->log_level,
+				if (gf_->save_srt && gf_->save_only_while_recording) {
+					obs_log(gf_->log_level,
 						"Recording started. Resetting srt file.");
 					// truncate file if it exists
-					std::ofstream output_file(gf->output_file_path,
+					std::ofstream output_file(gf_->output_file_path,
 								  std::ios::out | std::ios::trunc);
 					output_file.close();
-					gf->sentence_number = 1;
-					gf->start_timestamp_ms = now_ms();
+					gf_->sentence_number = 1;
+					gf_->start_timestamp_ms = now_ms();
 				}
 			}
 		},
