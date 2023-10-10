@@ -29,7 +29,8 @@ jobs:
           case "${GITHUB_EVENT_NAME}" in
             pull_request)
               config_data=('codesign:false' 'notarize:false' 'package:false' 'config:RelWithDebInfo')
-              if [[ ${{ contains(github.event.pull_request.labels.*.name, 'Seeking Testers') }} = true ]]; then
+              if gh pr view --json labels \
+                | jq -e -r '.labels[] | select(.name == "Seeking Testers")' > /dev/null; then
                 config_data[0]='codesign:true'
                 config_data[2]='package:true'
               fi
