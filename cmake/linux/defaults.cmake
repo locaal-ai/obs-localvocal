@@ -32,7 +32,7 @@ set(CPACK_SOURCE_IGNORE_FILES
     # cmake-format: sortable
     ".*~$"
     \\.git/
-    \\.github/
+    # \\.github/
     \\.gitignore
     build_.*
     cmake/\\.CMakeBuildNumber

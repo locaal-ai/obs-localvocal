@@ -41,6 +41,13 @@ inline enum speaker_layout convert_speaker_layout(uint8_t channels)
 	}
 }
 
+inline uint64_t now_ms()
+{
+	return std::chrono::duration_cast<std::chrono::milliseconds>(
+		       std::chrono::system_clock::now().time_since_epoch())
+		.count();
+}
+
 bool add_sources_to_list(void *list_property, obs_source_t *source)
 {
 	auto source_id = obs_source_get_id(source);
@@ -68,6 +75,13 @@ struct obs_audio_data *transcription_filter_filter_audio(void *data, struct obs_
 		static_cast<struct transcription_filter_data *>(data);
 
 	if (!gf->active) {
+		return audio;
+	}
+
+	// Check if the parent source is muted
+	obs_source_t *parent_source = obs_filter_get_parent(gf->context);
+	if (gf->process_while_muted == false && obs_source_muted(parent_source)) {
+		// Source is muted, do not process audio
 		return audio;
 	}
 
@@ -179,13 +193,13 @@ void acquire_weak_text_source_ref(struct transcription_filter_data *gf)
 	}
 }
 
-void set_text_callback(struct transcription_filter_data *gf, const std::string &str)
+void set_text_callback(struct transcription_filter_data *gf, const DetectionResultWithText &result)
 {
 #ifdef _WIN32
 	// Russian UTF8 charset on Windows output has a bug, instead of 0xd? it outputs
 	// 0xf?, so we need to replace it. This doesn't affect any other charset, which
 	// outputs the correct UTF8 output. (Except maybe for Greek?)
-	std::string str_copy = str;
+	std::string str_copy = result.text;
 	for (size_t i = 0; i < str_copy.size(); ++i) {
 		// if the char MSBs starts with 0xf replace the MSBs with 0xd
 		if ((str_copy.c_str()[i] & 0xf0) == 0xf0) {
@@ -193,21 +207,61 @@ void set_text_callback(struct transcription_filter_data *gf, const std::string &
 		}
 	}
 #else
-	std::string str_copy = str;
+	std::string str_copy = result.text;
 #endif
 
 	if (gf->caption_to_stream) {
 		obs_output_t *streaming_output = obs_frontend_get_streaming_output();
 		if (streaming_output) {
-			obs_output_output_caption_text1(streaming_output, str.c_str());
+			obs_output_output_caption_text1(streaming_output, result.text.c_str());
 			obs_output_release(streaming_output);
 		}
 	}
+
 	if (gf->output_file_path != "" && !gf->text_source_name) {
-		// Write to file, do not append
-		std::ofstream output_file(gf->output_file_path, std::ios::out | std::ios::trunc);
-		output_file << str;
-		output_file.close();
+		// Check if we should save the sentence
+		if (gf->save_only_while_recording && !obs_frontend_recording_active()) {
+			// We are not recording, do not save the sentence to file
+			return;
+		}
+		if (!gf->save_srt) {
+			// Write raw sentence to file, do not append
+			std::ofstream output_file(gf->output_file_path,
+						  std::ios::out | std::ios::trunc);
+			output_file << result.text << std::endl;
+			output_file.close();
+		} else {
+			obs_log(gf->log_level, "Saving sentence to file %s, sentence #%d",
+				gf->output_file_path.c_str(), gf->sentence_number);
+			// Append sentence to file in .srt format
+			std::ofstream output_file(gf->output_file_path,
+						  std::ios::out | std::ios::app);
+			output_file << gf->sentence_number << std::endl;
+			// use the start and end timestamps to calculate the start and end time in srt format
+			auto format_ts_for_srt = [&output_file](uint64_t ts) {
+				uint64_t time_s = ts / 1000;
+				uint64_t time_m = time_s / 60;
+				uint64_t time_h = time_m / 60;
+				uint64_t time_ms_rem = ts % 1000;
+				uint64_t time_s_rem = time_s % 60;
+				uint64_t time_m_rem = time_m % 60;
+				uint64_t time_h_rem = time_h % 60;
+				output_file << std::setfill('0') << std::setw(2) << time_h_rem
+					    << ":" << std::setfill('0') << std::setw(2)
+					    << time_m_rem << ":" << std::setfill('0')
+					    << std::setw(2) << time_s_rem << ","
+					    << std::setfill('0') << std::setw(3) << time_ms_rem;
+			};
+			format_ts_for_srt(result.start_timestamp_ms);
+			output_file << " --> ";
+			format_ts_for_srt(result.end_timestamp_ms);
+			output_file << std::endl;
+
+			output_file << result.text << std::endl;
+			output_file << std::endl;
+			output_file.close();
+			gf->sentence_number++;
+		}
 	} else {
 		if (!gf->text_source_mutex) {
 			obs_log(LOG_ERROR, "text_source_mutex is null");
@@ -292,6 +346,13 @@ void transcription_filter_update(void *data, obs_data_t *s)
 	bool step_by_step_processing = obs_data_get_bool(s, "step_by_step_processing");
 	gf->step_size_msec = step_by_step_processing ? (int)obs_data_get_int(s, "step_size_msec")
 						     : BUFFER_SIZE_MSEC;
+	gf->save_srt = obs_data_get_bool(s, "subtitle_save_srt");
+	gf->save_only_while_recording = obs_data_get_bool(s, "only_while_recording");
+	gf->rename_file_to_match_recording = obs_data_get_bool(s, "rename_file_to_match_recording");
+	// Get the current timestamp using the system clock
+	gf->start_timestamp_ms = now_ms();
+	gf->sentence_number = 1;
+	gf->process_while_muted = obs_data_get_bool(s, "process_while_muted");
 
 	obs_log(gf->log_level, "transcription_filter: update text source");
 	// update the text source
@@ -468,6 +529,11 @@ void *transcription_filter_create(obs_data_t *settings, obs_source_t *filter)
 				     ? (int)obs_data_get_int(settings, "step_size_msec")
 				     : BUFFER_SIZE_MSEC;
 	gf->log_level = (int)obs_data_get_int(settings, "log_level");
+	gf->save_srt = obs_data_get_bool(settings, "subtitle_save_srt");
+	gf->save_only_while_recording = obs_data_get_bool(settings, "only_while_recording");
+	gf->rename_file_to_match_recording =
+		obs_data_get_bool(settings, "rename_file_to_match_recording");
+	gf->process_while_muted = obs_data_get_bool(settings, "process_while_muted");
 
 	for (size_t i = 0; i < MAX_AUDIO_CHANNELS; i++) {
 		circlebuf_init(&gf->input_buffers[i]);
@@ -525,6 +591,48 @@ void *transcription_filter_create(obs_data_t *settings, obs_source_t *filter)
 
 	gf->active = true;
 
+	// handle the event OBS_FRONTEND_EVENT_RECORDING_STARTING to reset the srt sentence number
+	// to match the subtitles with the recording
+	obs_frontend_add_event_callback(
+		[](enum obs_frontend_event event, void *private_data) {
+			if (event == OBS_FRONTEND_EVENT_RECORDING_STARTING) {
+				struct transcription_filter_data *gf_ =
+					static_cast<struct transcription_filter_data *>(
+						private_data);
+				if (gf_->save_srt && gf_->save_only_while_recording) {
+					obs_log(gf_->log_level,
+						"Recording started. Resetting srt file.");
+					// truncate file if it exists
+					std::ofstream output_file(gf_->output_file_path,
+								  std::ios::out | std::ios::trunc);
+					output_file.close();
+					gf_->sentence_number = 1;
+					gf_->start_timestamp_ms = now_ms();
+				}
+			} else if (event == OBS_FRONTEND_EVENT_RECORDING_STOPPED) {
+				struct transcription_filter_data *gf_ =
+					static_cast<struct transcription_filter_data *>(
+						private_data);
+				if (gf_->save_srt && gf_->save_only_while_recording &&
+				    gf_->rename_file_to_match_recording) {
+					obs_log(gf_->log_level,
+						"Recording stopped. Rename srt file.");
+					// rename file to match the recording file name with .srt extension
+					// use obs_frontend_get_last_recording to get the last recording file name
+					std::string recording_file_name =
+						obs_frontend_get_last_recording();
+					// remove the extension
+					recording_file_name = recording_file_name.substr(
+						0, recording_file_name.find_last_of("."));
+					std::string srt_file_name = recording_file_name + ".srt";
+					// rename the file
+					std::rename(gf_->output_file_path.c_str(),
+						    srt_file_name.c_str());
+				}
+			}
+		},
+		gf);
+
 	obs_log(gf->log_level, "transcription_filter: filter created.");
 	return gf;
 }
@@ -557,6 +665,10 @@ void transcription_filter_defaults(obs_data_t *s)
 	obs_data_set_default_string(s, "whisper_language_select", "en");
 	obs_data_set_default_string(s, "subtitle_sources", "none");
 	obs_data_set_default_bool(s, "step_by_step_processing", false);
+	obs_data_set_default_bool(s, "process_while_muted", false);
+	obs_data_set_default_bool(s, "subtitle_save_srt", false);
+	obs_data_set_default_bool(s, "only_while_recording", false);
+	obs_data_set_default_bool(s, "rename_file_to_match_recording", true);
 	obs_data_set_default_int(s, "step_size_msec", 1000);
 
 	// Whisper parameters
@@ -617,6 +729,7 @@ obs_properties_t *transcription_filter_properties(void *data)
 		return true;
 	});
 
+	obs_properties_add_bool(ppts, "process_while_muted", MT_("process_while_muted"));
 	obs_property_t *subs_output =
 		obs_properties_add_list(ppts, "subtitle_sources", MT_("subtitle_sources"),
 					OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_STRING);
@@ -628,21 +741,25 @@ obs_properties_t *transcription_filter_properties(void *data)
 
 	obs_properties_add_path(ppts, "subtitle_output_filename", MT_("output_filename"),
 				OBS_PATH_FILE_SAVE, "Text (*.txt)", NULL);
+	obs_properties_add_bool(ppts, "subtitle_save_srt", MT_("save_srt"));
+	obs_properties_add_bool(ppts, "only_while_recording", MT_("only_while_recording"));
+	obs_properties_add_bool(ppts, "rename_file_to_match_recording",
+				MT_("rename_file_to_match_recording"));
 
 	obs_property_set_modified_callback(subs_output, [](obs_properties_t *props,
 							   obs_property_t *property,
 							   obs_data_t *settings) {
 		UNUSED_PARAMETER(property);
+		// Show or hide the output filename selection input
 		const char *new_output = obs_data_get_string(settings, "subtitle_sources");
-		if (strcmp(new_output, "text_file") == 0) {
-			// Show the output filename selection input
-			obs_property_set_visible(
-				obs_properties_get(props, "subtitle_output_filename"), true);
-		} else {
-			// Hide the output filename selection input
-			obs_property_set_visible(
-				obs_properties_get(props, "subtitle_output_filename"), false);
-		}
+		const bool show_hide = (strcmp(new_output, "text_file") == 0);
+		obs_property_set_visible(obs_properties_get(props, "subtitle_output_filename"),
+					 show_hide);
+		obs_property_set_visible(obs_properties_get(props, "subtitle_save_srt"), show_hide);
+		obs_property_set_visible(obs_properties_get(props, "only_while_recording"),
+					 show_hide);
+		obs_property_set_visible(
+			obs_properties_get(props, "rename_file_to_match_recording"), show_hide);
 		return true;
 	});
 
