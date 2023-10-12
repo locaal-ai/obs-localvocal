@@ -348,6 +348,7 @@ void transcription_filter_update(void *data, obs_data_t *s)
 						     : BUFFER_SIZE_MSEC;
 	gf->save_srt = obs_data_get_bool(s, "subtitle_save_srt");
 	gf->save_only_while_recording = obs_data_get_bool(s, "only_while_recording");
+	gf->rename_file_to_match_recording = obs_data_get_bool(s, "rename_file_to_match_recording");
 	// Get the current timestamp using the system clock
 	gf->start_timestamp_ms = now_ms();
 	gf->sentence_number = 1;
@@ -530,6 +531,8 @@ void *transcription_filter_create(obs_data_t *settings, obs_source_t *filter)
 	gf->log_level = (int)obs_data_get_int(settings, "log_level");
 	gf->save_srt = obs_data_get_bool(settings, "subtitle_save_srt");
 	gf->save_only_while_recording = obs_data_get_bool(settings, "only_while_recording");
+	gf->rename_file_to_match_recording =
+		obs_data_get_bool(settings, "rename_file_to_match_recording");
 	gf->process_while_muted = obs_data_get_bool(settings, "process_while_muted");
 
 	for (size_t i = 0; i < MAX_AUDIO_CHANNELS; i++) {
@@ -606,6 +609,26 @@ void *transcription_filter_create(obs_data_t *settings, obs_source_t *filter)
 					gf_->sentence_number = 1;
 					gf_->start_timestamp_ms = now_ms();
 				}
+			} else if (event == OBS_FRONTEND_EVENT_RECORDING_STOPPED) {
+				struct transcription_filter_data *gf_ =
+					static_cast<struct transcription_filter_data *>(
+						private_data);
+				if (gf_->save_srt && gf_->save_only_while_recording &&
+				    gf_->rename_file_to_match_recording) {
+					obs_log(gf_->log_level,
+						"Recording stopped. Rename srt file.");
+					// rename file to match the recording file name with .srt extension
+					// use obs_frontend_get_last_recording to get the last recording file name
+					std::string recording_file_name =
+						obs_frontend_get_last_recording();
+					// remove the extension
+					recording_file_name = recording_file_name.substr(
+						0, recording_file_name.find_last_of("."));
+					std::string srt_file_name = recording_file_name + ".srt";
+					// rename the file
+					std::rename(gf_->output_file_path.c_str(),
+						    srt_file_name.c_str());
+				}
 			}
 		},
 		gf);
@@ -645,6 +668,7 @@ void transcription_filter_defaults(obs_data_t *s)
 	obs_data_set_default_bool(s, "process_while_muted", false);
 	obs_data_set_default_bool(s, "subtitle_save_srt", false);
 	obs_data_set_default_bool(s, "only_while_recording", false);
+	obs_data_set_default_bool(s, "rename_file_to_match_recording", true);
 	obs_data_set_default_int(s, "step_size_msec", 1000);
 
 	// Whisper parameters
@@ -719,6 +743,8 @@ obs_properties_t *transcription_filter_properties(void *data)
 				OBS_PATH_FILE_SAVE, "Text (*.txt)", NULL);
 	obs_properties_add_bool(ppts, "subtitle_save_srt", MT_("save_srt"));
 	obs_properties_add_bool(ppts, "only_while_recording", MT_("only_while_recording"));
+	obs_properties_add_bool(ppts, "rename_file_to_match_recording",
+				MT_("rename_file_to_match_recording"));
 
 	obs_property_set_modified_callback(subs_output, [](obs_properties_t *props,
 							   obs_property_t *property,
@@ -732,6 +758,8 @@ obs_properties_t *transcription_filter_properties(void *data)
 		obs_property_set_visible(obs_properties_get(props, "subtitle_save_srt"), show_hide);
 		obs_property_set_visible(obs_properties_get(props, "only_while_recording"),
 					 show_hide);
+		obs_property_set_visible(
+			obs_properties_get(props, "rename_file_to_match_recording"), show_hide);
 		return true;
 	});
 

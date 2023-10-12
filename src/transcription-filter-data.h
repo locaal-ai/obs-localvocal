@@ -74,6 +74,7 @@ struct transcription_filter_data {
 	bool save_srt = false;
 	bool save_only_while_recording = false;
 	bool process_while_muted = false;
+	bool rename_file_to_match_recording = false;
 
 	// Text source to output the subtitles
 	obs_weak_source_t *text_source = nullptr;
