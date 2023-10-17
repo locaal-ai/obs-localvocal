@@ -196,15 +196,18 @@ void acquire_weak_text_source_ref(struct transcription_filter_data *gf)
 void set_text_callback(struct transcription_filter_data *gf, const DetectionResultWithText &result)
 {
 #ifdef _WIN32
-	// Russian UTF8 charset on Windows output has a bug, instead of 0xd? it outputs
-	// 0xf?, so we need to replace it. This doesn't affect any other charset, which
-	// outputs the correct UTF8 output. (Except maybe for Greek?)
+	// Some UTF8 charsets on Windows output have a bug, instead of 0xd? it outputs
+	// 0xf?, and 0xc? becomes 0xe?, so we need to replace it.
 	std::string str_copy = result.text;
 	for (size_t i = 0; i < str_copy.size(); ++i) {
 		// if the char MSBs starts with 0xf replace the MSBs with 0xd
 		if ((str_copy.c_str()[i] & 0xf0) == 0xf0) {
 			str_copy[i] = (str_copy.c_str()[i] & 0x0f) | 0xd0;
 		}
+        // if the char MSBs starts with 0xe replace the char with 0xc
+        if ((str_copy.c_str()[i] & 0xf0) == 0xe0) {
+            str_copy[i] = (str_copy.c_str()[i] & 0x0f) | 0xc0;
+        }
 	}
 #else
 	std::string str_copy = result.text;
