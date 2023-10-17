@@ -204,10 +204,10 @@ void set_text_callback(struct transcription_filter_data *gf, const DetectionResu
 		if ((str_copy.c_str()[i] & 0xf0) == 0xf0) {
 			str_copy[i] = (str_copy.c_str()[i] & 0x0f) | 0xd0;
 		}
-        // if the char MSBs starts with 0xe replace the char with 0xc
-        if ((str_copy.c_str()[i] & 0xf0) == 0xe0) {
-            str_copy[i] = (str_copy.c_str()[i] & 0x0f) | 0xc0;
-        }
+		// if the char MSBs starts with 0xe replace the char with 0xc
+		if ((str_copy.c_str()[i] & 0xf0) == 0xe0) {
+			str_copy[i] = (str_copy.c_str()[i] & 0x0f) | 0xc0;
+		}
 	}
 #else
 	std::string str_copy = result.text;
