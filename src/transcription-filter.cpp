@@ -216,7 +216,7 @@ void set_text_callback(struct transcription_filter_data *gf, const DetectionResu
 	if (gf->caption_to_stream) {
 		obs_output_t *streaming_output = obs_frontend_get_streaming_output();
 		if (streaming_output) {
-			obs_output_output_caption_text1(streaming_output, result.text.c_str());
+			obs_output_output_caption_text1(streaming_output, str_copy.c_str());
 			obs_output_release(streaming_output);
 		}
 	}
@@ -231,7 +231,7 @@ void set_text_callback(struct transcription_filter_data *gf, const DetectionResu
 			// Write raw sentence to file, do not append
 			std::ofstream output_file(gf->output_file_path,
 						  std::ios::out | std::ios::trunc);
-			output_file << result.text << std::endl;
+			output_file << str_copy << std::endl;
 			output_file.close();
 		} else {
 			obs_log(gf->log_level, "Saving sentence to file %s, sentence #%d",
@@ -260,7 +260,7 @@ void set_text_callback(struct transcription_filter_data *gf, const DetectionResu
 			format_ts_for_srt(result.end_timestamp_ms);
 			output_file << std::endl;
 
-			output_file << result.text << std::endl;
+			output_file << str_copy << std::endl;
 			output_file << std::endl;
 			output_file.close();
 			gf->sentence_number++;
