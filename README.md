@@ -47,6 +47,7 @@ Check out our other plugins:
 - [Background Removal](https://github.com/royshil/obs-backgroundremoval) removes background from webcam without a green screen.
 - 🚧 Experimental 🚧 [CleanStream](https://github.com/obs-ai/obs-cleanstream) for real-time filler word (uh,um) and profanity removal from live audio stream
 - [URL/API Source](https://github.com/obs-ai/obs-urlsource) that allows fetching live data from an API and displaying it in OBS.
+- [Polyglot](https://github.com/obs-ai/obs-polyglot) translation AI plugin for real-time, local translation to hunderds of languages
 
 ## Download
 Check out the [latest releases](https://github.com/obs-ai/obs-localvocal/releases) for downloads and install instructions.
