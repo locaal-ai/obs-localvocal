@@ -193,8 +193,23 @@ void acquire_weak_text_source_ref(struct transcription_filter_data *gf)
 	}
 }
 
-void set_text_callback(struct transcription_filter_data *gf, const DetectionResultWithText &result)
+void set_text_callback(struct transcription_filter_data *gf,
+		       const DetectionResultWithText &resultIn)
 {
+	DetectionResultWithText result = resultIn;
+	uint64_t now = now_ms();
+	if (result.text.empty() || result.result != DETECTION_RESULT_SPEECH) {
+		// check if we should clear the current sub depending on the minimum subtitle duration
+		if ((now - gf->last_sub_render_time) > gf->min_sub_duration) {
+			// clear the current sub, run an empty sub
+			result.text = "";
+		} else {
+			// nothing to do, the incoming sub is empty
+			return;
+		}
+	}
+	gf->last_sub_render_time = now;
+
 #ifdef _WIN32
 	// Some UTF8 charsets on Windows output have a bug, instead of 0xd? it outputs
 	// 0xf?, and 0xc? becomes 0xe?, so we need to replace it.
@@ -356,6 +371,8 @@ void transcription_filter_update(void *data, obs_data_t *s)
 	gf->start_timestamp_ms = now_ms();
 	gf->sentence_number = 1;
 	gf->process_while_muted = obs_data_get_bool(s, "process_while_muted");
+	gf->min_sub_duration = (int)obs_data_get_int(s, "min_sub_duration");
+	gf->last_sub_render_time = 0;
 
 	obs_log(gf->log_level, "transcription_filter: update text source");
 	// update the text source
@@ -475,7 +492,7 @@ void transcription_filter_update(void *data, obs_data_t *s)
 		}
 	} else {
 		// model path did not change
-		obs_log(LOG_INFO, "model path did not change: %s == %s", gf->whisper_model_path,
+		obs_log(LOG_DEBUG, "model path did not change: %s == %s", gf->whisper_model_path,
 			new_model_path.c_str());
 	}
 
@@ -531,6 +548,8 @@ void *transcription_filter_create(obs_data_t *settings, obs_source_t *filter)
 	gf->step_size_msec = step_by_step_processing
 				     ? (int)obs_data_get_int(settings, "step_size_msec")
 				     : BUFFER_SIZE_MSEC;
+	gf->min_sub_duration = (int)obs_data_get_int(settings, "min_sub_duration");
+	gf->last_sub_render_time = 0;
 	gf->log_level = (int)obs_data_get_int(settings, "log_level");
 	gf->save_srt = obs_data_get_bool(settings, "subtitle_save_srt");
 	gf->save_only_while_recording = obs_data_get_bool(settings, "only_while_recording");
@@ -673,6 +692,7 @@ void transcription_filter_defaults(obs_data_t *s)
 	obs_data_set_default_bool(s, "only_while_recording", false);
 	obs_data_set_default_bool(s, "rename_file_to_match_recording", true);
 	obs_data_set_default_int(s, "step_size_msec", 1000);
+	obs_data_set_default_int(s, "min_sub_duration", 3000);
 
 	// Whisper parameters
 	obs_data_set_default_int(s, "whisper_sampling_method", WHISPER_SAMPLING_BEAM_SEARCH);
@@ -721,6 +741,8 @@ obs_properties_t *transcription_filter_properties(void *data)
 		ppts, "step_by_step_processing", MT_("step_by_step_processing"));
 	obs_properties_add_int_slider(ppts, "step_size_msec", MT_("step_size_msec"), 1000,
 				      BUFFER_SIZE_MSEC, 50);
+	obs_properties_add_int_slider(ppts, "min_sub_duration", MT_("min_sub_duration"), 1000, 5000,
+				      50);
 
 	obs_property_set_modified_callback(step_by_step_processing, [](obs_properties_t *props,
 								       obs_property_t *property,
