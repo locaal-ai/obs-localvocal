@@ -8,8 +8,11 @@
 
 #include <algorithm>
 #include <cctype>
+
+#ifdef _WIN32
 #include <fstream>
 #include <Windows.h>
+#endif
 
 #define VAD_THOLD 0.0001f
 #define FREQ_THOLD 100.0f
