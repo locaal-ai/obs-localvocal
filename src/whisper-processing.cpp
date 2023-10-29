@@ -77,25 +77,27 @@ struct whisper_context *init_whisper_context(const std::string &model_path)
 	obs_log(LOG_INFO, "Loading whisper model from %s", model_path.c_str());
 
 #ifdef _WIN32
-    // convert model path UTF8 to wstring (wchar_t) for whisper
-    int count = MultiByteToWideChar(CP_UTF8, 0, model_path.c_str(), (int)model_path.length(), NULL, 0);
-    std::wstring model_path_ws(count, 0);
-    MultiByteToWideChar(CP_UTF8, 0, model_path.c_str(), (int)model_path.length(), &model_path_ws[0], count);
+	// convert model path UTF8 to wstring (wchar_t) for whisper
+	int count = MultiByteToWideChar(CP_UTF8, 0, model_path.c_str(), (int)model_path.length(),
+					NULL, 0);
+	std::wstring model_path_ws(count, 0);
+	MultiByteToWideChar(CP_UTF8, 0, model_path.c_str(), (int)model_path.length(),
+			    &model_path_ws[0], count);
 
-    // Read model into buffer
-    std::ifstream modelFile(model_path_ws, std::ios::binary);
-    if (!modelFile.is_open()) {
-        obs_log(LOG_ERROR, "Failed to open whisper model file %s", model_path.c_str());
-        return nullptr;
-    }
-    modelFile.seekg(0, std::ios::end);
-    const size_t modelFileSize = modelFile.tellg();
-    modelFile.seekg(0, std::ios::beg);
-    std::vector<char> modelBuffer(modelFileSize);
-    modelFile.read(modelBuffer.data(), modelFileSize);
-    modelFile.close();
+	// Read model into buffer
+	std::ifstream modelFile(model_path_ws, std::ios::binary);
+	if (!modelFile.is_open()) {
+		obs_log(LOG_ERROR, "Failed to open whisper model file %s", model_path.c_str());
+		return nullptr;
+	}
+	modelFile.seekg(0, std::ios::end);
+	const size_t modelFileSize = modelFile.tellg();
+	modelFile.seekg(0, std::ios::beg);
+	std::vector<char> modelBuffer(modelFileSize);
+	modelFile.read(modelBuffer.data(), modelFileSize);
+	modelFile.close();
 
-    // Initialize whisper
+	// Initialize whisper
 	struct whisper_context *ctx = whisper_init_from_buffer(modelBuffer.data(), modelFileSize);
 #else
 	struct whisper_context *ctx = whisper_init_from_file(model_path.c_str());
