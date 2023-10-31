@@ -2,10 +2,10 @@
 
 <div align="center">
 
-[![GitHub](https://img.shields.io/github/license/obs-ai/obs-localvocal)](https://github.com/obs-ai/obs-localvocal/blob/main/LICENSE)
-[![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/obs-ai/obs-localvocal/push.yaml)](https://github.com/obs-ai/obs-localvocal/actions/workflows/push.yaml)
-[![Total downloads](https://img.shields.io/github/downloads/obs-ai/obs-localvocal/total)](https://github.com/obs-ai/obs-localvocal/releases)
-[![GitHub release (latest by date)](https://img.shields.io/github/v/release/obs-ai/obs-localvocal)](https://github.com/obs-ai/obs-localvocal/releases)
+[![GitHub](https://img.shields.io/github/license/occ-ai/obs-localvocal)](https://github.com/occ-ai/obs-localvocal/blob/main/LICENSE)
+[![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/occ-ai/obs-localvocal/push.yaml)](https://github.com/occ-ai/obs-localvocal/actions/workflows/push.yaml)
+[![Total downloads](https://img.shields.io/github/downloads/occ-ai/obs-localvocal/total)](https://github.com/occ-ai/obs-localvocal/releases)
+[![GitHub release (latest by date)](https://img.shields.io/github/v/release/occ-ai/obs-localvocal)](https://github.com/occ-ai/obs-localvocal/releases)
 
 </div>
 
@@ -44,13 +44,13 @@ Internally the plugin is running a neural network ([OpenAI Whisper](https://gith
 It's using the [Whisper.cpp](https://github.com/ggerganov/whisper.cpp) project from [ggerganov](https://github.com/ggerganov) to run the Whisper network in a very efficient way on CPUs and GPUs.
 
 Check out our other plugins:
-- [Background Removal](https://github.com/royshil/obs-backgroundremoval) removes background from webcam without a green screen.
-- 🚧 Experimental 🚧 [CleanStream](https://github.com/obs-ai/obs-cleanstream) for real-time filler word (uh,um) and profanity removal from live audio stream
-- [URL/API Source](https://github.com/obs-ai/obs-urlsource) that allows fetching live data from an API and displaying it in OBS.
-- [Polyglot](https://github.com/obs-ai/obs-polyglot) translation AI plugin for real-time, local translation to hunderds of languages
+- [Background Removal](https://github.com/occ-ai/obs-backgroundremoval) removes background from webcam without a green screen.
+- 🚧 Experimental 🚧 [CleanStream](https://github.com/occ-ai/obs-cleanstream) for real-time filler word (uh,um) and profanity removal from live audio stream
+- [URL/API Source](https://github.com/occ-ai/obs-urlsource) that allows fetching live data from an API and displaying it in OBS.
+- [Polyglot](https://github.com/occ-ai/obs-polyglot) translation AI plugin for real-time, local translation to hunderds of languages
 
 ## Download
-Check out the [latest releases](https://github.com/obs-ai/obs-localvocal/releases) for downloads and install instructions.
+Check out the [latest releases](https://github.com/occ-ai/obs-localvocal/releases) for downloads and install instructions.
 
 ## Building
 
