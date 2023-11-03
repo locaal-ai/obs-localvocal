@@ -49,6 +49,10 @@ struct transcription_filter_data {
 	uint64_t start_timestamp_ms;
 	// Sentence counter for srt
 	size_t sentence_number;
+	// Minimal subtitle duration in ms
+	size_t min_sub_duration;
+	// Last time a subtitle was rendered
+	uint64_t last_sub_render_time;
 
 	/* PCM buffers */
 	float *copy_buffers[MAX_PREPROC_CHANNELS];
