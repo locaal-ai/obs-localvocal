@@ -134,7 +134,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/plugin-support.c.in")
     PRIVATE plugin-support.c
     PUBLIC src/plugin-support.h)
   target_include_directories(plugin-support PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src")
-  if (UNIX AND NOT APPLE)
+  if(UNIX AND NOT APPLE)
     # add fPIC
     set_property(TARGET plugin-support PROPERTY POSITION_INDEPENDENT_CODE ON)
   endif()
