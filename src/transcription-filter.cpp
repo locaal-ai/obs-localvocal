@@ -167,7 +167,7 @@ void transcription_filter_destroy(void *data)
 	delete gf->wshiper_thread_cv;
 	delete gf->text_source_mutex;
 
-	bfree(gf);
+	delete gf;
 }
 
 void acquire_weak_text_source_ref(struct transcription_filter_data *gf)
