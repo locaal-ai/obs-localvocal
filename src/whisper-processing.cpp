@@ -8,6 +8,7 @@
 
 #include <algorithm>
 #include <cctype>
+#include <cfloat>
 
 #ifdef _WIN32
 #include <fstream>
@@ -47,36 +48,34 @@ void high_pass_filter(float *pcmf32, size_t pcm32f_size, float cutoff, uint32_t 
 
 float calculate_segment_energy(const float *pcmf32, size_t pcm32f_size)
 {
-    float energy = 0.0f;
-    for (size_t i = 0; i < pcm32f_size; i++) {
-        energy += fabsf(pcmf32[i]);
-    }
-    return energy / (float)pcm32f_size;
+	float energy = 0.0f;
+	for (size_t i = 0; i < pcm32f_size; i++) {
+		energy += fabsf(pcmf32[i]);
+	}
+	return energy / (float)pcm32f_size;
 }
 
 size_t find_tail_word_cutoff(const float *pcmf32, size_t pcm32f_size, uint32_t sample_rate_hz)
 {
-    // segment size: 10ms worth of samples
-    const size_t segment_size = 10 * sample_rate_hz / 1000;
-    // overlap size in samples
-    const size_t overlap_size = OVERLAP_SIZE_MSEC * sample_rate_hz / 1000;
-    // tail lookup window starting point
-    const size_t tail_lookup_start = pcm32f_size - overlap_size;
+	// segment size: 10ms worth of samples
+	const size_t segment_size = 10 * sample_rate_hz / 1000;
+	// overlap size in samples
+	const size_t overlap_size = OVERLAP_SIZE_MSEC * sample_rate_hz / 1000;
+	// tail lookup window starting point
+	const size_t tail_lookup_start = pcm32f_size - overlap_size;
 
-    size_t tail_word_cutoff = pcm32f_size;
-    size_t segment_pointer = tail_lookup_start;
-    float lowest_energy = FLT_MAX;
-    for (size_t i = tail_lookup_start; i < pcm32f_size - segment_size; i += segment_size/2) {
-        const float energy = calculate_segment_energy(pcmf32 + i, segment_size);
-        if (energy < 0.0001 && energy < lowest_energy) {
-            tail_word_cutoff = i;
-            lowest_energy = energy;
-        }
-    }
+	size_t tail_word_cutoff = pcm32f_size;
+	float lowest_energy = FLT_MAX;
+	for (size_t i = tail_lookup_start; i < pcm32f_size - segment_size; i += segment_size / 2) {
+		const float energy = calculate_segment_energy(pcmf32 + i, segment_size);
+		if (energy < 0.0001 && energy < lowest_energy) {
+			tail_word_cutoff = i;
+			lowest_energy = energy;
+		}
+	}
 
-    return tail_word_cutoff;
+	return tail_word_cutoff;
 }
-
 
 // VAD (voice activity detection), return true if speech detected
 bool vad_simple(float *pcmf32, size_t pcm32f_size, uint32_t sample_rate, float vad_thold,
@@ -311,10 +310,12 @@ void process_audio_from_buffer(struct transcription_filter_data *gf)
 	}
 
 	if (!skipped_inference) {
-        // find the tail word cutoff
-        const size_t tail_word_cutoff = find_tail_word_cutoff(output[0], out_frames, WHISPER_SAMPLE_RATE);
-        if (tail_word_cutoff < out_frames)
-            obs_log(gf->log_level, "tail word cutoff: %d frames", (int)tail_word_cutoff);
+		// find the tail word cutoff
+		const size_t tail_word_cutoff =
+			find_tail_word_cutoff(output[0], out_frames, WHISPER_SAMPLE_RATE);
+		if (tail_word_cutoff < out_frames)
+			obs_log(gf->log_level, "tail word cutoff: %d frames",
+				(int)tail_word_cutoff);
 
 		// run inference
 		const struct DetectionResultWithText inference_result =
