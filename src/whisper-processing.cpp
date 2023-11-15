@@ -111,6 +111,8 @@ struct whisper_context *init_whisper_context(const std::string &model_path)
 {
 	obs_log(LOG_INFO, "Loading whisper model from %s", model_path.c_str());
 
+	struct whisper_context_params cparams;
+
 #ifdef _WIN32
 	// convert model path UTF8 to wstring (wchar_t) for whisper
 	int count = MultiByteToWideChar(CP_UTF8, 0, model_path.c_str(), (int)model_path.length(),
@@ -133,9 +135,11 @@ struct whisper_context *init_whisper_context(const std::string &model_path)
 	modelFile.close();
 
 	// Initialize whisper
-	struct whisper_context *ctx = whisper_init_from_buffer(modelBuffer.data(), modelFileSize);
+	struct whisper_context *ctx =
+		whisper_init_from_buffer_with_params(modelBuffer.data(), modelFileSize, cparams);
 #else
-	struct whisper_context *ctx = whisper_init_from_file(model_path.c_str());
+	struct whisper_context *ctx =
+		whisper_init_from_file_with_params(model_path.c_str(), cparams);
 #endif
 
 	if (ctx == nullptr) {
@@ -372,6 +376,10 @@ void whisper_loop(void *data)
 	// Thread main loop
 	while (true) {
 		{
+			if (gf->whisper_ctx_mutex == nullptr) {
+				obs_log(LOG_WARNING, "whisper_ctx_mutex is null, exiting thread");
+				break;
+			}
 			std::lock_guard<std::mutex> lock(*gf->whisper_ctx_mutex);
 			if (gf->whisper_context == nullptr) {
 				obs_log(LOG_WARNING, "Whisper context is null, exiting thread");
