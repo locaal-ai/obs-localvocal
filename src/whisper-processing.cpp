@@ -113,9 +113,9 @@ struct whisper_context *init_whisper_context(const std::string &model_path)
 
 	struct whisper_context_params cparams;
 #ifdef LOCALVOCAL_WITH_CUDA
-    cparams.use_gpu = true;
+	cparams.use_gpu = true;
 #else
-    cparams.use_gpu = false;
+	cparams.use_gpu = false;
 #endif
 
 #ifdef _WIN32
