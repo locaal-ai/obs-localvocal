@@ -112,6 +112,11 @@ struct whisper_context *init_whisper_context(const std::string &model_path)
 	obs_log(LOG_INFO, "Loading whisper model from %s", model_path.c_str());
 
 	struct whisper_context_params cparams;
+#ifdef LOCALVOCAL_WITH_CUDA
+    cparams.use_gpu = true;
+#else
+    cparams.use_gpu = false;
+#endif
 
 #ifdef _WIN32
 	// convert model path UTF8 to wstring (wchar_t) for whisper

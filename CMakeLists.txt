@@ -40,6 +40,10 @@ set(USE_SYSTEM_CURL
     OFF
     CACHE STRING "Use system cURL")
 
+if(LOCALVOCAL_WITH_CUDA)
+  add_compile_definitions(-DLOCALVOCAL_WITH_CUDA)
+endif()
+
 if(USE_SYSTEM_CURL)
   find_package(CURL REQUIRED)
   target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE "${CURL_LIBRARIES}")
