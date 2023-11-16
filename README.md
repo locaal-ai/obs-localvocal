@@ -17,12 +17,16 @@ If this free plugin has been valuable to you consider adding a ⭐ to this GH re
 
 <div align="center">
   <a href="https://youtu.be/5XqTMqpui3Q" target="_blank">
-    <img width="40%" src="https://github-production-user-asset-6210df.s3.amazonaws.com/441170/267728411-334551b8-6a7f-42bf-8434-6ad6b512a401.jpeg" />
+    <img width="27%" src="https://github-production-user-asset-6210df.s3.amazonaws.com/441170/267728411-334551b8-6a7f-42bf-8434-6ad6b512a401.jpeg" />
   </a>
   <a href="https://youtu.be/Q34LQsx-nlg" target="_blank">
-    <img width="40%" src="https://github-production-user-asset-6210df.s3.amazonaws.com/441170/271725640-3e5edd4a-9d07-4d19-b631-c70f91c73c27.PNG" />
-  </a><br/>
-  https://youtu.be/5XqTMqpui3Q & https://youtu.be/Q34LQsx-nlg
+    <img width="27%" src="https://github-production-user-asset-6210df.s3.amazonaws.com/441170/271725640-3e5edd4a-9d07-4d19-b631-c70f91c73c27.PNG" />
+  </a>
+  <a href="https://youtu.be/4BTmoKr0YMw" target="_blank">
+    <img width="27%" src="https://github-production-user-asset-6210df.s3.amazonaws.com/441170/283315931-70c0c583-d1dc-4bd6-9ace-86c8e47f1229.jpg" />
+  </a>
+  <br/>
+  https://youtu.be/5XqTMqpui3Q & https://youtu.be/Q34LQsx-nlg & https://youtu.be/4BTmoKr0YMw
 </div>
 
 Current Features:
