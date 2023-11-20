@@ -3,9 +3,9 @@
 #include "model-utils/model-downloader.h"
 #include "whisper-processing.h"
 
-
-void update_whsiper_model_path(struct transcription_filter_data *gf, obs_data_t *s) {
-    // update the whisper model path
+void update_whsiper_model_path(struct transcription_filter_data *gf, obs_data_t *s)
+{
+	// update the whisper model path
 	std::string new_model_path = obs_data_get_string(s, "whisper_model_path");
 	const bool is_external_model = new_model_path.find("!!!external!!!") != std::string::npos;
 

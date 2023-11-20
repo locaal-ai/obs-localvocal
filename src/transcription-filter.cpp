@@ -365,7 +365,6 @@ void set_text_callback(struct transcription_filter_data *gf,
 	}
 };
 
-
 void transcription_filter_update(void *data, obs_data_t *s)
 {
 	struct transcription_filter_data *gf =
