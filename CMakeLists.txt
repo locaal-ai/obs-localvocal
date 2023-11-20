@@ -41,7 +41,7 @@ set(USE_SYSTEM_CURL
     CACHE STRING "Use system cURL")
 
 if(LOCALVOCAL_WITH_CUDA)
-  add_compile_definitions(-DLOCALVOCAL_WITH_CUDA)
+  add_compile_definitions("LOCALVOCAL_WITH_CUDA")
 endif()
 
 if(USE_SYSTEM_CURL)
@@ -58,7 +58,12 @@ target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE Whispercpp)
 
 target_sources(
   ${CMAKE_PROJECT_NAME}
-  PRIVATE src/plugin-main.c src/transcription-filter.cpp src/transcription-filter.c src/whisper-processing.cpp
-          src/model-utils/model-downloader.cpp src/model-utils/model-downloader-ui.cpp)
+  PRIVATE src/plugin-main.c
+          src/transcription-filter.cpp
+          src/transcription-filter.c
+          src/whisper-utils/whisper-processing.cpp
+          src/model-utils/model-downloader.cpp
+          src/model-utils/model-downloader-ui.cpp
+          src/whisper-utils/whisper-utils.cpp)
 
 set_target_properties_plugin(${CMAKE_PROJECT_NAME} PROPERTIES OUTPUT_NAME ${_name})
