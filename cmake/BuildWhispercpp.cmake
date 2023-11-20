@@ -26,11 +26,12 @@ if(WIN32)
     # Build with CUDA Check that CUDA_TOOLKIT_ROOT_DIR is set
     if(NOT DEFINED CUDA_TOOLKIT_ROOT_DIR)
       message(FATAL_ERROR "CUDA_TOOLKIT_ROOT_DIR is not set. Please set it to the root directory of your CUDA "
-                          "installation.")
+                          "installation, e.g. `C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v11.4`")
     endif(NOT DEFINED CUDA_TOOLKIT_ROOT_DIR)
 
     set(WHISPER_ADDITIONAL_ENV "CUDAToolkit_ROOT=${CUDA_TOOLKIT_ROOT_DIR}")
-    set(WHISPER_ADDITIONAL_CMAKE_ARGS -DWHISPER_CUBLAS=ON -DCMAKE_GENERATOR_TOOLSET=cuda=${CUDA_TOOLKIT_ROOT_DIR})
+    set(WHISPER_ADDITIONAL_CMAKE_ARGS -DWHISPER_CUBLAS=ON -DWHISPER_OPENBLAS=OFF
+                                      -DCMAKE_GENERATOR_TOOLSET=cuda=${CUDA_TOOLKIT_ROOT_DIR})
   else()
     # Build with OpenBLAS
     set(OpenBLAS_URL "https://github.com/xianyi/OpenBLAS/releases/download/v0.3.24/OpenBLAS-0.3.24-x64.zip")
