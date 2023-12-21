@@ -60,11 +60,11 @@ struct transcription_filter_data {
 	struct circlebuf input_buffers[MAX_PREPROC_CHANNELS];
 
 	/* Resampler */
-	audio_resampler_t *resampler = nullptr;
+	audio_resampler_t *resampler;
 
 	/* whisper */
-	char *whisper_model_path = nullptr;
-	struct whisper_context *whisper_context = nullptr;
+	char *whisper_model_path;
+	struct whisper_context *whisper_context;
 	whisper_full_params whisper_params;
 
 	float filler_p_threshold;
@@ -81,21 +81,41 @@ struct transcription_filter_data {
 	bool rename_file_to_match_recording = false;
 
 	// Text source to output the subtitles
-	obs_weak_source_t *text_source = nullptr;
-	char *text_source_name = nullptr;
-	std::mutex *text_source_mutex = nullptr;
+	obs_weak_source_t *text_source;
+	char *text_source_name;
+	std::mutex *text_source_mutex;
 	// Callback to set the text in the output text source (subtitles)
 	std::function<void(const DetectionResultWithText &result)> setTextCallback;
 	// Output file path to write the subtitles
-	std::string output_file_path = "";
-	std::string whisper_model_file_currently_loaded = "";
+	std::string output_file_path;
+	std::string whisper_model_file_currently_loaded;
 
 	// Use std for thread and mutex
 	std::thread whisper_thread;
 
-	std::mutex *whisper_buf_mutex = nullptr;
-	std::mutex *whisper_ctx_mutex = nullptr;
-	std::condition_variable *wshiper_thread_cv = nullptr;
+	std::mutex *whisper_buf_mutex;
+	std::mutex *whisper_ctx_mutex;
+	std::condition_variable *wshiper_thread_cv;
+
+	// ctor
+	transcription_filter_data()
+	{
+		// initialize all pointers to nullptr
+		for (size_t i = 0; i < MAX_PREPROC_CHANNELS; i++) {
+			copy_buffers[i] = nullptr;
+		}
+		context = nullptr;
+		resampler = nullptr;
+		whisper_model_path = nullptr;
+		whisper_context = nullptr;
+		text_source = nullptr;
+		text_source_mutex = nullptr;
+		whisper_buf_mutex = nullptr;
+		whisper_ctx_mutex = nullptr;
+		wshiper_thread_cv = nullptr;
+		output_file_path = "";
+		whisper_model_file_currently_loaded = "";
+	}
 };
 
 // Audio packet info

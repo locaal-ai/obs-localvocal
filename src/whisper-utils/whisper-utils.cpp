@@ -94,7 +94,7 @@ void shutdown_whisper_thread(struct transcription_filter_data *gf)
 void start_whisper_thread_with_path(struct transcription_filter_data *gf, const std::string &path)
 {
 	obs_log(gf->log_level, "start_whisper_thread_with_path: %s", path.c_str());
-	if (!gf->whisper_ctx_mutex) {
+	if (gf->whisper_ctx_mutex == nullptr) {
 		obs_log(LOG_ERROR, "cannot init whisper: whisper_ctx_mutex is null");
 		return;
 	}
