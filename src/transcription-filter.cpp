@@ -18,6 +18,8 @@
 #include <Windows.h>
 #endif
 
+#include <QString>
+
 inline enum speaker_layout convert_speaker_layout(uint8_t channels)
 {
 	switch (channels) {
@@ -125,19 +127,7 @@ void transcription_filter_destroy(void *data)
 		static_cast<struct transcription_filter_data *>(data);
 
 	obs_log(gf->log_level, "transcription_filter_destroy");
-	{
-		std::lock_guard<std::mutex> lock(*gf->whisper_ctx_mutex);
-		if (gf->whisper_context != nullptr) {
-			whisper_free(gf->whisper_context);
-			gf->whisper_context = nullptr;
-			gf->wshiper_thread_cv->notify_all();
-		}
-	}
-
-	// join the thread
-	if (gf->whisper_thread.joinable()) {
-		gf->whisper_thread.join();
-	}
+	shutdown_whisper_thread(gf);
 
 	if (gf->text_source_name) {
 		bfree(gf->text_source_name);
@@ -448,13 +438,13 @@ void transcription_filter_update(void *data, obs_data_t *s)
 		obs_weak_source_release(old_weak_text_source);
 	}
 
-	obs_log(gf->log_level, "transcription_filter: update whisper model");
-	update_whsiper_model_path(gf, s);
-
-	if (!gf->whisper_ctx_mutex) {
+	if (gf->whisper_ctx_mutex == nullptr) {
 		obs_log(LOG_ERROR, "whisper_ctx_mutex is null");
 		return;
 	}
+
+	obs_log(gf->log_level, "transcription_filter: update whisper model");
+	update_whsiper_model_path(gf, s);
 
 	obs_log(gf->log_level, "transcription_filter: update whisper params");
 	std::lock_guard<std::mutex> lock(*gf->whisper_ctx_mutex);
@@ -492,7 +482,7 @@ void *transcription_filter_create(obs_data_t *settings, obs_source_t *filter)
 {
 	obs_log(LOG_INFO, "transcription filter create");
 
-	struct transcription_filter_data *gf = new transcription_filter_data;
+	struct transcription_filter_data *gf = new transcription_filter_data();
 
 	// Get the number of channels for the input source
 	gf->channels = audio_output_get_channels(obs_get_audio());
@@ -648,6 +638,7 @@ void transcription_filter_defaults(obs_data_t *s)
 	obs_data_set_default_bool(s, "rename_file_to_match_recording", true);
 	obs_data_set_default_int(s, "step_size_msec", 1000);
 	obs_data_set_default_int(s, "min_sub_duration", 3000);
+	obs_data_set_default_bool(s, "advanced_settings", false);
 
 	// Whisper parameters
 	obs_data_set_default_int(s, "whisper_sampling_method", WHISPER_SAMPLING_BEAM_SEARCH);
@@ -684,12 +675,6 @@ obs_properties_t *transcription_filter_properties(void *data)
 
 	obs_properties_t *ppts = obs_properties_create();
 
-	obs_properties_add_bool(ppts, "vad_enabled", MT_("vad_enabled"));
-	obs_property_t *list = obs_properties_add_list(ppts, "log_level", MT_("log_level"),
-						       OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_INT);
-	obs_property_list_add_int(list, "DEBUG", LOG_DEBUG);
-	obs_property_list_add_int(list, "INFO", LOG_INFO);
-	obs_property_list_add_int(list, "WARNING", LOG_WARNING);
 	obs_properties_add_bool(ppts, "log_words", MT_("log_words"));
 	obs_properties_add_bool(ppts, "caption_to_stream", MT_("caption_to_stream"));
 	obs_property_t *step_by_step_processing = obs_properties_add_bool(
@@ -799,9 +784,28 @@ obs_properties_t *transcription_filter_properties(void *data)
 		return true;
 	});
 
+	obs_property_t * advanced_settings_prop = obs_properties_add_bool(ppts, "advanced_settings", MT_("advanced_settings"));
+	obs_property_set_modified_callback(advanced_settings_prop, [](obs_properties_t *props,
+								   obs_property_t *property,
+								   obs_data_t *settings) {
+		UNUSED_PARAMETER(property);
+		// If advanced settings is enabled, show the advanced settings group
+		const bool show_hide = obs_data_get_bool(settings, "advanced_settings");
+		obs_property_set_visible(obs_properties_get(props, "whisper_params_group"),
+					 show_hide);
+		return true;
+	});
+
 	obs_properties_t *whisper_params_group = obs_properties_create();
 	obs_properties_add_group(ppts, "whisper_params_group", MT_("whisper_parameters"),
 				 OBS_GROUP_NORMAL, whisper_params_group);
+
+	obs_properties_add_bool(whisper_params_group, "vad_enabled", MT_("vad_enabled"));
+	obs_property_t *list = obs_properties_add_list(whisper_params_group, "log_level", MT_("log_level"),
+						       OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_INT);
+	obs_property_list_add_int(list, "DEBUG", LOG_DEBUG);
+	obs_property_list_add_int(list, "INFO", LOG_INFO);
+	obs_property_list_add_int(list, "WARNING", LOG_WARNING);
 
 	// Add language selector
 	obs_property_t *whisper_language_select_list = obs_properties_add_list(
@@ -884,6 +888,14 @@ obs_properties_t *transcription_filter_properties(void *data)
 	// float length_penalty
 	obs_properties_add_float_slider(whisper_params_group, "length_penalty",
 					MT_("length_penalty"), -1.0f, 1.0f, 0.1f);
+
+	// Add a informative text about the plugin
+	obs_properties_add_text(ppts, "info",
+				QString(PLUGIN_INFO_TEMPLATE)
+					.arg(PLUGIN_VERSION)
+					.toStdString()
+					.c_str(),
+				OBS_TEXT_INFO);
 
 	UNUSED_PARAMETER(data);
 	return ppts;
