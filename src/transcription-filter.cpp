@@ -784,10 +784,11 @@ obs_properties_t *transcription_filter_properties(void *data)
 		return true;
 	});
 
-	obs_property_t * advanced_settings_prop = obs_properties_add_bool(ppts, "advanced_settings", MT_("advanced_settings"));
+	obs_property_t *advanced_settings_prop =
+		obs_properties_add_bool(ppts, "advanced_settings", MT_("advanced_settings"));
 	obs_property_set_modified_callback(advanced_settings_prop, [](obs_properties_t *props,
-								   obs_property_t *property,
-								   obs_data_t *settings) {
+								      obs_property_t *property,
+								      obs_data_t *settings) {
 		UNUSED_PARAMETER(property);
 		// If advanced settings is enabled, show the advanced settings group
 		const bool show_hide = obs_data_get_bool(settings, "advanced_settings");
@@ -801,8 +802,9 @@ obs_properties_t *transcription_filter_properties(void *data)
 				 OBS_GROUP_NORMAL, whisper_params_group);
 
 	obs_properties_add_bool(whisper_params_group, "vad_enabled", MT_("vad_enabled"));
-	obs_property_t *list = obs_properties_add_list(whisper_params_group, "log_level", MT_("log_level"),
-						       OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_INT);
+	obs_property_t *list = obs_properties_add_list(whisper_params_group, "log_level",
+						       MT_("log_level"), OBS_COMBO_TYPE_LIST,
+						       OBS_COMBO_FORMAT_INT);
 	obs_property_list_add_int(list, "DEBUG", LOG_DEBUG);
 	obs_property_list_add_int(list, "INFO", LOG_INFO);
 	obs_property_list_add_int(list, "WARNING", LOG_WARNING);
@@ -890,12 +892,10 @@ obs_properties_t *transcription_filter_properties(void *data)
 					MT_("length_penalty"), -1.0f, 1.0f, 0.1f);
 
 	// Add a informative text about the plugin
-	obs_properties_add_text(ppts, "info",
-				QString(PLUGIN_INFO_TEMPLATE)
-					.arg(PLUGIN_VERSION)
-					.toStdString()
-					.c_str(),
-				OBS_TEXT_INFO);
+	obs_properties_add_text(
+		ppts, "info",
+		QString(PLUGIN_INFO_TEMPLATE).arg(PLUGIN_VERSION).toStdString().c_str(),
+		OBS_TEXT_INFO);
 
 	UNUSED_PARAMETER(data);
 	return ppts;

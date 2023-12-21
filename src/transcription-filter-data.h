@@ -98,7 +98,8 @@ struct transcription_filter_data {
 	std::condition_variable *wshiper_thread_cv;
 
 	// ctor
-	transcription_filter_data() {
+	transcription_filter_data()
+	{
 		// initialize all pointers to nullptr
 		for (size_t i = 0; i < MAX_PREPROC_CHANNELS; i++) {
 			copy_buffers[i] = nullptr;
