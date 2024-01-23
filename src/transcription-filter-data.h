@@ -76,6 +76,7 @@ struct transcription_filter_data {
 	bool caption_to_stream;
 	bool active = false;
 	bool save_srt = false;
+	bool truncate_output_file = false;
 	bool save_only_while_recording = false;
 	bool process_while_muted = false;
 	bool rename_file_to_match_recording = false;

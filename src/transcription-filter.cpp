@@ -288,10 +288,17 @@ void set_text_callback(struct transcription_filter_data *gf,
 			// We are not recording, do not save the sentence to file
 			return;
 		}
+		// should the file be truncated?
+		std::ios_base::openmode openmode = std::ios::out;
+		if (gf->truncate_output_file) {
+			openmode |= std::ios::trunc;
+		} else {
+			openmode |= std::ios::app;
+		}
 		if (!gf->save_srt) {
-			// Write raw sentence to file, do not append
+			// Write raw sentence to file
 			std::ofstream output_file(gf->output_file_path,
-						  std::ios::out | std::ios::trunc);
+						  openmode);
 			output_file << str_copy << std::endl;
 			output_file.close();
 		} else {
@@ -299,7 +306,7 @@ void set_text_callback(struct transcription_filter_data *gf,
 				gf->output_file_path.c_str(), gf->sentence_number);
 			// Append sentence to file in .srt format
 			std::ofstream output_file(gf->output_file_path,
-						  std::ios::out | std::ios::app);
+						  openmode);
 			output_file << gf->sentence_number << std::endl;
 			// use the start and end timestamps to calculate the start and end time in srt format
 			auto format_ts_for_srt = [&output_file](uint64_t ts) {
@@ -370,6 +377,7 @@ void transcription_filter_update(void *data, obs_data_t *s)
 	gf->step_size_msec = step_by_step_processing ? (int)obs_data_get_int(s, "step_size_msec")
 						     : BUFFER_SIZE_MSEC;
 	gf->save_srt = obs_data_get_bool(s, "subtitle_save_srt");
+	gf->truncate_output_file = obs_data_get_bool(s, "truncate_output_file");
 	gf->save_only_while_recording = obs_data_get_bool(s, "only_while_recording");
 	gf->rename_file_to_match_recording = obs_data_get_bool(s, "rename_file_to_match_recording");
 	// Get the current timestamp using the system clock
@@ -497,6 +505,7 @@ void *transcription_filter_create(obs_data_t *settings, obs_source_t *filter)
 	gf->last_sub_render_time = 0;
 	gf->log_level = (int)obs_data_get_int(settings, "log_level");
 	gf->save_srt = obs_data_get_bool(settings, "subtitle_save_srt");
+	gf->truncate_output_file = obs_data_get_bool(settings, "truncate_output_file");
 	gf->save_only_while_recording = obs_data_get_bool(settings, "only_while_recording");
 	gf->rename_file_to_match_recording =
 		obs_data_get_bool(settings, "rename_file_to_match_recording");
@@ -634,6 +643,7 @@ void transcription_filter_defaults(obs_data_t *s)
 	obs_data_set_default_bool(s, "step_by_step_processing", false);
 	obs_data_set_default_bool(s, "process_while_muted", false);
 	obs_data_set_default_bool(s, "subtitle_save_srt", false);
+	obs_data_set_default_bool(s, "truncate_output_file", false);
 	obs_data_set_default_bool(s, "only_while_recording", false);
 	obs_data_set_default_bool(s, "rename_file_to_match_recording", true);
 	obs_data_set_default_int(s, "step_size_msec", 1000);
@@ -707,6 +717,7 @@ obs_properties_t *transcription_filter_properties(void *data)
 	obs_properties_add_path(ppts, "subtitle_output_filename", MT_("output_filename"),
 				OBS_PATH_FILE_SAVE, "Text (*.txt)", NULL);
 	obs_properties_add_bool(ppts, "subtitle_save_srt", MT_("save_srt"));
+	obs_properties_add_bool(ppts, "truncate_output_file", MT_("truncate_output_file"));
 	obs_properties_add_bool(ppts, "only_while_recording", MT_("only_while_recording"));
 	obs_properties_add_bool(ppts, "rename_file_to_match_recording",
 				MT_("rename_file_to_match_recording"));
