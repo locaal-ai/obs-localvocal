@@ -184,8 +184,8 @@ void acquire_weak_text_source_ref(struct transcription_filter_data *gf)
 	}
 }
 
-#define is_lead_byte(c) (((c)&0xe0) == 0xc0 || ((c)&0xf0) == 0xe0 || ((c)&0xf8) == 0xf0)
-#define is_trail_byte(c) (((c)&0xc0) == 0x80)
+#define is_lead_byte(c) (((c) & 0xe0) == 0xc0 || ((c) & 0xf0) == 0xe0 || ((c) & 0xf8) == 0xf0)
+#define is_trail_byte(c) (((c) & 0xc0) == 0x80)
 
 inline int lead_byte_length(const uint8_t c)
 {
@@ -297,16 +297,14 @@ void set_text_callback(struct transcription_filter_data *gf,
 		}
 		if (!gf->save_srt) {
 			// Write raw sentence to file
-			std::ofstream output_file(gf->output_file_path,
-						  openmode);
+			std::ofstream output_file(gf->output_file_path, openmode);
 			output_file << str_copy << std::endl;
 			output_file.close();
 		} else {
 			obs_log(gf->log_level, "Saving sentence to file %s, sentence #%d",
 				gf->output_file_path.c_str(), gf->sentence_number);
 			// Append sentence to file in .srt format
-			std::ofstream output_file(gf->output_file_path,
-						  openmode);
+			std::ofstream output_file(gf->output_file_path, openmode);
 			output_file << gf->sentence_number << std::endl;
 			// use the start and end timestamps to calculate the start and end time in srt format
 			auto format_ts_for_srt = [&output_file](uint64_t ts) {
