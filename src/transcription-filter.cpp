@@ -184,8 +184,8 @@ void acquire_weak_text_source_ref(struct transcription_filter_data *gf)
 	}
 }
 
-#define is_lead_byte(c) (((c) & 0xe0) == 0xc0 || ((c) & 0xf0) == 0xe0 || ((c) & 0xf8) == 0xf0)
-#define is_trail_byte(c) (((c) & 0xc0) == 0x80)
+#define is_lead_byte(c) (((c)&0xe0) == 0xc0 || ((c)&0xf0) == 0xe0 || ((c)&0xf8) == 0xf0)
+#define is_trail_byte(c) (((c)&0xc0) == 0x80)
 
 inline int lead_byte_length(const uint8_t c)
 {
