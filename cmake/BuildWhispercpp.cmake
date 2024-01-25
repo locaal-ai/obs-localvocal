@@ -2,7 +2,7 @@ include(ExternalProject)
 
 set(CMAKE_OSX_ARCHITECTURES_ "arm64$<SEMICOLON>x86_64")
 
-set(Whispercpp_Build_GIT_TAG "8986690c2a7b81b2b5d79cdc186b5aa672311740")
+set(Whispercpp_Build_GIT_TAG "1cf679dec4eca99aeaed4fe09a8092803bdecfc1")
 
 if(${CMAKE_BUILD_TYPE} STREQUAL Release OR ${CMAKE_BUILD_TYPE} STREQUAL RelWithDebInfo)
   set(Whispercpp_BUILD_TYPE Release)
