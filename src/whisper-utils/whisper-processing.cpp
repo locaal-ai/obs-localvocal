@@ -55,12 +55,12 @@ float calculate_segment_energy(const float *pcmf32, size_t pcm32f_size)
 	return energy / (float)pcm32f_size;
 }
 
-size_t find_tail_word_cutoff(const float *pcmf32, size_t pcm32f_size, uint32_t sample_rate_hz)
+size_t find_tail_word_cutoff(const float *pcmf32, size_t pcm32f_size, size_t overlap_ms, uint32_t sample_rate_hz)
 {
 	// segment size: 10ms worth of samples
 	const size_t segment_size = 10 * sample_rate_hz / 1000;
 	// overlap size in samples
-	const size_t overlap_size = OVERLAP_SIZE_MSEC * sample_rate_hz / 1000;
+	const size_t overlap_size = overlap_ms * sample_rate_hz / 1000;
 	// tail lookup window starting point
 	const size_t tail_lookup_start = pcm32f_size - overlap_size;
 
@@ -321,7 +321,7 @@ void process_audio_from_buffer(struct transcription_filter_data *gf)
 	if (!skipped_inference) {
 		// find the tail word cutoff
 		const size_t tail_word_cutoff =
-			find_tail_word_cutoff(output[0], out_frames, WHISPER_SAMPLE_RATE);
+			find_tail_word_cutoff(output[0], out_frames, gf->overlap_ms, WHISPER_SAMPLE_RATE);
 		if (tail_word_cutoff < out_frames)
 			obs_log(gf->log_level, "tail word cutoff: %d frames",
 				(int)tail_word_cutoff);
