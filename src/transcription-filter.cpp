@@ -370,7 +370,8 @@ void transcription_filter_update(void *data, obs_data_t *s)
 
 	gf->vad_enabled = obs_data_get_bool(s, "vad_enabled");
 	gf->log_words = obs_data_get_bool(s, "log_words");
-	gf->frames = (size_t)((float)gf->sample_rate / (1000.0f / (float)obs_data_get_int(s, "buffer_size_msec")));
+	gf->frames = (size_t)((float)gf->sample_rate /
+			      (1000.0f / (float)obs_data_get_int(s, "buffer_size_msec")));
 	gf->caption_to_stream = obs_data_get_bool(s, "caption_to_stream");
 	bool step_by_step_processing = obs_data_get_bool(s, "step_by_step_processing");
 	gf->step_size_msec = step_by_step_processing ? (int)obs_data_get_int(s, "step_size_msec")
@@ -494,7 +495,8 @@ void *transcription_filter_create(obs_data_t *settings, obs_source_t *filter)
 	// Get the number of channels for the input source
 	gf->channels = audio_output_get_channels(obs_get_audio());
 	gf->sample_rate = audio_output_get_sample_rate(obs_get_audio());
-	gf->frames = (size_t)((float)gf->sample_rate / (1000.0f / (float)obs_data_get_int(settings, "buffer_size_msec")));
+	gf->frames = (size_t)((float)gf->sample_rate /
+			      (1000.0f / (float)obs_data_get_int(settings, "buffer_size_msec")));
 	gf->last_num_frames = 0;
 	bool step_by_step_processing = obs_data_get_bool(settings, "step_by_step_processing");
 	gf->step_size_msec = step_by_step_processing
@@ -690,9 +692,9 @@ obs_properties_t *transcription_filter_properties(void *data)
 	obs_properties_add_bool(ppts, "caption_to_stream", MT_("caption_to_stream"));
 
 	obs_properties_add_int_slider(ppts, "buffer_size_msec", MT_("buffer_size_msec"), 1000,
-						DEFAULT_BUFFER_SIZE_MSEC, 50);
-	obs_properties_add_int_slider(ppts, "overlap_size_msec", MT_("overlap_size_msec"), 50,
-						300, 50);
+				      DEFAULT_BUFFER_SIZE_MSEC, 50);
+	obs_properties_add_int_slider(ppts, "overlap_size_msec", MT_("overlap_size_msec"), 50, 300,
+				      50);
 
 	obs_property_t *step_by_step_processing = obs_properties_add_bool(
 		ppts, "step_by_step_processing", MT_("step_by_step_processing"));
