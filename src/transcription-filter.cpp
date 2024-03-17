@@ -184,8 +184,8 @@ void acquire_weak_text_source_ref(struct transcription_filter_data *gf)
 	}
 }
 
-#define is_lead_byte(c) (((c)&0xe0) == 0xc0 || ((c)&0xf0) == 0xe0 || ((c)&0xf8) == 0xf0)
-#define is_trail_byte(c) (((c)&0xc0) == 0x80)
+#define is_lead_byte(c) (((c) & 0xe0) == 0xc0 || ((c) & 0xf0) == 0xe0 || ((c) & 0xf8) == 0xf0)
+#define is_trail_byte(c) (((c) & 0xc0) == 0x80)
 
 inline int lead_byte_length(const uint8_t c)
 {
@@ -614,22 +614,19 @@ void *transcription_filter_create(obs_data_t *settings, obs_source_t *filter)
 	return gf;
 }
 
-bool subs_output_select_changed(obs_properties_t *props,
-							   obs_property_t *property,
-							   obs_data_t *settings) {
+bool subs_output_select_changed(obs_properties_t *props, obs_property_t *property,
+				obs_data_t *settings)
+{
 	UNUSED_PARAMETER(property);
 	// Show or hide the output filename selection input
 	const char *new_output = obs_data_get_string(settings, "subtitle_sources");
 	const bool show_hide = (strcmp(new_output, "text_file") == 0);
-	obs_property_set_visible(obs_properties_get(props, "subtitle_output_filename"),
-					show_hide);
+	obs_property_set_visible(obs_properties_get(props, "subtitle_output_filename"), show_hide);
 	obs_property_set_visible(obs_properties_get(props, "subtitle_save_srt"), show_hide);
-	obs_property_set_visible(obs_properties_get(props, "truncate_output_file"),
-					show_hide);
-	obs_property_set_visible(obs_properties_get(props, "only_while_recording"),
-					show_hide);
-	obs_property_set_visible(
-		obs_properties_get(props, "rename_file_to_match_recording"), show_hide);
+	obs_property_set_visible(obs_properties_get(props, "truncate_output_file"), show_hide);
+	obs_property_set_visible(obs_properties_get(props, "only_while_recording"), show_hide);
+	obs_property_set_visible(obs_properties_get(props, "rename_file_to_match_recording"),
+				 show_hide);
 	return true;
 }
 
