@@ -21,6 +21,7 @@ set(_obs_gcc_c_options
     -Wformat
     -Wformat-security
     -Wno-conversion
+    -Wno-error=deprecated-declarations
     -Wno-float-conversion
     -Wno-implicit-fallthrough
     -Wno-missing-braces
@@ -38,8 +39,7 @@ set(_obs_gcc_c_options
     -Wunused-parameter
     -Wunused-value
     -Wunused-variable
-    -Wvla
-    -Wno-error=deprecated-declarations)
+    -Wvla)
 
 # gcc options for C++
 set(_obs_gcc_cxx_options
