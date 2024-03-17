@@ -15,7 +15,7 @@
 #include <functional>
 #include <string>
 
-#define MAX_PREPROC_CHANNELS 2
+#define MAX_PREPROC_CHANNELS 10
 
 #define MT_ obs_module_text
 

@@ -512,7 +512,7 @@ void *transcription_filter_create(obs_data_t *settings, obs_source_t *filter)
 		obs_data_get_bool(settings, "rename_file_to_match_recording");
 	gf->process_while_muted = obs_data_get_bool(settings, "process_while_muted");
 
-	for (size_t i = 0; i < MAX_AUDIO_CHANNELS; i++) {
+	for (size_t i = 0; i < gf->channels; i++) {
 		circlebuf_init(&gf->input_buffers[i]);
 	}
 	circlebuf_init(&gf->info_buffer);
@@ -612,6 +612,25 @@ void *transcription_filter_create(obs_data_t *settings, obs_source_t *filter)
 
 	obs_log(gf->log_level, "transcription_filter: filter created.");
 	return gf;
+}
+
+bool subs_output_select_changed(obs_properties_t *props,
+							   obs_property_t *property,
+							   obs_data_t *settings) {
+	UNUSED_PARAMETER(property);
+	// Show or hide the output filename selection input
+	const char *new_output = obs_data_get_string(settings, "subtitle_sources");
+	const bool show_hide = (strcmp(new_output, "text_file") == 0);
+	obs_property_set_visible(obs_properties_get(props, "subtitle_output_filename"),
+					show_hide);
+	obs_property_set_visible(obs_properties_get(props, "subtitle_save_srt"), show_hide);
+	obs_property_set_visible(obs_properties_get(props, "truncate_output_file"),
+					show_hide);
+	obs_property_set_visible(obs_properties_get(props, "only_while_recording"),
+					show_hide);
+	obs_property_set_visible(
+		obs_properties_get(props, "rename_file_to_match_recording"), show_hide);
+	return true;
 }
 
 void transcription_filter_activate(void *data)
@@ -731,24 +750,7 @@ obs_properties_t *transcription_filter_properties(void *data)
 	obs_properties_add_bool(ppts, "rename_file_to_match_recording",
 				MT_("rename_file_to_match_recording"));
 
-	obs_property_set_modified_callback(subs_output, [](obs_properties_t *props,
-							   obs_property_t *property,
-							   obs_data_t *settings) {
-		UNUSED_PARAMETER(property);
-		// Show or hide the output filename selection input
-		const char *new_output = obs_data_get_string(settings, "subtitle_sources");
-		const bool show_hide = (strcmp(new_output, "text_file") == 0);
-		obs_property_set_visible(obs_properties_get(props, "subtitle_output_filename"),
-					 show_hide);
-		obs_property_set_visible(obs_properties_get(props, "subtitle_save_srt"), show_hide);
-		obs_property_set_visible(obs_properties_get(props, "truncate_output_file"),
-					 show_hide);
-		obs_property_set_visible(obs_properties_get(props, "only_while_recording"),
-					 show_hide);
-		obs_property_set_visible(
-			obs_properties_get(props, "rename_file_to_match_recording"), show_hide);
-		return true;
-	});
+	obs_property_set_modified_callback(subs_output, subs_output_select_changed);
 
 	// Add a list of available whisper models to download
 	obs_property_t *whisper_models_list =

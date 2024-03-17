@@ -38,7 +38,8 @@ set(_obs_gcc_c_options
     -Wunused-parameter
     -Wunused-value
     -Wunused-variable
-    -Wvla)
+    -Wvla
+    -Wno-error=deprecated-declarations)
 
 # gcc options for C++
 set(_obs_gcc_cxx_options
