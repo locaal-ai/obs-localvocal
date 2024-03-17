@@ -55,9 +55,9 @@ struct transcription_filter_data {
 	uint64_t last_sub_render_time;
 
 	/* PCM buffers */
-	float *copy_buffers[MAX_PREPROC_CHANNELS];
+	float *copy_buffers[MAX_AUDIO_CHANNELS];
 	struct circlebuf info_buffer;
-	struct circlebuf input_buffers[MAX_PREPROC_CHANNELS];
+	struct circlebuf input_buffers[MAX_AUDIO_CHANNELS];
 
 	/* Resampler */
 	audio_resampler_t *resampler;
@@ -102,7 +102,7 @@ struct transcription_filter_data {
 	transcription_filter_data()
 	{
 		// initialize all pointers to nullptr
-		for (size_t i = 0; i < MAX_PREPROC_CHANNELS; i++) {
+		for (size_t i = 0; i < MAX_AUDIO_CHANNELS; i++) {
 			copy_buffers[i] = nullptr;
 		}
 		context = nullptr;
