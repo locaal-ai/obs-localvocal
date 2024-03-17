@@ -21,6 +21,7 @@ set(_obs_gcc_c_options
     -Wformat
     -Wformat-security
     -Wno-conversion
+    -Wno-error=deprecated-declarations
     -Wno-float-conversion
     -Wno-implicit-fallthrough
     -Wno-missing-braces
