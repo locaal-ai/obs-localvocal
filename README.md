@@ -16,7 +16,7 @@ LocalVocal live-streaming AI assistant plugin allows you to transcribe, locally 
 
 If this free plugin has been valuable to you consider adding a ⭐ to this GH repo, rating it [on OBS](https://obsproject.com/forum/resources/localvocal-live-stream-ai-assistant.1769/), subscribing to [my YouTube channel](https://www.youtube.com/@royshilk) where I post updates, and supporting my work: https://github.com/sponsors/royshil
 
-<div align="center">
+<p align="center">
   <a href="https://youtu.be/5XqTMqpui3Q" target="_blank">
     <img width="27%" src="https://github-production-user-asset-6210df.s3.amazonaws.com/441170/267728411-334551b8-6a7f-42bf-8434-6ad6b512a401.jpeg" />
   </a>
@@ -28,7 +28,13 @@ If this free plugin has been valuable to you consider adding a ⭐ to this GH re
   </a>
   <br/>
   https://youtu.be/5XqTMqpui3Q & https://youtu.be/Q34LQsx-nlg & https://youtu.be/4BTmoKr0YMw
-</div>
+</p>
+
+Do more with LocalVocal:
+- [Translate Caption any Application](https://youtu.be/qen7NC8kbEQ)
+- [Real-time Translation with DeepL](https://youtu.be/ryWBIEmVka4)
+- [POST Captions to YouTube](https://youtu.be/E7HKbO6CP_c)
+- [Local LLM Real-time Translation](https://youtu.be/ZMNILPWDkDw)
 
 Current Features:
 - Transcribe audio to text in real time in 100 languages
