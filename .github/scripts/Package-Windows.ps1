@@ -4,6 +4,8 @@ param(
     [string] $Target = 'x64',
     [ValidateSet('Debug', 'RelWithDebInfo', 'Release', 'MinSizeRel')]
     [string] $Configuration = 'RelWithDebInfo',
+    [ValidateSet('cpu', 'cuda12_2', 'cuda11_8')]
+    [string] $Cublas = 'cpu',
     [switch] $BuildInstaller,
     [switch] $SkipDeps
 )
@@ -48,7 +50,7 @@ function Package {
     $ProductName = $BuildSpec.name
     $ProductVersion = $BuildSpec.version
 
-    $OutputName = "${ProductName}-${ProductVersion}-windows-${Target}"
+    $OutputName = "${ProductName}-${ProductVersion}-windows-${Target}-${Cublas}"
 
     if ( ! $SkipDeps ) {
         Install-BuildDependencies -WingetFile "${ScriptHome}/.Wingetfile"
