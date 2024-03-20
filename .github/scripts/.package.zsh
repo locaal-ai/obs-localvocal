@@ -168,8 +168,10 @@ ${_usage_host:-}"
 
   if [[ ${host_os} == macos ]] {
     autoload -Uz check_packages read_codesign read_codesign_installer read_codesign_pass
+    # get the arch from MACOS_ARCH env var
+    local -r macos_arch=${MACOS_ARCH:-$(uname -m)}
 
-    local output_name="${product_name}-${product_version}-${host_os}-universal"
+    local output_name="${product_name}-${product_version}-${host_os}-${macos_arch}"
 
     if [[ ! -d ${project_root}/release/${config}/${product_name}.plugin ]] {
       log_error 'No release artifact found. Run the build script or the CMake install procedure first.'

@@ -230,7 +230,15 @@ ${_usage_host:-}"
           -DCODESIGN_IDENTITY=${CODESIGN_IDENT:--}
         )
 
-        cmake_build_args+=(--preset ${_preset} --parallel --config ${config} -- ONLY_ACTIVE_ARCH=NO -arch arm64 -arch x86_64)
+        cmake_build_args+=(--preset ${_preset} --parallel --config ${config} -- ONLY_ACTIVE_ARCH=YES)
+        # check the MACOS_ARCH env var to determine the build architecture
+        if [[ -n ${MACOS_ARCH} ]] {
+          cmake_build_args+=(-arch ${MACOS_ARCH})
+        } else {
+          # error out
+          log_error "No MACOS_ARCH environment variable set. Please set it to the desired architecture."
+          exit 2
+        }
         cmake_install_args+=(build_macos --config ${config} --prefix "${project_root}/release/${config}")
 
         local -a xcbeautify_opts=()
