@@ -26,8 +26,8 @@ if(APPLE)
     set(WHISPER_ADDITIONAL_CMAKE_ARGS -DWHISPER_METAL=OFF -DWHISPER_COREML=OFF -DWHISPER_NO_AVX=OFF
                                       -DWHISPER_NO_AVX2=OFF -DWHISPER_NO_F16C=OFF)
   else()
-    set(WHISPER_ADDITIONAL_CMAKE_ARGS -DWHISPER_METAL=OFF -DWHISPER_COREML=ON -DWHISPER_NO_AVX=ON -DWHISPER_NO_AVX2=ON
-                                      -DWHISPER_NO_F16C=ON)
+    set(WHISPER_ADDITIONAL_CMAKE_ARGS -DWHISPER_METAL=OFF -DWHISPER_COREML=OFF -DWHISPER_NO_AVX=ON -DWHISPER_NO_AVX2=ON
+                                      -DWHISPER_NO_F16C=ON -DWHISPER_NO_FMA=ON)
   endif()
   set(WHISPER_EXTRA_CXX_FLAGS
       "-Wno-shorten-64-to-32 -Wno-unused-parameter -Wno-unused-function -Wno-unguarded-availability-new")
