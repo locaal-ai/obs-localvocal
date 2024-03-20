@@ -21,7 +21,7 @@ if(APPLE)
   # enable CoreML and allow fallback to CPU
   # disable AVX and AVX2 as they are not supported on MacOS ARM64
   set(WHISPER_ADDITIONAL_CMAKE_ARGS -DWHISPER_METAL=OFF -DWHISPER_NO_ACCELERATE=OFF -DWHISPER_NO_AVX=ON
-                                    -DWHISPER_NO_AVX2=ON -DWHISPER_COREML=ON -DWHISPER_COREML_ALLOW_FALLBACK=ON)
+                                    -DWHISPER_NO_AVX2=ON -DWHISPER_COREML=OFF)
 endif()
 
 if(WIN32)
