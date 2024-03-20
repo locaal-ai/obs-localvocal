@@ -247,7 +247,7 @@ jobs:
       - name: Set CUDA_TOOLKIT_ROOT_DIR if CUDA is installed
         if: ${{ matrix.cublas != 'cpu' }}
         run: |
-          "CUDA_TOOLKIT_ROOT_DIR=${{ steps.cuda-toolkit.outputs.cudaPath }}" >> $env:GITHUB_ENV
+          "CUDA_TOOLKIT_ROOT_DIR=$env:CUDA_PATH" >> $env:GITHUB_ENV
 
       - name: Set Up Environment 🔧
         id: setup
