@@ -227,7 +227,7 @@ jobs:
     needs: check-event
     strategy:
       matrix:
-        cublas: [cpu, cuda12_2, cuda11_8]
+        cublas: [cpu, 12.2.0, 11.8.0]
     defaults:
       run:
         shell: pwsh
