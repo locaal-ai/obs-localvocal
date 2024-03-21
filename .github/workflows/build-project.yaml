@@ -243,6 +243,9 @@ jobs:
         uses: Jimver/cuda-toolkit@v0.2.11
         with:
           cuda: '${{ matrix.cublas }}'
+          sub-packages: '["nvcc", "cudart"]'
+          non-cuda-sub-packages: '["libcublas"]'
+          method: 'local'
 
       - name: Set CUDA_TOOLKIT_ROOT_DIR if CUDA is installed
         if: ${{ matrix.cublas != 'cpu' }}
