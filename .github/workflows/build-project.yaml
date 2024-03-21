@@ -244,12 +244,13 @@ jobs:
         with:
           cuda: '${{ matrix.cublas }}'
           sub-packages: '["nvcc", "cudart", "cublas", "visual_studio_integration"]'
-          method: 'local'
+          method: 'netwprk'
 
       - name: Set CUDA_TOOLKIT_ROOT_DIR if CUDA is installed
         if: ${{ matrix.cublas != 'cpu' }}
         run: |
           ls "$env:CUDA_PATH\bin"
+          ls -d 2 "$env:CUDA_PATH\lib"
           "CUDA_TOOLKIT_ROOT_DIR=$env:CUDA_PATH" >> $env:GITHUB_ENV
 
       - name: Set Up Environment 🔧
