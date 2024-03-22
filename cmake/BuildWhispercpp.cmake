@@ -17,8 +17,20 @@ if(UNIX AND NOT APPLE)
                                     -DWHISPER_NO_AVX2=ON)
 endif()
 if(APPLE)
-  # disable Metal on MacOS as it hurts performance right now
-  set(WHISPER_ADDITIONAL_CMAKE_ARGS -DWHISPER_METAL=OFF)
+  # check the "MACOS_ARCH" env var to figure out if this is x86 or arm64
+  if(NOT DEFINED ENV{MACOS_ARCH})
+    message(FATAL_ERROR "The MACOS_ARCH environment variable is not set. Please set it to either `x86` or `arm64`")
+  endif(NOT DEFINED ENV{MACOS_ARCH})
+  set(CMAKE_OSX_ARCHITECTURES_ "$ENV{MACOS_ARCH}")
+  if($ENV{MACOS_ARCH} STREQUAL "x86_64")
+    set(WHISPER_ADDITIONAL_CMAKE_ARGS -DWHISPER_METAL=OFF -DWHISPER_COREML=OFF -DWHISPER_NO_AVX=OFF
+                                      -DWHISPER_NO_AVX2=OFF -DWHISPER_NO_F16C=OFF)
+  else()
+    set(WHISPER_ADDITIONAL_CMAKE_ARGS -DWHISPER_METAL=OFF -DWHISPER_COREML=OFF -DWHISPER_NO_AVX=ON -DWHISPER_NO_AVX2=ON
+                                      -DWHISPER_NO_F16C=ON -DWHISPER_NO_FMA=ON)
+  endif()
+  set(WHISPER_EXTRA_CXX_FLAGS
+      "-Wno-shorten-64-to-32 -Wno-unused-parameter -Wno-unused-function -Wno-unguarded-availability-new")
 endif()
 
 if(WIN32)

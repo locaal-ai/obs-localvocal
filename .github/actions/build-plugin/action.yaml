@@ -8,6 +8,10 @@ inputs:
     description: 'Build configuration'
     required: false
     default: 'RelWithDebInfo'
+  cublas:
+    description: 'Enable cuBLAS'
+    required: false
+    default: 'cpu'
   codesign:
     description: 'Enable codesigning (macOS only)'
     required: false
@@ -78,6 +82,7 @@ runs:
         $BuildArgs = @{
           Target = '${{ inputs.target }}'
           Configuration = '${{ inputs.config }}'
+          Cublas = '${{ inputs.cublas }}'
         }
 
         .github/scripts/Build-Windows.ps1 @BuildArgs

@@ -4,6 +4,8 @@ param(
     [string] $Target = 'x64',
     [ValidateSet('Debug', 'RelWithDebInfo', 'Release', 'MinSizeRel')]
     [string] $Configuration = 'RelWithDebInfo',
+    [ValidateSet('cpu', '12.2.0', '11.8.0')]
+    [string] $Cublas = 'cpu',
     [switch] $SkipAll,
     [switch] $SkipBuild,
     [switch] $SkipDeps,
@@ -76,6 +78,13 @@ function Build {
         $CmakeArgs += @(
             '--preset', $Preset
         )
+
+        if ( $Cublas -ne 'cpu' ) {
+            $CmakeArgs += @(
+                '-DLOCALVOCAL_WITH_CUDA=ON',
+                "-DCUDA_TOOLKIT_ROOT_DIR=$Env:CUDA_TOOLKIT_ROOT_DIR"
+            )
+        }
 
         $CmakeBuildArgs += @(
             '--build'

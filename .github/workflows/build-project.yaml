@@ -60,6 +60,9 @@ jobs:
     name: Build for macOS 🍏
     runs-on: macos-13
     needs: check-event
+    strategy:
+      matrix:
+        architecture: [x86_64, arm64]
     defaults:
       run:
         shell: zsh --no-rcs --errexit --pipefail {0}
@@ -114,15 +117,17 @@ jobs:
       - name: Build Plugin 🧱
         uses: ./.github/actions/build-plugin
         with:
-          target: macos-universal
+          target: macos-${{ matrix.architecture }}
           config: ${{ needs.check-event.outputs.config }}
           codesign: ${{ fromJSON(needs.check-event.outputs.codesign) }}
           codesignIdent: ${{ steps.codesign.outputs.codesignIdent }}
+        env:
+          MACOS_ARCH: ${{ matrix.architecture }}
 
       - name: Package Plugin 📀
         uses: ./.github/actions/package-plugin
         with:
-          target: macos-universal
+          target: macos-${{ matrix.architecture }}
           config: ${{ needs.check-event.outputs.config }}
           package: ${{ fromJSON(needs.check-event.outputs.package) }}
           codesign: ${{ fromJSON(needs.check-event.outputs.codesign) && fromJSON(steps.codesign.outputs.haveCodesignIdent) }}
@@ -132,19 +137,21 @@ jobs:
           notarize: ${{ fromJSON(needs.check-event.outputs.notarize) && fromJSON(steps.codesign.outputs.haveNotarizationUser) }}
           codesignUser: ${{ secrets.MACOS_NOTARIZATION_USERNAME }}
           codesignPass: ${{ secrets.MACOS_NOTARIZATION_PASSWORD }}
+        env:
+          MACOS_ARCH: ${{ matrix.architecture }}
 
       - name: Upload Artifacts 📡
         uses: actions/upload-artifact@v3
         with:
-          name: ${{ steps.setup.outputs.pluginName }}-${{ steps.setup.outputs.pluginVersion }}-macos-universal-${{ needs.check-event.outputs.commitHash }}
-          path: ${{ github.workspace }}/release/${{ steps.setup.outputs.pluginName }}-${{ steps.setup.outputs.pluginVersion }}-macos-universal.*
+          name: ${{ steps.setup.outputs.pluginName }}-${{ steps.setup.outputs.pluginVersion }}-macos-${{ matrix.architecture }}-${{ needs.check-event.outputs.commitHash }}
+          path: ${{ github.workspace }}/release/${{ steps.setup.outputs.pluginName }}-${{ steps.setup.outputs.pluginVersion }}-macos-${{ matrix.architecture }}.*
 
       - name: Upload Debug Symbol Artifacts 🪲
         uses: actions/upload-artifact@v3
         if: ${{ needs.check-event.outputs.config == 'Release' }}
         with:
-          name: ${{ steps.setup.outputs.pluginName }}-${{ steps.setup.outputs.pluginVersion }}-macos-universal-${{ needs.check-event.outputs.commitHash }}-dSYMs
-          path: ${{ github.workspace }}/release/${{ steps.setup.outputs.pluginName }}-${{ steps.setup.outputs.pluginVersion }}-macos-universal-dSYMs.*
+          name: ${{ steps.setup.outputs.pluginName }}-${{ steps.setup.outputs.pluginVersion }}-macos-${{ matrix.architecture }}-${{ needs.check-event.outputs.commitHash }}-dSYMs
+          path: ${{ github.workspace }}/release/${{ steps.setup.outputs.pluginName }}-${{ steps.setup.outputs.pluginVersion }}-macos-${{ matrix.architecture }}-dSYMs.*
 
   ubuntu-build:
     name: Build for Ubuntu 🐧
@@ -218,6 +225,9 @@ jobs:
     name: Build for Windows 🪟
     runs-on: windows-2022
     needs: check-event
+    strategy:
+      matrix:
+        cublas: [cpu, 12.2.0, 11.8.0]
     defaults:
       run:
         shell: pwsh
@@ -226,6 +236,20 @@ jobs:
         with:
           submodules: recursive
           fetch-depth: 0
+
+      - name: Install CUDA Toolkit
+        if: ${{ matrix.cublas != 'cpu' }}
+        id: cuda-toolkit
+        uses: Jimver/cuda-toolkit@v0.2.11
+        with:
+          cuda: '${{ matrix.cublas }}'
+
+      - name: Set CUDA_TOOLKIT_ROOT_DIR if CUDA is installed
+        if: ${{ matrix.cublas != 'cpu' }}
+        run: |
+          ls "$env:CUDA_PATH\bin"
+          ls -d 2 "$env:CUDA_PATH\lib"
+          "CUDA_TOOLKIT_ROOT_DIR=$env:CUDA_PATH" >> $env:GITHUB_ENV
 
       - name: Set Up Environment 🔧
         id: setup
@@ -247,6 +271,7 @@ jobs:
         with:
           target: x64
           config: ${{ needs.check-event.outputs.config }}
+          cublas: ${{ matrix.cublas }}
 
       - name: Package Plugin 📀
         uses: ./.github/actions/package-plugin
@@ -254,9 +279,10 @@ jobs:
           target: x64
           config: ${{ needs.check-event.outputs.config }}
           package: ${{ fromJSON(needs.check-event.outputs.package) }}
+          cublas: ${{ matrix.cublas }}
 
       - name: Upload Artifacts 📡
         uses: actions/upload-artifact@v3
         with:
-          name: ${{ steps.setup.outputs.pluginName }}-${{ steps.setup.outputs.pluginVersion }}-windows-x64-${{ needs.check-event.outputs.commitHash }}
+          name: ${{ steps.setup.outputs.pluginName }}-${{ steps.setup.outputs.pluginVersion }}-windows-x64-${{ matrix.cublas }}-${{ needs.check-event.outputs.commitHash }}
           path: ${{ github.workspace }}/release/${{ steps.setup.outputs.pluginName }}-${{ steps.setup.outputs.pluginVersion }}-windows-x64*.*
