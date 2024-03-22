@@ -5,8 +5,7 @@
 
 #include <filesystem>
 
-const std::string MODEL_BASE_PATH = "https://huggingface.co/ggerganov/whisper.cpp";
-const std::string MODEL_PREFIX = "resolve/main/";
+const std::string MODEL_BASE_PATH = "https://ggml.ggerganov.com/";
 
 size_t write_data(void *ptr, size_t size, size_t nmemb, FILE *stream)
 {
@@ -143,7 +142,7 @@ void ModelDownloadWorker::download_model()
 	const std::string model_filename =
 		this->model_name.substr(this->model_name.find_last_of("/\\") + 1);
 
-	std::string model_url = MODEL_BASE_PATH + "/" + MODEL_PREFIX + model_filename;
+	std::string model_url = MODEL_BASE_PATH + model_filename;
 	obs_log(LOG_INFO, "Model URL: %s", model_url.c_str());
 
 	CURL *curl = curl_easy_init();

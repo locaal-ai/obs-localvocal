@@ -112,11 +112,13 @@ struct whisper_context *init_whisper_context(const std::string &model_path)
 {
 	obs_log(LOG_INFO, "Loading whisper model from %s", model_path.c_str());
 
-	struct whisper_context_params cparams;
+	struct whisper_context_params cparams = whisper_context_default_params();
 #ifdef LOCALVOCAL_WITH_CUDA
 	cparams.use_gpu = true;
+	obs_log(LOG_INFO, "Using GPU for inference, device %d", cparams.gpu_device);
 #else
 	cparams.use_gpu = false;
+	obs_log(LOG_INFO, "Using CPU for inference");
 #endif
 
 #ifdef _WIN32

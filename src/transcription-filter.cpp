@@ -654,7 +654,8 @@ void transcription_filter_defaults(obs_data_t *s)
 	obs_data_set_default_int(s, "log_level", LOG_DEBUG);
 	obs_data_set_default_bool(s, "log_words", true);
 	obs_data_set_default_bool(s, "caption_to_stream", false);
-	obs_data_set_default_string(s, "whisper_model_path", "models/ggml-tiny.en.bin");
+	obs_data_set_default_string(s, "whisper_model_path",
+				    "models/ggml-model-whisper-tiny.en.bin");
 	obs_data_set_default_string(s, "whisper_language_select", "en");
 	obs_data_set_default_string(s, "subtitle_sources", "none");
 	obs_data_set_default_bool(s, "step_by_step_processing", false);
@@ -754,15 +755,38 @@ obs_properties_t *transcription_filter_properties(void *data)
 		obs_properties_add_list(ppts, "whisper_model_path", MT_("whisper_model"),
 					OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_STRING);
 
-	obs_property_list_add_string(whisper_models_list, "Tiny (Eng) 75Mb",
-				     "models/ggml-tiny.en.bin");
-	obs_property_list_add_string(whisper_models_list, "Tiny 75Mb", "models/ggml-tiny.bin");
-	obs_property_list_add_string(whisper_models_list, "Base (Eng) 142Mb",
-				     "models/ggml-base.en.bin");
-	obs_property_list_add_string(whisper_models_list, "Base 142Mb", "models/ggml-base.bin");
-	obs_property_list_add_string(whisper_models_list, "Small (Eng) 466Mb",
-				     "models/ggml-small.en.bin");
-	obs_property_list_add_string(whisper_models_list, "Small 466Mb", "models/ggml-small.bin");
+	obs_property_list_add_string(whisper_models_list, "Base q5 57M",
+				     "models/ggml-model-whisper-base-q5_1.bin");
+	obs_property_list_add_string(whisper_models_list, "Base 141M",
+				     "models/ggml-model-whisper-base.bin");
+	obs_property_list_add_string(whisper_models_list, "Base (Eng) q5 57M",
+				     "models/ggml-model-whisper-base.en-q5_1.bin");
+	obs_property_list_add_string(whisper_models_list, "Base (Eng) 141M",
+				     "models/ggml-model-whisper-base.en.bin");
+	obs_property_list_add_string(whisper_models_list, "Large q5 1G",
+				     "models/ggml-model-whisper-large-q5_0.bin");
+	obs_property_list_add_string(whisper_models_list, "Medium q5 514M",
+				     "models/ggml-model-whisper-medium-q5_0.bin");
+	obs_property_list_add_string(whisper_models_list, "Medium (Eng) 514M",
+				     "models/ggml-model-whisper-medium.en-q5_0.bin");
+	obs_property_list_add_string(whisper_models_list, "Small q5 181M",
+				     "models/ggml-model-whisper-small-q5_1.bin");
+	obs_property_list_add_string(whisper_models_list, "Small 465M",
+				     "models/ggml-model-whisper-small.bin");
+	obs_property_list_add_string(whisper_models_list, "Small (Eng) q5 181M",
+				     "models/ggml-model-whisper-small.en-q5_1.bin");
+	obs_property_list_add_string(whisper_models_list, "Small (Eng) 465M",
+				     "models/ggml-model-whisper-small.en.bin");
+	obs_property_list_add_string(whisper_models_list, "Tiny q5 31M",
+				     "models/ggml-model-whisper-tiny-q5_1.bin");
+	obs_property_list_add_string(whisper_models_list, "Tiny 74M",
+				     "models/ggml-model-whisper-tiny.bin");
+	obs_property_list_add_string(whisper_models_list, "Tiny (Eng) q5 31M",
+				     "models/ggml-model-whisper-tiny.en-q5_1.bin");
+	obs_property_list_add_string(whisper_models_list, "Tiny (Eng) q8 42M",
+				     "models/ggml-model-whisper-tiny.en-q8_0.bin");
+	obs_property_list_add_string(whisper_models_list, "Tiny (Eng) 74M",
+				     "models/ggml-model-whisper-tiny.en.bin");
 	obs_property_list_add_string(whisper_models_list, "Load external model file",
 				     "!!!external!!!");
 
