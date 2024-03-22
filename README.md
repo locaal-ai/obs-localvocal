@@ -63,6 +63,12 @@ Check out our other plugins:
 ## Download
 Check out the [latest releases](https://github.com/occ-ai/obs-localvocal/releases) for downloads and install instructions.
 
+### Models
+The plugin ships with the Tiny.en model, and will autonomoously download other bigger Whisper models through a dropdown.
+However there's an option to select an external model file if you have it on disk.
+
+Get more models from https://ggml.ggerganov.com/ and follow [the instructions on whisper.cpp](https://github.com/ggerganov/whisper.cpp/tree/master/models) to create your own models or download others such as distilled models.
+
 ## Building
 
 The plugin was built and tested on Mac OSX  (Intel & Apple silicon), Windows and Linux.
