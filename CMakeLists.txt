@@ -41,6 +41,7 @@ set(USE_SYSTEM_CURL
     CACHE STRING "Use system cURL")
 
 if(LOCALVOCAL_WITH_CUDA)
+  message(STATUS "Building with CUDA support")
   add_compile_definitions("LOCALVOCAL_WITH_CUDA")
 endif()
 
