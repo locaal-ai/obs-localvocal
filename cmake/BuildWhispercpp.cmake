@@ -36,14 +36,45 @@ endif()
 if(WIN32)
   if(LOCALVOCAL_WITH_CUDA)
     # Build with CUDA Check that CUDA_TOOLKIT_ROOT_DIR is set
-    if(NOT DEFINED CUDA_TOOLKIT_ROOT_DIR)
-      message(FATAL_ERROR "CUDA_TOOLKIT_ROOT_DIR is not set. Please set it to the root directory of your CUDA "
-                          "installation, e.g. `C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v11.4`")
-    endif(NOT DEFINED CUDA_TOOLKIT_ROOT_DIR)
+    # if(NOT DEFINED CUDA_TOOLKIT_ROOT_DIR)
+    #   message(FATAL_ERROR "CUDA_TOOLKIT_ROOT_DIR is not set. Please set it to the root directory of your CUDA "
+    #                       "installation, e.g. `C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v11.4`")
+    # endif(NOT DEFINED CUDA_TOOLKIT_ROOT_DIR)
 
-    set(WHISPER_ADDITIONAL_ENV "CUDAToolkit_ROOT=${CUDA_TOOLKIT_ROOT_DIR}")
-    set(WHISPER_ADDITIONAL_CMAKE_ARGS -DWHISPER_BLAS=OFF -DWHISPER_CUBLAS=ON -DWHISPER_OPENBLAS=OFF
-                                      -DCMAKE_GENERATOR_TOOLSET=cuda=${CUDA_TOOLKIT_ROOT_DIR})
+    # set(WHISPER_ADDITIONAL_ENV "CUDAToolkit_ROOT=${CUDA_TOOLKIT_ROOT_DIR}")
+    # set(WHISPER_ADDITIONAL_CMAKE_ARGS -DWHISPER_BLAS=OFF -DWHISPER_CUBLAS=ON -DWHISPER_OPENBLAS=OFF
+    #                                   -DCMAKE_GENERATOR_TOOLSET=cuda=${CUDA_TOOLKIT_ROOT_DIR})
+    set(WHISPER_PREBUILT_VERSION "1.5.4")
+    set(WHISPER_PREBUILT_CUDA_VERSION "11.8.0")
+    set(WHISPER_PREBUILT_URL "https://github.com/ggerganov/whisper.cpp/releases/download/${WHISPRE_PREBUILT_VERSION}/whisper-cublas-${WHISPER_PREBUILT_CUDA_VERSION}-bin-x64.zip")
+    if (${WHISPER_PREBUILT_CUDA_VERSION} STREQUAL "11.8.0")
+      set(WHISPER_PREBUILT_SHA256 "9581a52267db410bc6c39c98d576cc092f46c9b9f6c317b43920125e54bbd10a")
+    else()
+      set(WHISPER_PREBUILT_SHA256 "df85ddde59ad1f73ec382e2f746963da65fe9021db501198a15a1d8e46413522")
+    endif()
+    # Download prebuilt Whisper library with cuBLAS
+    ExternalProject_Add(
+      Whispercpp_Build
+      DOWNLOAD_EXTRACT_TIMESTAMP true
+      URL ${WHISPER_PREBUILT_URL}
+      URL_HASH SHA256=${WHISPER_PREBUILT_SHA256}
+      CONFIGURE_COMMAND ""
+      BUILD_COMMAND ""
+      INSTALL_COMMAND
+        ${CMAKE_COMMAND} -E copy_directory <SOURCE_DIR> <INSTALL_DIR>)
+
+    set(WHISPER_PREBUILT_SOURCE_URL "https://github.com/ggerganov/whisper.cpp/archive/refs/tags/v${WHISPER_PREBUILT_VERSION}.zip")
+    set(WHISPER_PREBUILT_SOURCE_SHA256 "45bf476b1050b7f56f5bf2372c4355cebf9b3bbbc153d740810700dc4f8ab526")
+    # Download whisper.cpp source code
+    ExternalProject_Add(
+      Whispercpp_Prebuilt
+      DOWNLOAD_EXTRACT_TIMESTAMP true
+      URL ${WHISPER_PREBUILT_SOURCE_URL}
+      URL_HASH SHA256=${WHISPER_PREBUILT_SOURCE_SHA256}
+      CONFIGURE_COMMAND ""
+      BUILD_COMMAND ""
+      INSTALL_COMMAND
+        ${CMAKE_COMMAND} -E copy_directory <SOURCE_DIR> <INSTALL_DIR>)
   else()
     # Build with OpenBLAS
     set(OpenBLAS_URL "https://github.com/xianyi/OpenBLAS/releases/download/v0.3.24/OpenBLAS-0.3.24-x64.zip")
@@ -60,34 +91,32 @@ if(WIN32)
     set(OpenBLAS_DIR ${INSTALL_DIR})
     set(WHISPER_ADDITIONAL_ENV "OPENBLAS_PATH=${OpenBLAS_DIR}")
     set(WHISPER_ADDITIONAL_CMAKE_ARGS -DWHISPER_BLAS=ON -DWHISPER_CUBLAS=OFF)
-  endif()
 
-  ExternalProject_Add(
-    Whispercpp_Build
-    DOWNLOAD_EXTRACT_TIMESTAMP true
-    GIT_REPOSITORY https://github.com/ggerganov/whisper.cpp.git
-    GIT_TAG ${Whispercpp_Build_GIT_TAG}
-    BUILD_COMMAND ${CMAKE_COMMAND} --build <BINARY_DIR> --config ${Whispercpp_BUILD_TYPE}
-    BUILD_BYPRODUCTS
-      <INSTALL_DIR>/lib/static/${CMAKE_STATIC_LIBRARY_PREFIX}whisper${CMAKE_STATIC_LIBRARY_SUFFIX}
-      <INSTALL_DIR>/bin/${CMAKE_SHARED_LIBRARY_PREFIX}whisper${CMAKE_SHARED_LIBRARY_SUFFIX}
-      <INSTALL_DIR>/lib/${CMAKE_IMPORT_LIBRARY_PREFIX}whisper${CMAKE_IMPORT_LIBRARY_SUFFIX}
-    CMAKE_GENERATOR ${CMAKE_GENERATOR}
-    INSTALL_COMMAND
-      ${CMAKE_COMMAND} --install <BINARY_DIR> --config ${Whispercpp_BUILD_TYPE} && ${CMAKE_COMMAND} -E copy
-      <BINARY_DIR>/${Whispercpp_BUILD_TYPE}/whisper.lib <INSTALL_DIR>/lib && ${CMAKE_COMMAND} -E copy
-      <SOURCE_DIR>/ggml.h <INSTALL_DIR>/include
-    CONFIGURE_COMMAND
-      ${CMAKE_COMMAND} -E env ${WHISPER_ADDITIONAL_ENV} ${CMAKE_COMMAND} <SOURCE_DIR> -B <BINARY_DIR> -G
-      ${CMAKE_GENERATOR} -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR> -DCMAKE_BUILD_TYPE=${Whispercpp_BUILD_TYPE}
-      -DCMAKE_GENERATOR_PLATFORM=${CMAKE_GENERATOR_PLATFORM} -DCMAKE_OSX_DEPLOYMENT_TARGET=10.13
-      -DCMAKE_OSX_ARCHITECTURES=${CMAKE_OSX_ARCHITECTURES_} -DCMAKE_CXX_FLAGS=${WHISPER_EXTRA_CXX_FLAGS}
-      -DCMAKE_C_FLAGS=${WHISPER_EXTRA_CXX_FLAGS} -DBUILD_SHARED_LIBS=ON -DWHISPER_BUILD_TESTS=OFF
-      -DWHISPER_BUILD_EXAMPLES=OFF ${WHISPER_ADDITIONAL_CMAKE_ARGS})
+    ExternalProject_Add(
+      Whispercpp_Build
+      DOWNLOAD_EXTRACT_TIMESTAMP true
+      GIT_REPOSITORY https://github.com/ggerganov/whisper.cpp.git
+      GIT_TAG ${Whispercpp_Build_GIT_TAG}
+      BUILD_COMMAND ${CMAKE_COMMAND} --build <BINARY_DIR> --config ${Whispercpp_BUILD_TYPE}
+      BUILD_BYPRODUCTS
+        <INSTALL_DIR>/lib/static/${CMAKE_STATIC_LIBRARY_PREFIX}whisper${CMAKE_STATIC_LIBRARY_SUFFIX}
+        <INSTALL_DIR>/bin/${CMAKE_SHARED_LIBRARY_PREFIX}whisper${CMAKE_SHARED_LIBRARY_SUFFIX}
+        <INSTALL_DIR>/lib/${CMAKE_IMPORT_LIBRARY_PREFIX}whisper${CMAKE_IMPORT_LIBRARY_SUFFIX}
+      CMAKE_GENERATOR ${CMAKE_GENERATOR}
+      INSTALL_COMMAND
+        ${CMAKE_COMMAND} --install <BINARY_DIR> --config ${Whispercpp_BUILD_TYPE} && ${CMAKE_COMMAND} -E copy
+        <BINARY_DIR>/${Whispercpp_BUILD_TYPE}/whisper.lib <INSTALL_DIR>/lib && ${CMAKE_COMMAND} -E copy
+        <SOURCE_DIR>/ggml.h <INSTALL_DIR>/include
+      CONFIGURE_COMMAND
+        ${CMAKE_COMMAND} -E env ${WHISPER_ADDITIONAL_ENV} ${CMAKE_COMMAND} <SOURCE_DIR> -B <BINARY_DIR> -G
+        ${CMAKE_GENERATOR} -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR> -DCMAKE_BUILD_TYPE=${Whispercpp_BUILD_TYPE}
+        -DCMAKE_GENERATOR_PLATFORM=${CMAKE_GENERATOR_PLATFORM} -DCMAKE_OSX_DEPLOYMENT_TARGET=10.13
+        -DCMAKE_OSX_ARCHITECTURES=${CMAKE_OSX_ARCHITECTURES_} -DCMAKE_CXX_FLAGS=${WHISPER_EXTRA_CXX_FLAGS}
+        -DCMAKE_C_FLAGS=${WHISPER_EXTRA_CXX_FLAGS} -DBUILD_SHARED_LIBS=ON -DWHISPER_BUILD_TESTS=OFF
+        -DWHISPER_BUILD_EXAMPLES=OFF ${WHISPER_ADDITIONAL_CMAKE_ARGS})
 
-  if(NOT LOCALVOCAL_WITH_CUDA)
     add_dependencies(Whispercpp_Build OpenBLAS)
-  endif(NOT LOCALVOCAL_WITH_CUDA)
+  endif()
 else()
   # On Linux and MacOS build a static Whisper library
   ExternalProject_Add(
