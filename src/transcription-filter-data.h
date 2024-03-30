@@ -15,6 +15,8 @@
 #include <functional>
 #include <string>
 
+#include "translation/translation.h"
+
 #define MAX_PREPROC_CHANNELS 10
 
 #define MT_ obs_module_text
@@ -80,6 +82,9 @@ struct transcription_filter_data {
 	bool save_only_while_recording = false;
 	bool process_while_muted = false;
 	bool rename_file_to_match_recording = false;
+	bool translate = false;
+	std::string source_lang;
+	std::string target_lang;
 
 	// Text source to output the subtitles
 	obs_weak_source_t *text_source;
@@ -97,6 +102,9 @@ struct transcription_filter_data {
 	std::mutex *whisper_buf_mutex;
 	std::mutex *whisper_ctx_mutex;
 	std::condition_variable *wshiper_thread_cv;
+
+	// translation context
+	struct translation_context translation_ctx;
 
 	// ctor
 	transcription_filter_data()

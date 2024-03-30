@@ -8,6 +8,7 @@
 #include "whisper-utils/whisper-processing.h"
 #include "whisper-utils/whisper-language.h"
 #include "whisper-utils/whisper-utils.h"
+#include "translation/language_codes.h"
 
 #include <algorithm>
 #include <fstream>
@@ -274,6 +275,16 @@ void set_text_callback(struct transcription_filter_data *gf,
 	std::string str_copy = result.text;
 #endif
 
+	if (gf->translate) {
+		std::string translated_text;
+		if (translate(gf->translation_ctx, str_copy, gf->source_lang, gf->target_lang,
+			      translated_text) == OBS_POLYGLOT_TRANSLATION_SUCCESS) {
+			str_copy = translated_text;
+		} else {
+			obs_log(gf->log_level, "Failed to translate text");
+		}
+	}
+
 	if (gf->caption_to_stream) {
 		obs_output_t *streaming_output = obs_frontend_get_streaming_output();
 		if (streaming_output) {
@@ -386,6 +397,26 @@ void transcription_filter_update(void *data, obs_data_t *s)
 	gf->process_while_muted = obs_data_get_bool(s, "process_while_muted");
 	gf->min_sub_duration = (int)obs_data_get_int(s, "min_sub_duration");
 	gf->last_sub_render_time = 0;
+
+	bool new_translate = obs_data_get_bool(s, "translate");
+	gf->source_lang = obs_data_get_string(s, "translate_source_language");
+	gf->target_lang = obs_data_get_string(s, "translate_target_language");
+
+	if (new_translate != gf->translate) {
+		if (new_translate) {
+			if (build_translation_context(gf->translation_ctx,
+						      "models/m2m100-418m.sp.model",
+						      "models/m2m100-418m") !=
+			    OBS_POLYGLOT_TRANSLATION_INIT_SUCCESS) {
+				obs_log(gf->log_level, "Failed to initialize translation context");
+				gf->translate = false;
+			} else {
+				gf->translate = true;
+			}
+		} else {
+			gf->translate = false;
+		}
+	}
 
 	obs_log(gf->log_level, "transcription_filter: update text source");
 	// update the text source
@@ -669,6 +700,9 @@ void transcription_filter_defaults(obs_data_t *s)
 	obs_data_set_default_int(s, "step_size_msec", 1000);
 	obs_data_set_default_int(s, "min_sub_duration", 3000);
 	obs_data_set_default_bool(s, "advanced_settings", false);
+	obs_data_set_default_bool(s, "translate", false);
+	obs_data_set_default_string(s, "translate_target_language", "__es__");
+	obs_data_set_default_string(s, "translate_source_language", "__en__");
 
 	// Whisper parameters
 	obs_data_set_default_int(s, "whisper_sampling_method", WHISPER_SAMPLING_BEAM_SEARCH);
@@ -727,6 +761,40 @@ obs_properties_t *transcription_filter_properties(void *data)
 		// Show/Hide the step size input
 		obs_property_set_visible(obs_properties_get(props, "step_size_msec"),
 					 obs_data_get_bool(settings, "step_by_step_processing"));
+		return true;
+	});
+
+	// add translation option group
+	obs_properties_t *translation_group = obs_properties_create();
+	obs_property_t *translation_group_prop = obs_properties_add_group(
+		ppts, "translate", MT_("translate"), OBS_GROUP_CHECKABLE, translation_group);
+	// add target language selection
+	obs_property_t *prop_tgt = obs_properties_add_list(
+		translation_group, "translate_target_language", MT_("target_language"),
+		OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_STRING);
+	obs_property_t *prop_src = obs_properties_add_list(
+		translation_group, "translate_source_language", MT_("source_language"),
+		OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_STRING);
+
+	// Populate the dropdown with the language codes
+	for (const auto &language : language_codes) {
+		obs_property_list_add_string(prop_tgt, language.second.c_str(),
+					     language.first.c_str());
+		obs_property_list_add_string(prop_src, language.second.c_str(),
+					     language.first.c_str());
+	}
+
+	// add callback to enable/disable translation group
+	obs_property_set_modified_callback(translation_group_prop, [](obs_properties_t *props,
+								      obs_property_t *property,
+								      obs_data_t *settings) {
+		UNUSED_PARAMETER(property);
+		// Show/Hide the translation group
+		const bool translate_enabled = obs_data_get_bool(settings, "translate");
+		obs_property_set_visible(obs_properties_get(props, "translate_target_language"),
+					 translate_enabled);
+		obs_property_set_visible(obs_properties_get(props, "translate_source_language"),
+					 translate_enabled);
 		return true;
 	});
 
