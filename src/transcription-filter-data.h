@@ -86,8 +86,8 @@ struct transcription_filter_data {
 	std::string source_lang;
 	std::string target_lang;
 
-    // Last transcription result
-    std::string last_text;
+	// Last transcription result
+	std::string last_text;
 
 	// Text source to output the subtitles
 	obs_weak_source_t *text_source;

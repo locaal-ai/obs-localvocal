@@ -12,8 +12,8 @@ void update_whsiper_model_path(struct transcription_filter_data *gf, obs_data_t 
 	if (gf->whisper_model_path.empty() || gf->whisper_model_path != new_model_path ||
 	    is_external_model) {
 		// model path changed, reload the model
-		obs_log(gf->log_level, "model path changed from %s to %s", gf->whisper_model_path.c_str(),
-			new_model_path.c_str());
+		obs_log(gf->log_level, "model path changed from %s to %s",
+			gf->whisper_model_path.c_str(), new_model_path.c_str());
 
 		// check if the new model is external file
 		if (!is_external_model) {
@@ -33,12 +33,12 @@ void update_whsiper_model_path(struct transcription_filter_data *gf, obs_data_t 
 			if (model_file_found == "") {
 				obs_log(LOG_WARNING, "Whisper model does not exist");
 				download_model_with_ui_dialog(
-					model_info,
-					[gf, new_model_path](int download_status, const std::string &path) {
+					model_info, [gf, new_model_path](int download_status,
+									 const std::string &path) {
 						if (download_status == 0) {
 							obs_log(LOG_INFO,
 								"Model download complete");
-                            gf->whisper_model_path = new_model_path;
+							gf->whisper_model_path = new_model_path;
 							start_whisper_thread_with_path(gf, path);
 						} else {
 							obs_log(LOG_ERROR, "Model download failed");
@@ -46,7 +46,7 @@ void update_whsiper_model_path(struct transcription_filter_data *gf, obs_data_t 
 					});
 			} else {
 				// Model exists, just load it
-                gf->whisper_model_path = new_model_path;
+				gf->whisper_model_path = new_model_path;
 				start_whisper_thread_with_path(gf, model_file_found);
 			}
 		} else {

@@ -8,49 +8,52 @@
 #include <obs-module.h>
 #include <regex>
 
-void build_and_enable_translation(struct transcription_filter_data* gf, const std::string& model_file_path)
+void build_and_enable_translation(struct transcription_filter_data *gf,
+				  const std::string &model_file_path)
 {
-    gf->translation_ctx.local_model_folder_path = model_file_path;
-    if (build_translation_context(gf->translation_ctx) == OBS_POLYGLOT_TRANSLATION_INIT_SUCCESS) {
-        obs_log(LOG_INFO, "Enable translation");
-        gf->translate = true;
-    } else {
-        obs_log(LOG_ERROR, "Failed to load CT2 model");
-        gf->translate = false;
-    }
+	gf->translation_ctx.local_model_folder_path = model_file_path;
+	if (build_translation_context(gf->translation_ctx) ==
+	    OBS_POLYGLOT_TRANSLATION_INIT_SUCCESS) {
+		obs_log(LOG_INFO, "Enable translation");
+		gf->translate = true;
+	} else {
+		obs_log(LOG_ERROR, "Failed to load CT2 model");
+		gf->translate = false;
+	}
 }
 
-void start_translation(struct transcription_filter_data* gf)
+void start_translation(struct transcription_filter_data *gf)
 {
-    obs_log(LOG_INFO, "Starting translation...");
+	obs_log(LOG_INFO, "Starting translation...");
 
-    const ModelInfo &translation_model_info = models_info["M2M-100 418M (495Mb)"];
-    std::string model_file_found = find_model_folder(translation_model_info);
-    if (model_file_found == "") {
-        obs_log(LOG_INFO, "Translation CT2 model does not exist. Downloading...");
-        download_model_with_ui_dialog(
-            translation_model_info,
-            [gf, model_file_found](int download_status, const std::string &path) {
-                if (download_status == 0) {
-                    obs_log(LOG_INFO, "CT2 model download complete");
-                    build_and_enable_translation(gf, path);
-                } else {
-                    obs_log(LOG_ERROR, "Model download failed");
-                    gf->translate = false;
-                }
-            });
-    } else {
-        // Model exists, just load it
-        build_and_enable_translation(gf, model_file_found);
-    }
+	const ModelInfo &translation_model_info = models_info["M2M-100 418M (495Mb)"];
+	std::string model_file_found = find_model_folder(translation_model_info);
+	if (model_file_found == "") {
+		obs_log(LOG_INFO, "Translation CT2 model does not exist. Downloading...");
+		download_model_with_ui_dialog(
+			translation_model_info,
+			[gf, model_file_found](int download_status, const std::string &path) {
+				if (download_status == 0) {
+					obs_log(LOG_INFO, "CT2 model download complete");
+					build_and_enable_translation(gf, path);
+				} else {
+					obs_log(LOG_ERROR, "Model download failed");
+					gf->translate = false;
+				}
+			});
+	} else {
+		// Model exists, just load it
+		build_and_enable_translation(gf, model_file_found);
+	}
 }
 
 int build_translation_context(struct translation_context &translation_ctx)
 {
 	std::string local_model_path = translation_ctx.local_model_folder_path;
 	obs_log(LOG_INFO, "Building translation context from '%s'...", local_model_path.c_str());
-    // find the SPM file in the model folder
-    std::string local_spm_path = find_file_in_folder_by_name(local_model_path, "sentencepiece.bpe.model");
+	// find the SPM file in the model folder
+	std::string local_spm_path =
+		find_file_in_folder_by_name(local_model_path, "sentencepiece.bpe.model");
 
 	try {
 		obs_log(LOG_INFO, "Loading SPM from %s", local_spm_path.c_str());
@@ -107,36 +110,42 @@ int translate(struct translation_context &translation_ctx, const std::string &te
 	try {
 		// set input tokens
 		std::vector<std::string> input_tokens = {source_lang, "<s>"};
-        if (translation_ctx.add_context && translation_ctx.last_input_tokens.size() > 0) {
-            input_tokens.insert(input_tokens.end(), translation_ctx.last_input_tokens.begin(), translation_ctx.last_input_tokens.end());
-        }
-        std::vector<std::string> new_input_tokens = translation_ctx.tokenizer(text);
-        input_tokens.insert(input_tokens.end(), new_input_tokens.begin(), new_input_tokens.end());
+		if (translation_ctx.add_context && translation_ctx.last_input_tokens.size() > 0) {
+			input_tokens.insert(input_tokens.end(),
+					    translation_ctx.last_input_tokens.begin(),
+					    translation_ctx.last_input_tokens.end());
+		}
+		std::vector<std::string> new_input_tokens = translation_ctx.tokenizer(text);
+		input_tokens.insert(input_tokens.end(), new_input_tokens.begin(),
+				    new_input_tokens.end());
 		input_tokens.push_back("</s>");
 
-        translation_ctx.last_input_tokens = new_input_tokens;
+		translation_ctx.last_input_tokens = new_input_tokens;
 
 		const std::vector<std::vector<std::string>> batch = {input_tokens};
 
-        // get target prefix
-        std::vector<std::string> target_prefix = {target_lang};
-        if (translation_ctx.add_context && translation_ctx.last_translation_tokens.size() > 0) {
-            target_prefix.insert(target_prefix.end(), translation_ctx.last_translation_tokens.begin(), translation_ctx.last_translation_tokens.end());
-        }
+		// get target prefix
+		std::vector<std::string> target_prefix = {target_lang};
+		if (translation_ctx.add_context &&
+		    translation_ctx.last_translation_tokens.size() > 0) {
+			target_prefix.insert(target_prefix.end(),
+					     translation_ctx.last_translation_tokens.begin(),
+					     translation_ctx.last_translation_tokens.end());
+		}
 
-        const std::vector<std::vector<std::string>> target_prefix_batch = {target_prefix};
-        const std::vector<ctranslate2::TranslationResult> results =
-            translation_ctx.translator->translate_batch(batch, target_prefix_batch,
-                                    *translation_ctx.options);
+		const std::vector<std::vector<std::string>> target_prefix_batch = {target_prefix};
+		const std::vector<ctranslate2::TranslationResult> results =
+			translation_ctx.translator->translate_batch(batch, target_prefix_batch,
+								    *translation_ctx.options);
 
-        const auto &tokens_result = results[0].output();
-        // take the tokens from the target_prefix length to the end
-        std::vector<std::string> translation_tokens(tokens_result.begin() + target_prefix.size(),
-                                                     tokens_result.end());
+		const auto &tokens_result = results[0].output();
+		// take the tokens from the target_prefix length to the end
+		std::vector<std::string> translation_tokens(
+			tokens_result.begin() + target_prefix.size(), tokens_result.end());
 
-        translation_ctx.last_translation_tokens = translation_tokens;
-        // detokenize
-        result = translation_ctx.detokenizer(translation_tokens);
+		translation_ctx.last_translation_tokens = translation_tokens;
+		// detokenize
+		result = translation_ctx.detokenizer(translation_tokens);
 	} catch (std::exception &e) {
 		obs_log(LOG_ERROR, "Error: %s", e.what());
 		return OBS_POLYGLOT_TRANSLATION_FAIL;

@@ -276,27 +276,31 @@ void set_text_callback(struct transcription_filter_data *gf,
 	std::string str_copy = result.text;
 #endif
 
-    // remove trailing spaces, newlines, tabs or punctuation
-    str_copy.erase(std::find_if(str_copy.rbegin(), str_copy.rend(),
-                                [](unsigned char ch) { return !std::isspace(ch) || !std::ispunct(ch); })
-                       .base(),
-                   str_copy.end());
+	// remove trailing spaces, newlines, tabs or punctuation
+	str_copy.erase(std::find_if(str_copy.rbegin(), str_copy.rend(),
+				    [](unsigned char ch) {
+					    return !std::isspace(ch) || !std::ispunct(ch);
+				    })
+			       .base(),
+		       str_copy.end());
 
 	if (gf->translate) {
-        obs_log(gf->log_level, "Translating text. %s -> %s", gf->source_lang.c_str(), gf->target_lang.c_str());
-        std::string translated_text;
+		obs_log(gf->log_level, "Translating text. %s -> %s", gf->source_lang.c_str(),
+			gf->target_lang.c_str());
+		std::string translated_text;
 		if (translate(gf->translation_ctx, str_copy, gf->source_lang, gf->target_lang,
 			      translated_text) == OBS_POLYGLOT_TRANSLATION_SUCCESS) {
-            if (gf->log_words) {
-                obs_log(LOG_INFO, "Translation: '%s' -> '%s'", str_copy.c_str(), translated_text.c_str());
-            }
-            str_copy = translated_text;
+			if (gf->log_words) {
+				obs_log(LOG_INFO, "Translation: '%s' -> '%s'", str_copy.c_str(),
+					translated_text.c_str());
+			}
+			str_copy = translated_text;
 		} else {
 			obs_log(gf->log_level, "Failed to translate text");
 		}
 	}
 
-    gf->last_text = str_copy;
+	gf->last_text = str_copy;
 
 	if (gf->caption_to_stream) {
 		obs_output_t *streaming_output = obs_frontend_get_streaming_output();
@@ -565,8 +569,8 @@ void *transcription_filter_create(obs_data_t *settings, obs_source_t *filter)
 
 	gf->overlap_ms = (int)obs_data_get_int(settings, "overlap_size_msec");
 	gf->overlap_frames = (size_t)((float)gf->sample_rate / (1000.0f / (float)gf->overlap_ms));
-	obs_log(gf->log_level, "channels %d, frames %d, sample_rate %d",
-		(int)gf->channels, (int)gf->frames, gf->sample_rate);
+	obs_log(gf->log_level, "channels %d, frames %d, sample_rate %d", (int)gf->channels,
+		(int)gf->frames, gf->sample_rate);
 
 	obs_log(gf->log_level, "setup audio resampler");
 	struct resample_info src, dst;
@@ -781,8 +785,8 @@ obs_properties_t *transcription_filter_properties(void *data)
 	obs_property_t *prop_src = obs_properties_add_list(
 		translation_group, "translate_source_language", MT_("source_language"),
 		OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_STRING);
-    obs_property_t *prop_add_context = obs_properties_add_bool(
-                translation_group, "translate_add_context", MT_("translate_add_context"));
+	obs_property_t *prop_add_context = obs_properties_add_bool(
+		translation_group, "translate_add_context", MT_("translate_add_context"));
 
 	// Populate the dropdown with the language codes
 	for (const auto &language : language_codes) {
@@ -799,9 +803,11 @@ obs_properties_t *transcription_filter_properties(void *data)
 		UNUSED_PARAMETER(property);
 		// Show/Hide the translation group
 		const bool translate_enabled = obs_data_get_bool(settings, "translate");
-        for (const auto& prop : { "translate_target_language", "translate_source_language", "translate_add_context" }) {
-            obs_property_set_visible(obs_properties_get(props, prop), translate_enabled);
-        }
+		for (const auto &prop : {"translate_target_language", "translate_source_language",
+					 "translate_add_context"}) {
+			obs_property_set_visible(obs_properties_get(props, prop),
+						 translate_enabled);
+		}
 		return true;
 	});
 

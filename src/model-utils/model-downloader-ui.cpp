@@ -112,14 +112,15 @@ void ModelDownloader::show_error(const std::string &reason)
 
 ModelDownloadWorker::ModelDownloadWorker(const ModelInfo &model_info_) : model_info(model_info_) {}
 
-std::string get_filename_from_url(const std::string& url) {
-    auto lastSlashPos = url.find_last_of("/");
-    auto queryPos = url.find("?", lastSlashPos);
-    if (queryPos == std::string::npos) {
-        return url.substr(lastSlashPos + 1);
-    } else {
-        return url.substr(lastSlashPos + 1, queryPos - lastSlashPos - 1);
-    }
+std::string get_filename_from_url(const std::string &url)
+{
+	auto lastSlashPos = url.find_last_of("/");
+	auto queryPos = url.find("?", lastSlashPos);
+	if (queryPos == std::string::npos) {
+		return url.substr(lastSlashPos + 1);
+	} else {
+		return url.substr(lastSlashPos + 1, queryPos - lastSlashPos - 1);
+	}
 }
 
 void ModelDownloadWorker::download_model()
@@ -131,7 +132,8 @@ void ModelDownloadWorker::download_model()
 
 	// Check if the config folder exists
 	if (!std::filesystem::exists(module_config_models_folder)) {
-		obs_log(LOG_WARNING, "Config folder does not exist: %s", module_config_models_folder);
+		obs_log(LOG_WARNING, "Config folder does not exist: %s",
+			module_config_models_folder);
 		// Create the config folder
 		if (!std::filesystem::create_directories(module_config_models_folder)) {
 			obs_log(LOG_ERROR, "Failed to create config folder: %s",
@@ -146,24 +148,26 @@ void ModelDownloadWorker::download_model()
 
 	obs_log(LOG_INFO, "Model save path: %s", model_local_config_path.c_str());
 
-    if (!std::filesystem::exists(model_local_config_path)) {
-        // model folder does not exist, create it
-        if (!std::filesystem::create_directories(model_local_config_path)) {
-            obs_log(LOG_ERROR, "Failed to create model folder: %s",
-                model_local_config_path.c_str());
-            emit download_error("Failed to create model folder.");
-            return;
-        }
-    }
+	if (!std::filesystem::exists(model_local_config_path)) {
+		// model folder does not exist, create it
+		if (!std::filesystem::create_directories(model_local_config_path)) {
+			obs_log(LOG_ERROR, "Failed to create model folder: %s",
+				model_local_config_path.c_str());
+			emit download_error("Failed to create model folder.");
+			return;
+		}
+	}
 
 	CURL *curl = curl_easy_init();
 	if (curl) {
 		for (auto &model_download_file : this->model_info.files) {
 			obs_log(LOG_INFO, "Model URL: %s", model_download_file.url.c_str());
 
-            const std::string model_filename = get_filename_from_url(model_download_file.url);
+			const std::string model_filename =
+				get_filename_from_url(model_download_file.url);
 			const std::string model_file_save_path =
-				(std::filesystem::path(model_local_config_path) / model_filename).string();
+				(std::filesystem::path(model_local_config_path) / model_filename)
+					.string();
 			if (std::filesystem::exists(model_file_save_path)) {
 				obs_log(LOG_INFO, "Model file already exists: %s",
 					model_file_save_path.c_str());

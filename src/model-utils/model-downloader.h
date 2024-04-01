@@ -6,7 +6,8 @@
 
 #include "model-downloader-types.h"
 
-std::string find_file_in_folder_by_name(const std::string& folder_path, const std::string& file_name);
+std::string find_file_in_folder_by_name(const std::string &folder_path,
+					const std::string &file_name);
 std::string find_bin_file_in_folder(const std::string &path);
 std::string find_model_folder(const ModelInfo &model_info);
 std::string find_model_bin_file(const ModelInfo &model_info);

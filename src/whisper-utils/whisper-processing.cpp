@@ -111,20 +111,22 @@ bool vad_simple(float *pcmf32, size_t pcm32f_size, uint32_t sample_rate, float v
 
 struct whisper_context *init_whisper_context(const std::string &model_path_in)
 {
-    std::string model_path = model_path_in;
+	std::string model_path = model_path_in;
 
 	obs_log(LOG_INFO, "Loading whisper model from %s", model_path.c_str());
 
-    if (std::filesystem::is_directory(model_path)) {
-        obs_log(LOG_INFO, "Model path is a directory, not a file, looking for .bin file in folder");
-        // look for .bin file
-        const std::string model_bin_file = find_bin_file_in_folder(model_path);
-        if (model_bin_file.empty()) {
-            obs_log(LOG_ERROR, "Model bin file not found in folder: %s", model_path.c_str());
-            return nullptr;
-        }
-        model_path = model_bin_file;
-    }
+	if (std::filesystem::is_directory(model_path)) {
+		obs_log(LOG_INFO,
+			"Model path is a directory, not a file, looking for .bin file in folder");
+		// look for .bin file
+		const std::string model_bin_file = find_bin_file_in_folder(model_path);
+		if (model_bin_file.empty()) {
+			obs_log(LOG_ERROR, "Model bin file not found in folder: %s",
+				model_path.c_str());
+			return nullptr;
+		}
+		model_path = model_bin_file;
+	}
 
 	struct whisper_context_params cparams = whisper_context_default_params();
 #ifdef LOCALVOCAL_WITH_CUDA
