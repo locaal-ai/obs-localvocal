@@ -34,7 +34,7 @@ set(_obs_clang_c_options
     -Wfour-char-constants
     -Winfinite-recursion
     -Wint-conversion
-    -Wnewline-eof
+    -Wno-newline-eof
     -Wno-conversion
     -Wno-float-conversion
     -Wno-implicit-fallthrough

@@ -785,8 +785,8 @@ obs_properties_t *transcription_filter_properties(void *data)
 	obs_property_t *prop_src = obs_properties_add_list(
 		translation_group, "translate_source_language", MT_("source_language"),
 		OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_STRING);
-	obs_property_t *prop_add_context = obs_properties_add_bool(
-		translation_group, "translate_add_context", MT_("translate_add_context"));
+	obs_properties_add_bool(translation_group, "translate_add_context",
+				MT_("translate_add_context"));
 
 	// Populate the dropdown with the language codes
 	for (const auto &language : language_codes) {
