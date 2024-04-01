@@ -65,7 +65,7 @@ struct transcription_filter_data {
 	audio_resampler_t *resampler;
 
 	/* whisper */
-	char *whisper_model_path;
+	std::string whisper_model_path;
 	struct whisper_context *whisper_context;
 	whisper_full_params whisper_params;
 
@@ -85,6 +85,9 @@ struct transcription_filter_data {
 	bool translate = false;
 	std::string source_lang;
 	std::string target_lang;
+
+    // Last transcription result
+    std::string last_text;
 
 	// Text source to output the subtitles
 	obs_weak_source_t *text_source;
@@ -115,7 +118,7 @@ struct transcription_filter_data {
 		}
 		context = nullptr;
 		resampler = nullptr;
-		whisper_model_path = nullptr;
+		whisper_model_path = "";
 		whisper_context = nullptr;
 		text_source = nullptr;
 		text_source_mutex = nullptr;

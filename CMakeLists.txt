@@ -69,6 +69,7 @@ target_sources(
           src/whisper-utils/whisper-processing.cpp
           src/model-utils/model-downloader.cpp
           src/model-utils/model-downloader-ui.cpp
+          src/model-utils/model-infos.cpp
           src/whisper-utils/whisper-utils.cpp
           src/translation/translation.cpp)
 
