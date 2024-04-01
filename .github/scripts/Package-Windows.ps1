@@ -49,7 +49,12 @@ function Package {
     $BuildSpec = Get-Content -Path ${BuildSpecFile} -Raw | ConvertFrom-Json
     $ProductName = $BuildSpec.name
     $ProductVersion = $BuildSpec.version
-    $CudaName = "cuda${Cublas}"
+    # Check if $cublas is cpu or cuda
+    if ( $Cublas -eq 'cpu' ) {
+        $CudaName = 'cpu'
+    } else {
+        $CudaName = "cuda${Cublas}"
+    }
 
     $OutputName = "${ProductName}-${ProductVersion}-windows-${Target}-${CudaName}"
 

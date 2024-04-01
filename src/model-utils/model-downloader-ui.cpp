@@ -5,15 +5,13 @@
 
 #include <filesystem>
 
-const std::string MODEL_BASE_PATH = "https://ggml.ggerganov.com/";
-
 size_t write_data(void *ptr, size_t size, size_t nmemb, FILE *stream)
 {
 	size_t written = fwrite(ptr, size, nmemb, stream);
 	return written;
 }
 
-ModelDownloader::ModelDownloader(const std::string &model_name,
+ModelDownloader::ModelDownloader(const ModelInfo &model_info,
 				 download_finished_callback_t download_finished_callback_,
 				 QWidget *parent)
 	: QDialog(parent),
@@ -30,7 +28,7 @@ ModelDownloader::ModelDownloader(const std::string &model_name,
 
 	// Add a label for the model name
 	QLabel *model_name_label = new QLabel(this);
-	model_name_label->setText(QString::fromStdString(model_name));
+	model_name_label->setText(QString::fromStdString(model_info.friendly_name));
 	model_name_label->setAlignment(Qt::AlignCenter);
 	this->layout->addWidget(model_name_label);
 
@@ -43,7 +41,7 @@ ModelDownloader::ModelDownloader(const std::string &model_name,
 	this->layout->addWidget(this->progress_bar);
 
 	this->download_thread = new QThread();
-	this->download_worker = new ModelDownloadWorker(model_name);
+	this->download_worker = new ModelDownloadWorker(model_info);
 	this->download_worker->moveToThread(this->download_thread);
 
 	connect(this->download_thread, &QThread::started, this->download_worker,
@@ -112,65 +110,96 @@ void ModelDownloader::show_error(const std::string &reason)
 	this->download_finished_callback(1, "");
 }
 
-ModelDownloadWorker::ModelDownloadWorker(const std::string &model_name_)
+ModelDownloadWorker::ModelDownloadWorker(const ModelInfo &model_info_) : model_info(model_info_) {}
+
+std::string get_filename_from_url(const std::string &url)
 {
-	this->model_name = model_name_;
+	auto lastSlashPos = url.find_last_of("/");
+	auto queryPos = url.find("?", lastSlashPos);
+	if (queryPos == std::string::npos) {
+		return url.substr(lastSlashPos + 1);
+	} else {
+		return url.substr(lastSlashPos + 1, queryPos - lastSlashPos - 1);
+	}
 }
 
 void ModelDownloadWorker::download_model()
 {
-	char *module_config_path = obs_module_get_config_path(obs_current_module(), "models");
+	char *config_folder = obs_module_get_config_path(obs_current_module(), "models");
+	const std::filesystem::path module_config_models_folder =
+		std::filesystem::absolute(config_folder);
+	bfree(config_folder);
+
 	// Check if the config folder exists
-	if (!std::filesystem::exists(module_config_path)) {
-		obs_log(LOG_WARNING, "Config folder does not exist: %s", module_config_path);
+	if (!std::filesystem::exists(module_config_models_folder)) {
+		obs_log(LOG_WARNING, "Config folder does not exist: %s",
+			module_config_models_folder.string().c_str());
 		// Create the config folder
-		if (!std::filesystem::create_directories(module_config_path)) {
+		if (!std::filesystem::create_directories(module_config_models_folder)) {
 			obs_log(LOG_ERROR, "Failed to create config folder: %s",
-				module_config_path);
+				module_config_models_folder.string().c_str());
 			emit download_error("Failed to create config folder.");
 			return;
 		}
 	}
 
-	char *model_save_path_str =
-		obs_module_get_config_path(obs_current_module(), this->model_name.c_str());
-	std::string model_save_path(model_save_path_str);
-	bfree(model_save_path_str);
-	obs_log(LOG_INFO, "Model save path: %s", model_save_path.c_str());
+	const std::string model_local_config_path =
+		(module_config_models_folder / model_info.local_folder_name).string();
 
-	// extract filename from path in this->modle_name
-	const std::string model_filename =
-		this->model_name.substr(this->model_name.find_last_of("/\\") + 1);
+	obs_log(LOG_INFO, "Model save path: %s", model_local_config_path.c_str());
 
-	std::string model_url = MODEL_BASE_PATH + model_filename;
-	obs_log(LOG_INFO, "Model URL: %s", model_url.c_str());
+	if (!std::filesystem::exists(model_local_config_path)) {
+		// model folder does not exist, create it
+		if (!std::filesystem::create_directories(model_local_config_path)) {
+			obs_log(LOG_ERROR, "Failed to create model folder: %s",
+				model_local_config_path.c_str());
+			emit download_error("Failed to create model folder.");
+			return;
+		}
+	}
 
 	CURL *curl = curl_easy_init();
 	if (curl) {
-		FILE *fp = fopen(model_save_path.c_str(), "wb");
-		if (fp == nullptr) {
-			obs_log(LOG_ERROR, "Failed to open file %s.", model_save_path.c_str());
-			emit download_error("Failed to open file.");
-			return;
-		}
-		curl_easy_setopt(curl, CURLOPT_URL, model_url.c_str());
-		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_data);
-		curl_easy_setopt(curl, CURLOPT_WRITEDATA, fp);
-		curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 0L);
-		curl_easy_setopt(curl, CURLOPT_XFERINFOFUNCTION,
-				 ModelDownloadWorker::progress_callback);
-		curl_easy_setopt(curl, CURLOPT_XFERINFODATA, this);
-		// Follow redirects
-		curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
-		CURLcode res = curl_easy_perform(curl);
-		if (res != CURLE_OK) {
-			obs_log(LOG_ERROR, "Failed to download model %s.",
-				this->model_name.c_str());
-			emit download_error("Failed to download model.");
+		for (auto &model_download_file : this->model_info.files) {
+			obs_log(LOG_INFO, "Model URL: %s", model_download_file.url.c_str());
+
+			const std::string model_filename =
+				get_filename_from_url(model_download_file.url);
+			const std::string model_file_save_path =
+				(std::filesystem::path(model_local_config_path) / model_filename)
+					.string();
+			if (std::filesystem::exists(model_file_save_path)) {
+				obs_log(LOG_INFO, "Model file already exists: %s",
+					model_file_save_path.c_str());
+				continue;
+			}
+
+			FILE *fp = fopen(model_file_save_path.c_str(), "wb");
+			if (fp == nullptr) {
+				obs_log(LOG_ERROR, "Failed to open model file for writing %s.",
+					model_file_save_path.c_str());
+				emit download_error("Failed to open file.");
+				return;
+			}
+			curl_easy_setopt(curl, CURLOPT_URL, model_download_file.url.c_str());
+			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_data);
+			curl_easy_setopt(curl, CURLOPT_WRITEDATA, fp);
+			curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 0L);
+			curl_easy_setopt(curl, CURLOPT_XFERINFOFUNCTION,
+					 ModelDownloadWorker::progress_callback);
+			curl_easy_setopt(curl, CURLOPT_XFERINFODATA, this);
+			// Follow redirects
+			curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
+			CURLcode res = curl_easy_perform(curl);
+			if (res != CURLE_OK) {
+				obs_log(LOG_ERROR, "Failed to download model file %s.",
+					model_filename.c_str());
+				emit download_error("Failed to download model file.");
+			}
+			fclose(fp);
 		}
 		curl_easy_cleanup(curl);
-		fclose(fp);
-		emit download_finished(model_save_path);
+		emit download_finished(model_local_config_path);
 	} else {
 		obs_log(LOG_ERROR, "Failed to initialize curl.");
 		emit download_error("Failed to initialize curl.");

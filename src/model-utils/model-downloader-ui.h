@@ -14,7 +14,7 @@
 class ModelDownloadWorker : public QObject {
 	Q_OBJECT
 public:
-	ModelDownloadWorker(const std::string &model_name);
+	ModelDownloadWorker(const ModelInfo &model_info_);
 	~ModelDownloadWorker();
 
 public slots:
@@ -28,13 +28,13 @@ signals:
 private:
 	static int progress_callback(void *clientp, curl_off_t dltotal, curl_off_t dlnow,
 				     curl_off_t ultotal, curl_off_t ulnow);
-	std::string model_name;
+	ModelInfo model_info;
 };
 
 class ModelDownloader : public QDialog {
 	Q_OBJECT
 public:
-	ModelDownloader(const std::string &model_name,
+	ModelDownloader(const ModelInfo &model_info,
 			download_finished_callback_t download_finished_callback,
 			QWidget *parent = nullptr);
 	~ModelDownloader();

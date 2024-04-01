@@ -57,6 +57,10 @@ endif()
 include(cmake/BuildWhispercpp.cmake)
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE Whispercpp)
 
+include(cmake/BuildCTranslate2.cmake)
+include(cmake/BuildSentencepiece.cmake)
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE ct2 sentencepiece)
+
 target_sources(
   ${CMAKE_PROJECT_NAME}
   PRIVATE src/plugin-main.c
@@ -65,6 +69,8 @@ target_sources(
           src/whisper-utils/whisper-processing.cpp
           src/model-utils/model-downloader.cpp
           src/model-utils/model-downloader-ui.cpp
-          src/whisper-utils/whisper-utils.cpp)
+          src/model-utils/model-infos.cpp
+          src/whisper-utils/whisper-utils.cpp
+          src/translation/translation.cpp)
 
 set_target_properties_plugin(${CMAKE_PROJECT_NAME} PROPERTIES OUTPUT_NAME ${_name})
