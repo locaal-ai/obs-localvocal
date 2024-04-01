@@ -86,6 +86,8 @@ runs:
         }
 
         .github/scripts/Build-Windows.ps1 @BuildArgs
+      env:
+        CPU_OR_CUDA: ${{ inputs.cublas }}
 
     - name: Create Summary 📊
       if: contains(fromJSON('["Linux", "macOS"]'),runner.os)

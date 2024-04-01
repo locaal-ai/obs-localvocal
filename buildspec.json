@@ -45,7 +45,7 @@
         }
     },
     "name": "obs-localvocal",
-    "version": "0.2.0",
+    "version": "0.2.1",
     "author": "Roy Shilkrot",
     "website": "https://github.com/occ-ai/obs-localvocal",
     "email": "roy.shil@gmail.com",

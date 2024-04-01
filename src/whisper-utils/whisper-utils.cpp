@@ -71,8 +71,8 @@ void update_whsiper_model_path(struct transcription_filter_data *gf, obs_data_t 
 		}
 	} else {
 		// model path did not change
-		obs_log(LOG_DEBUG, "model path did not change: %s == %s", gf->whisper_model_path,
-			new_model_path.c_str());
+		obs_log(LOG_DEBUG, "model path did not change: %s == %s",
+			gf->whisper_model_path.c_str(), new_model_path.c_str());
 	}
 }
 
@@ -94,7 +94,7 @@ void shutdown_whisper_thread(struct transcription_filter_data *gf)
 		gf->whisper_thread.join();
 	}
 	if (!gf->whisper_model_path.empty()) {
-		gf->whisper_model_path.clear();
+		gf->whisper_model_path = "";
 	}
 }
 
