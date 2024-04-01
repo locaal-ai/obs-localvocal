@@ -34,14 +34,13 @@ set(_obs_clang_c_options
     -Wfour-char-constants
     -Winfinite-recursion
     -Wint-conversion
+    -Wnewline-eof
     -Wno-conversion
-    -Wno-error=newline-eof
     -Wno-float-conversion
     -Wno-implicit-fallthrough
     -Wno-missing-braces
     -Wno-missing-field-initializers
     -Wno-missing-prototypes
-    -Wno-newline-eof
     -Wno-semicolon-before-method-body
     -Wno-shadow
     -Wno-sign-conversion

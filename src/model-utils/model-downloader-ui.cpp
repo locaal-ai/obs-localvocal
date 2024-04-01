@@ -133,11 +133,11 @@ void ModelDownloadWorker::download_model()
 	// Check if the config folder exists
 	if (!std::filesystem::exists(module_config_models_folder)) {
 		obs_log(LOG_WARNING, "Config folder does not exist: %s",
-			module_config_models_folder);
+			module_config_models_folder.string().c_str());
 		// Create the config folder
 		if (!std::filesystem::create_directories(module_config_models_folder)) {
 			obs_log(LOG_ERROR, "Failed to create config folder: %s",
-				module_config_models_folder);
+				module_config_models_folder.string().c_str());
 			emit download_error("Failed to create config folder.");
 			return;
 		}
