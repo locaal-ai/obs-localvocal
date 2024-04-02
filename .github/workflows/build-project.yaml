@@ -237,20 +237,6 @@ jobs:
           submodules: recursive
           fetch-depth: 0
 
-      - name: Install CUDA Toolkit
-        if: ${{ matrix.cublas != 'cpu' }}
-        id: cuda-toolkit
-        uses: Jimver/cuda-toolkit@v0.2.11
-        with:
-          cuda: '${{ matrix.cublas }}'
-
-      - name: Set CUDA_TOOLKIT_ROOT_DIR if CUDA is installed
-        if: ${{ matrix.cublas != 'cpu' }}
-        run: |
-          ls "$env:CUDA_PATH\bin"
-          ls -d 2 "$env:CUDA_PATH\lib"
-          "CUDA_TOOLKIT_ROOT_DIR=$env:CUDA_PATH" >> $env:GITHUB_ENV
-
       - name: Set Up Environment 🔧
         id: setup
         run: |
