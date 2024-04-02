@@ -16,6 +16,7 @@
 #include <string>
 
 #include "translation/translation.h"
+#include "whisper-utils/silero-vad-onnx.h"
 
 #define MAX_PREPROC_CHANNELS 10
 
@@ -68,6 +69,9 @@ struct transcription_filter_data {
 	std::string whisper_model_path;
 	struct whisper_context *whisper_context;
 	whisper_full_params whisper_params;
+
+	/* Silero VAD */
+	std::unique_ptr<VadIterator> vad;
 
 	float filler_p_threshold;
 

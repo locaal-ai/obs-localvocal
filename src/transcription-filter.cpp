@@ -502,29 +502,29 @@ void transcription_filter_update(void *data, obs_data_t *s)
 		(whisper_sampling_strategy)obs_data_get_int(s, "whisper_sampling_method"));
 	gf->whisper_params.duration_ms = (int)obs_data_get_int(s, "buffer_size_msec");
 	gf->whisper_params.language = obs_data_get_string(s, "whisper_language_select");
-	gf->whisper_params.initial_prompt = obs_data_get_string(s, "initial_prompt");
-	gf->whisper_params.n_threads = (int)obs_data_get_int(s, "n_threads");
-	gf->whisper_params.n_max_text_ctx = (int)obs_data_get_int(s, "n_max_text_ctx");
-	gf->whisper_params.translate = obs_data_get_bool(s, "whisper_translate");
-	gf->whisper_params.no_context = obs_data_get_bool(s, "no_context");
-	gf->whisper_params.single_segment = obs_data_get_bool(s, "single_segment");
-	gf->whisper_params.print_special = obs_data_get_bool(s, "print_special");
-	gf->whisper_params.print_progress = obs_data_get_bool(s, "print_progress");
-	gf->whisper_params.print_realtime = obs_data_get_bool(s, "print_realtime");
-	gf->whisper_params.print_timestamps = obs_data_get_bool(s, "print_timestamps");
-	gf->whisper_params.token_timestamps = obs_data_get_bool(s, "token_timestamps");
-	gf->whisper_params.thold_pt = (float)obs_data_get_double(s, "thold_pt");
-	gf->whisper_params.thold_ptsum = (float)obs_data_get_double(s, "thold_ptsum");
-	gf->whisper_params.max_len = (int)obs_data_get_int(s, "max_len");
-	gf->whisper_params.split_on_word = obs_data_get_bool(s, "split_on_word");
-	gf->whisper_params.max_tokens = (int)obs_data_get_int(s, "max_tokens");
-	gf->whisper_params.speed_up = obs_data_get_bool(s, "speed_up");
-	gf->whisper_params.suppress_blank = obs_data_get_bool(s, "suppress_blank");
-	gf->whisper_params.suppress_non_speech_tokens =
-		obs_data_get_bool(s, "suppress_non_speech_tokens");
-	gf->whisper_params.temperature = (float)obs_data_get_double(s, "temperature");
-	gf->whisper_params.max_initial_ts = (float)obs_data_get_double(s, "max_initial_ts");
-	gf->whisper_params.length_penalty = (float)obs_data_get_double(s, "length_penalty");
+	// gf->whisper_params.initial_prompt = obs_data_get_string(s, "initial_prompt");
+	// gf->whisper_params.n_threads = (int)obs_data_get_int(s, "n_threads");
+	// gf->whisper_params.n_max_text_ctx = (int)obs_data_get_int(s, "n_max_text_ctx");
+	// gf->whisper_params.translate = obs_data_get_bool(s, "whisper_translate");
+	// gf->whisper_params.no_context = obs_data_get_bool(s, "no_context");
+	// gf->whisper_params.single_segment = obs_data_get_bool(s, "single_segment");
+	// gf->whisper_params.print_special = obs_data_get_bool(s, "print_special");
+	// gf->whisper_params.print_progress = obs_data_get_bool(s, "print_progress");
+	// gf->whisper_params.print_realtime = obs_data_get_bool(s, "print_realtime");
+	// gf->whisper_params.print_timestamps = obs_data_get_bool(s, "print_timestamps");
+	// gf->whisper_params.token_timestamps = obs_data_get_bool(s, "token_timestamps");
+	// gf->whisper_params.thold_pt = (float)obs_data_get_double(s, "thold_pt");
+	// gf->whisper_params.thold_ptsum = (float)obs_data_get_double(s, "thold_ptsum");
+	// gf->whisper_params.max_len = (int)obs_data_get_int(s, "max_len");
+	// gf->whisper_params.split_on_word = obs_data_get_bool(s, "split_on_word");
+	// gf->whisper_params.max_tokens = (int)obs_data_get_int(s, "max_tokens");
+	// gf->whisper_params.speed_up = obs_data_get_bool(s, "speed_up");
+	// gf->whisper_params.suppress_blank = obs_data_get_bool(s, "suppress_blank");
+	// gf->whisper_params.suppress_non_speech_tokens =
+	// 	obs_data_get_bool(s, "suppress_non_speech_tokens");
+	// gf->whisper_params.temperature = (float)obs_data_get_double(s, "temperature");
+	// gf->whisper_params.max_initial_ts = (float)obs_data_get_double(s, "max_initial_ts");
+	// gf->whisper_params.length_penalty = (float)obs_data_get_double(s, "length_penalty");
 }
 
 void *transcription_filter_create(obs_data_t *settings, obs_source_t *filter)
