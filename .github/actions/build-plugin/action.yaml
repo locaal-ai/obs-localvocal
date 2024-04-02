@@ -82,7 +82,6 @@ runs:
         $BuildArgs = @{
           Target = '${{ inputs.target }}'
           Configuration = '${{ inputs.config }}'
-          Cublas = '${{ inputs.cublas }}'
         }
 
         .github/scripts/Build-Windows.ps1 @BuildArgs
