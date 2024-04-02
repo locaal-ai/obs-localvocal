@@ -51,6 +51,7 @@ elseif(WIN32)
   set(CUDA_PREFIX $ENV{CPU_OR_CUDA})
   if(NOT $ENV{CPU_OR_CUDA} STREQUAL "cpu")
     set(CUDA_PREFIX "cuda$ENV{CPU_OR_CUDA}")
+    add_compile_definitions("LOCALVOCAL_WITH_CUDA")
   endif()
 
   set(WHISPER_CPP_URL

@@ -7,8 +7,6 @@ project(${_name} VERSION ${_version})
 option(ENABLE_FRONTEND_API "Use obs-frontend-api for UI functionality" ON)
 option(ENABLE_QT "Use Qt functionality" ON)
 
-option(LOCALVOCAL_WITH_CUDA "Build with CUDA support. (Windows, CUDA toolkit required)" OFF)
-
 include(compilerconfig)
 include(defaults)
 include(helpers)
@@ -39,11 +37,6 @@ endif()
 set(USE_SYSTEM_CURL
     OFF
     CACHE STRING "Use system cURL")
-
-if(LOCALVOCAL_WITH_CUDA)
-  message(STATUS "Building with CUDA support")
-  add_compile_definitions("LOCALVOCAL_WITH_CUDA")
-endif()
 
 if(USE_SYSTEM_CURL)
   find_package(CURL REQUIRED)
