@@ -128,9 +128,13 @@ struct whisper_context *init_whisper_context(const std::string &model_path_in)
 		model_path = model_bin_file;
 	}
 
-    whisper_log_set([](enum ggml_log_level level, const char * text, void * user_data) {
-        obs_log(LOG_INFO, "Whisper: %s", text);
-    }, nullptr);
+	whisper_log_set(
+		[](enum ggml_log_level level, const char *text, void *user_data) {
+			UNUSED_PARAMETER(level);
+			UNUSED_PARAMETER(user_data);
+			obs_log(LOG_INFO, "Whisper: %s", text);
+		},
+		nullptr);
 
 	struct whisper_context_params cparams = whisper_context_default_params();
 #ifdef LOCALVOCAL_WITH_CUDA
@@ -141,42 +145,44 @@ struct whisper_context *init_whisper_context(const std::string &model_path_in)
 	obs_log(LOG_INFO, "Using CPU for inference");
 #endif
 
-    struct whisper_context *ctx = nullptr;
-    try {
+	struct whisper_context *ctx = nullptr;
+	try {
 #ifdef _WIN32
-        // convert model path UTF8 to wstring (wchar_t) for whisper
-        int count = MultiByteToWideChar(CP_UTF8, 0, model_path.c_str(), (int)model_path.length(),
-                        NULL, 0);
-        std::wstring model_path_ws(count, 0);
-        MultiByteToWideChar(CP_UTF8, 0, model_path.c_str(), (int)model_path.length(),
-                    &model_path_ws[0], count);
+		// convert model path UTF8 to wstring (wchar_t) for whisper
+		int count = MultiByteToWideChar(CP_UTF8, 0, model_path.c_str(),
+						(int)model_path.length(), NULL, 0);
+		std::wstring model_path_ws(count, 0);
+		MultiByteToWideChar(CP_UTF8, 0, model_path.c_str(), (int)model_path.length(),
+				    &model_path_ws[0], count);
 
-        // Read model into buffer
-        std::ifstream modelFile(model_path_ws, std::ios::binary);
-        if (!modelFile.is_open()) {
-            obs_log(LOG_ERROR, "Failed to open whisper model file %s", model_path.c_str());
-            return nullptr;
-        }
-        modelFile.seekg(0, std::ios::end);
-        const size_t modelFileSize = modelFile.tellg();
-        modelFile.seekg(0, std::ios::beg);
-        std::vector<char> modelBuffer(modelFileSize);
-        modelFile.read(modelBuffer.data(), modelFileSize);
-        modelFile.close();
+		// Read model into buffer
+		std::ifstream modelFile(model_path_ws, std::ios::binary);
+		if (!modelFile.is_open()) {
+			obs_log(LOG_ERROR, "Failed to open whisper model file %s",
+				model_path.c_str());
+			return nullptr;
+		}
+		modelFile.seekg(0, std::ios::end);
+		const size_t modelFileSize = modelFile.tellg();
+		modelFile.seekg(0, std::ios::beg);
+		std::vector<char> modelBuffer(modelFileSize);
+		modelFile.read(modelBuffer.data(), modelFileSize);
+		modelFile.close();
 
-        // Initialize whisper
-        ctx = whisper_init_from_buffer_with_params(modelBuffer.data(), modelFileSize, cparams);
+		// Initialize whisper
+		ctx = whisper_init_from_buffer_with_params(modelBuffer.data(), modelFileSize,
+							   cparams);
 #else
-        ctx = whisper_init_from_file_with_params(model_path.c_str(), cparams);
+		ctx = whisper_init_from_file_with_params(model_path.c_str(), cparams);
 #endif
-    } catch (const std::exception &e) {
-        obs_log(LOG_ERROR, "Exception while loading whisper model: %s", e.what());
-        return nullptr;
-    }
-    if (ctx == nullptr) {
-        obs_log(LOG_ERROR, "Failed to load whisper model");
-        return nullptr;
-    }
+	} catch (const std::exception &e) {
+		obs_log(LOG_ERROR, "Exception while loading whisper model: %s", e.what());
+		return nullptr;
+	}
+	if (ctx == nullptr) {
+		obs_log(LOG_ERROR, "Failed to load whisper model");
+		return nullptr;
+	}
 
 	obs_log(LOG_INFO, "Whisper model loaded: %s", whisper_print_system_info());
 	return ctx;
@@ -338,31 +344,28 @@ void process_audio_from_buffer(struct transcription_filter_data *gf)
 		(float)out_frames / WHISPER_SAMPLE_RATE * 1000.0f);
 
 	bool skipped_inference = false;
-    uint32_t speech_start_frame = 0;
-    uint32_t speech_end_frame = out_frames;
+	uint32_t speech_start_frame = 0;
+	uint32_t speech_end_frame = out_frames;
 
 	if (gf->vad_enabled) {
-        std::vector<float> vad_input(output[0], output[0] + out_frames);
-        gf->vad->process(vad_input);
+		std::vector<float> vad_input(output[0], output[0] + out_frames);
+		gf->vad->process(vad_input);
 
-        auto stamps = gf->vad->get_speech_timestamps();
-        if (stamps.size() == 0) {
-            skipped_inference = true;
-        } else {
-            speech_start_frame = stamps[0].start;
-            speech_end_frame = stamps.back().end;
-            obs_log(gf->log_level, "VAD detected speech from %d to %d", speech_start_frame, speech_end_frame);
-        }
+		auto stamps = gf->vad->get_speech_timestamps();
+		if (stamps.size() == 0) {
+			skipped_inference = true;
+		} else {
+			speech_start_frame = stamps[0].start;
+			speech_end_frame = stamps.back().end;
+			obs_log(gf->log_level, "VAD detected speech from %d to %d",
+				speech_start_frame, speech_end_frame);
+		}
 	}
 
 	if (!skipped_inference) {
 		// run inference
-		const struct DetectionResultWithText inference_result =
-			run_whisper_inference(
-                gf,
-                output[0] + speech_start_frame,
-                speech_end_frame - speech_start_frame
-            );
+		const struct DetectionResultWithText inference_result = run_whisper_inference(
+			gf, output[0] + speech_start_frame, speech_end_frame - speech_start_frame);
 
 		if (inference_result.result == DETECTION_RESULT_SPEECH) {
 			// output inference result to a text source
@@ -410,13 +413,14 @@ void whisper_loop(void *data)
 	struct transcription_filter_data *gf =
 		static_cast<struct transcription_filter_data *>(data);
 
-    {
-        std::lock_guard<std::mutex> lock(*gf->whisper_ctx_mutex);
-        if (gf->whisper_context == nullptr) {
-            obs_log(LOG_WARNING, "Whisper context is null. Whisper thread cannot start");
-            return;
-        }
-    }
+	{
+		std::lock_guard<std::mutex> lock(*gf->whisper_ctx_mutex);
+		if (gf->whisper_context == nullptr) {
+			obs_log(LOG_WARNING,
+				"Whisper context is null. Whisper thread cannot start");
+			return;
+		}
+	}
 
 	obs_log(LOG_INFO, "starting whisper thread");
 

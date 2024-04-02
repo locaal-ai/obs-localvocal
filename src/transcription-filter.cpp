@@ -503,7 +503,7 @@ void transcription_filter_update(void *data, obs_data_t *s)
 	gf->whisper_params.duration_ms = (int)obs_data_get_int(s, "buffer_size_msec");
 	gf->whisper_params.language = obs_data_get_string(s, "whisper_language_select");
 	// gf->whisper_params.initial_prompt = obs_data_get_string(s, "initial_prompt");
-	// gf->whisper_params.n_threads = (int)obs_data_get_int(s, "n_threads");
+	gf->whisper_params.n_threads = (int)obs_data_get_int(s, "n_threads");
 	// gf->whisper_params.n_max_text_ctx = (int)obs_data_get_int(s, "n_max_text_ctx");
 	// gf->whisper_params.translate = obs_data_get_bool(s, "whisper_translate");
 	// gf->whisper_params.no_context = obs_data_get_bool(s, "no_context");

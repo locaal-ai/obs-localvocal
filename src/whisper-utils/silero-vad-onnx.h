@@ -6,6 +6,12 @@
 #include <string>
 #include <limits>
 
+#ifdef _WIN32
+typedef std::wstring SileroString;
+#else
+typedef std::string SileroString;
+#endif
+
 class timestamp_t {
 public:
 	int start;
@@ -36,7 +42,7 @@ private:
 
 private:
 	void init_engine_threads(int inter_threads, int intra_threads);
-	void init_onnx_model(const std::wstring &model_path);
+	void init_onnx_model(const SileroString &model_path);
 	void reset_states();
 	void predict(const std::vector<float> &data);
 
@@ -93,14 +99,14 @@ private:
 
 public:
 	// Construction
-	VadIterator(const std::wstring ModelPath, int Sample_rate = 16000,
+	VadIterator(const SileroString &ModelPath, int Sample_rate = 16000,
 		    int windows_frame_size = 64, float Threshold = 0.5,
 		    int min_silence_duration_ms = 0, int speech_pad_ms = 64,
 		    int min_speech_duration_ms = 64,
 		    float max_speech_duration_s = std::numeric_limits<float>::infinity());
 
-    // Default constructor
-    VadIterator() = default;
+	// Default constructor
+	VadIterator() = default;
 };
 
 #endif // SILERO_VAD_ONNX_H

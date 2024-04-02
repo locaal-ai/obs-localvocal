@@ -32,9 +32,9 @@ std::string timestamp_t::string()
 {
 	// return std::format("timestamp {:08d}, {:08d}", start, end);
 	// return format("{start:%08d,end:%08d}", start, end);
-    std::stringstream ss;
-    ss << "timestamp " << start << ", " << end;
-    return ss.str();
+	std::stringstream ss;
+	ss << "timestamp " << start << ", " << end;
+	return ss.str();
 };
 
 std::string timestamp_t::format(const char *fmt, ...)
@@ -82,7 +82,7 @@ void VadIterator::init_engine_threads(int inter_threads, int intra_threads)
 	session_options.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_ALL);
 };
 
-void VadIterator::init_onnx_model(const std::wstring &model_path)
+void VadIterator::init_onnx_model(const SileroString &model_path)
 {
 	// Init threads = 1 for
 	init_engine_threads(1, 1);
@@ -285,7 +285,7 @@ void VadIterator::collect_chunks(const std::vector<float> &input_wav,
 				 std::vector<float> &output_wav)
 {
 	output_wav.clear();
-	for (int i = 0; i < speeches.size(); i++) {
+	for (size_t i = 0; i < speeches.size(); i++) {
 #ifdef __DEBUG_SPEECH_PROB___
 		std::cout << speeches[i].c_str() << std::endl;
 #endif //#ifdef __DEBUG_SPEECH_PROB___
@@ -304,7 +304,7 @@ void VadIterator::drop_chunks(const std::vector<float> &input_wav, std::vector<f
 {
 	output_wav.clear();
 	int current_start = 0;
-	for (int i = 0; i < speeches.size(); i++) {
+	for (size_t i = 0; i < speeches.size(); i++) {
 
 		std::vector<float> slice(&input_wav[current_start], &input_wav[speeches[i].start]);
 		output_wav.insert(output_wav.end(), slice.begin(), slice.end());
@@ -315,7 +315,7 @@ void VadIterator::drop_chunks(const std::vector<float> &input_wav, std::vector<f
 	output_wav.insert(output_wav.end(), slice.begin(), slice.end());
 };
 
-VadIterator::VadIterator(const std::wstring ModelPath, int Sample_rate, int windows_frame_size,
+VadIterator::VadIterator(const SileroString &ModelPath, int Sample_rate, int windows_frame_size,
 			 float Threshold, int min_silence_duration_ms, int speech_pad_ms,
 			 int min_speech_duration_ms, float max_speech_duration_s)
 {
@@ -344,49 +344,3 @@ VadIterator::VadIterator(const std::wstring ModelPath, int Sample_rate, int wind
 	sr.resize(1);
 	sr[0] = sample_rate;
 };
-
-void silero_vad(const std::vector<float> &input_wav)
-{
-	std::vector<timestamp_t> stamps;
-
-	std::vector<float> output_wav;
-
-	// ===== Test configs =====
-	std::wstring path = L"silero_vad.onnx";
-	VadIterator vad(path);
-
-	// ==============================================
-	// ==== = Example 1 of full function  =====
-	// ==============================================
-	vad.process(input_wav);
-
-	// 1.a get_speech_timestamps
-	stamps = vad.get_speech_timestamps();
-	for (int i = 0; i < stamps.size(); i++) {
-
-		std::cout << stamps[i].string() << std::endl;
-	}
-
-	// 1.b collect_chunks output wav
-	vad.collect_chunks(input_wav, output_wav);
-
-	// 1.c drop_chunks output wav
-	vad.drop_chunks(input_wav, output_wav);
-
-	// ==============================================
-	// ===== Example 2 of simple full function  =====
-	// ==============================================
-	vad.process(input_wav, output_wav);
-
-	stamps = vad.get_speech_timestamps();
-	for (int i = 0; i < stamps.size(); i++) {
-
-		std::cout << stamps[i].string() << std::endl;
-	}
-
-	// ==============================================
-	// ===== Example 3 of full function  =====
-	// ==============================================
-	for (int i = 0; i < 2; i++)
-		vad.process(input_wav, output_wav);
-}
