@@ -69,37 +69,18 @@ if(APPLE)
       "@loader_path/../Frameworks/libonnxruntime.${Onnxruntime_VERSION}.dylib" $<TARGET_FILE:${CMAKE_PROJECT_NAME}>)
 elseif(MSVC)
   add_library(Ort INTERFACE)
-  set(Onnxruntime_LIB_NAMES
-      onnxruntime;onnxruntime_providers_shared)
+  set(Onnxruntime_LIB_NAMES onnxruntime;onnxruntime_providers_shared)
   foreach(lib_name IN LISTS Onnxruntime_LIB_NAMES)
     add_library(Ort::${lib_name} SHARED IMPORTED)
-    set_target_properties(Ort::${lib_name} PROPERTIES IMPORTED_IMPLIB
-                                                      ${onnxruntime_SOURCE_DIR}/lib/${lib_name}.lib)
-    set_target_properties(Ort::${lib_name} PROPERTIES IMPORTED_LOCATION
-                                                      ${onnxruntime_SOURCE_DIR}/lib/${lib_name}.dll)
+    set_target_properties(Ort::${lib_name} PROPERTIES IMPORTED_IMPLIB ${onnxruntime_SOURCE_DIR}/lib/${lib_name}.lib)
+    set_target_properties(Ort::${lib_name} PROPERTIES IMPORTED_LOCATION ${onnxruntime_SOURCE_DIR}/lib/${lib_name}.dll)
     set_target_properties(Ort::${lib_name} PROPERTIES INTERFACE_INCLUDE_DIRECTORIES ${onnxruntime_SOURCE_DIR}/include)
     target_link_libraries(Ort INTERFACE Ort::${lib_name})
     install(FILES ${onnxruntime_SOURCE_DIR}/lib/${lib_name}.dll DESTINATION "obs-plugins/64bit")
   endforeach()
 
-#   set(Onnxruntime_EXTERNAL_LIB_NAMES
-#       onnx;onnx_proto;libprotobuf-lite;re2;absl_throw_delegate;absl_hash;absl_city;absl_low_level_hash;absl_raw_hash_set
-#   )
-#   foreach(lib_name IN LISTS Onnxruntime_EXTERNAL_LIB_NAMES)
-#     add_library(Ort::${lib_name} STATIC IMPORTED)
-#     set_target_properties(Ort::${lib_name} PROPERTIES IMPORTED_LOCATION ${onnxruntime_SOURCE_DIR}/lib/${lib_name}.lib)
-#     target_link_libraries(Ort INTERFACE Ort::${lib_name})
-#   endforeach()
-
-#   add_library(Ort::DirectML SHARED IMPORTED)
-#   set_target_properties(Ort::DirectML PROPERTIES IMPORTED_LOCATION ${onnxruntime_SOURCE_DIR}/bin/DirectML.dll)
-#   set_target_properties(Ort::DirectML PROPERTIES IMPORTED_IMPLIB ${onnxruntime_SOURCE_DIR}/bin/DirectML.lib)
-
-#   target_link_libraries(Ort INTERFACE Ort::DirectML d3d12.lib dxgi.lib dxguid.lib Dxcore.lib)
-
   target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE Ort)
 
-#   install(IMPORTED_RUNTIME_ARTIFACTS Ort DESTINATION "obs-plugins/64bit")
 else()
   if(CMAKE_SYSTEM_PROCESSOR STREQUAL "aarch64")
     set(Onnxruntime_LINK_LIBS "${onnxruntime_SOURCE_DIR}/lib/libonnxruntime.so.${Onnxruntime_VERSION}")
@@ -108,8 +89,6 @@ else()
     set(Onnxruntime_LINK_LIBS "${onnxruntime_SOURCE_DIR}/lib/libonnxruntime.so.${Onnxruntime_VERSION}")
     set(Onnxruntime_INSTALL_LIBS ${Onnxruntime_LINK_LIBS}
                                  "${onnxruntime_SOURCE_DIR}/lib/libonnxruntime_providers_shared.so")
-    # TODO add other providers "${onnxruntime_SOURCE_DIR}/lib/libonnxruntime_providers_cuda.so"
-    # "${onnxruntime_SOURCE_DIR}/lib/libonnxruntime_providers_tensorrt.so"
   endif()
   target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE ${Onnxruntime_LINK_LIBS})
   target_include_directories(${CMAKE_PROJECT_NAME} SYSTEM PUBLIC "${onnxruntime_SOURCE_DIR}/include")

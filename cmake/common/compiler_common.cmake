@@ -36,6 +36,7 @@ set(_obs_clang_c_options
     -Wint-conversion
     -Wnewline-eof
     -Wno-conversion
+    -Wno-error=deprecated-declarations
     -Wno-float-conversion
     -Wno-implicit-fallthrough
     -Wno-missing-braces

@@ -9,7 +9,6 @@
 #include <iostream>
 #include <cstdio>
 #include <cstdarg>
-#include <format>
 
 //#define __DEBUG_SPEECH_PROB___
 
@@ -30,8 +29,6 @@ bool timestamp_t::operator==(const timestamp_t &a) const
 };
 std::string timestamp_t::string()
 {
-	// return std::format("timestamp {:08d}, {:08d}", start, end);
-	// return format("{start:%08d,end:%08d}", start, end);
 	std::stringstream ss;
 	ss << "timestamp " << start << ", " << end;
 	return ss.str();
