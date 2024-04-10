@@ -12,7 +12,7 @@
 
 //#define __DEBUG_SPEECH_PROB___
 
-timestamp_t::timestamp_t(int start, int end) : start(start), end(end){};
+timestamp_t::timestamp_t(int start_, int end_) : start(start_), end(end_){};
 
 // assignment operator modifies object, therefore non-const
 timestamp_t &timestamp_t::operator=(const timestamp_t &a)
@@ -136,7 +136,7 @@ void VadIterator::predict(const std::vector<float> &data)
 	std::memcpy(_c.data(), cn, size_hc * sizeof(float));
 
 	// Push forward sample index
-	current_sample += window_size_samples;
+	current_sample += (unsigned int)window_size_samples;
 
 	// Reset temp_end when > threshold
 	if ((speech_prob >= threshold)) {
@@ -150,17 +150,18 @@ void VadIterator::predict(const std::vector<float> &data)
 		if (temp_end != 0) {
 			temp_end = 0;
 			if (next_start < prev_end)
-				next_start = current_sample - window_size_samples;
+				next_start = current_sample - (unsigned int)window_size_samples;
 		}
 		if (triggered == false) {
 			triggered = true;
 
-			current_speech.start = current_sample - window_size_samples;
+			current_speech.start = current_sample - (unsigned int)window_size_samples;
 		}
 		return;
 	}
 
-	if ((triggered == true) && ((current_sample - current_speech.start) > max_speech_samples)) {
+	if ((triggered == true) &&
+	    ((float)(current_sample - current_speech.start) > max_speech_samples)) {
 		if (prev_end > 0) {
 			current_speech.end = prev_end;
 			speeches.push_back(current_speech);
@@ -252,10 +253,10 @@ void VadIterator::process(const std::vector<float> &input_wav)
 {
 	reset_states();
 
-	audio_length_samples = input_wav.size();
+	audio_length_samples = (int)input_wav.size();
 
-	for (int j = 0; j < audio_length_samples; j += window_size_samples) {
-		if (j + window_size_samples > audio_length_samples)
+	for (int j = 0; j < audio_length_samples; j += (int)window_size_samples) {
+		if (j + (int)window_size_samples > audio_length_samples)
 			break;
 		std::vector<float> r{&input_wav[0] + j, &input_wav[0] + j + window_size_samples};
 		predict(r);
@@ -326,8 +327,8 @@ VadIterator::VadIterator(const SileroString &ModelPath, int Sample_rate, int win
 	min_speech_samples = sr_per_ms * min_speech_duration_ms;
 	speech_pad_samples = sr_per_ms * speech_pad_ms;
 
-	max_speech_samples = (sample_rate * max_speech_duration_s - window_size_samples -
-			      2 * speech_pad_samples);
+	max_speech_samples = ((float)sample_rate * max_speech_duration_s -
+			      (float)window_size_samples - 2.0f * (float)speech_pad_samples);
 
 	min_silence_samples = sr_per_ms * min_silence_duration_ms;
 	min_silence_samples_at_max_speech = sr_per_ms * 98;
