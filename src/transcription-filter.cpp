@@ -505,9 +505,9 @@ void transcription_filter_update(void *data, obs_data_t *s)
 	// gf->whisper_params.initial_prompt = obs_data_get_string(s, "initial_prompt");
 	gf->whisper_params.n_threads = (int)obs_data_get_int(s, "n_threads");
 	// gf->whisper_params.n_max_text_ctx = (int)obs_data_get_int(s, "n_max_text_ctx");
-	// gf->whisper_params.translate = obs_data_get_bool(s, "whisper_translate");
-	// gf->whisper_params.no_context = obs_data_get_bool(s, "no_context");
-	// gf->whisper_params.single_segment = obs_data_get_bool(s, "single_segment");
+	gf->whisper_params.translate = obs_data_get_bool(s, "whisper_translate");
+	gf->whisper_params.no_context = obs_data_get_bool(s, "no_context");
+	gf->whisper_params.single_segment = obs_data_get_bool(s, "single_segment");
 	// gf->whisper_params.print_special = obs_data_get_bool(s, "print_special");
 	// gf->whisper_params.print_progress = obs_data_get_bool(s, "print_progress");
 	// gf->whisper_params.print_realtime = obs_data_get_bool(s, "print_realtime");
@@ -517,7 +517,7 @@ void transcription_filter_update(void *data, obs_data_t *s)
 	// gf->whisper_params.thold_ptsum = (float)obs_data_get_double(s, "thold_ptsum");
 	// gf->whisper_params.max_len = (int)obs_data_get_int(s, "max_len");
 	// gf->whisper_params.split_on_word = obs_data_get_bool(s, "split_on_word");
-	// gf->whisper_params.max_tokens = (int)obs_data_get_int(s, "max_tokens");
+	gf->whisper_params.max_tokens = (int)obs_data_get_int(s, "max_tokens");
 	// gf->whisper_params.speed_up = obs_data_get_bool(s, "speed_up");
 	// gf->whisper_params.suppress_blank = obs_data_get_bool(s, "suppress_blank");
 	// gf->whisper_params.suppress_non_speech_tokens =
@@ -944,7 +944,8 @@ obs_properties_t *transcription_filter_properties(void *data)
 	// int offset_ms;          // start offset in ms
 	// int duration_ms;        // audio duration to process in ms
 	// bool translate;
-	obs_properties_add_bool(whisper_params_group, "whisper_translate", MT_("translate"));
+	obs_properties_add_bool(whisper_params_group, "whisper_translate",
+				MT_("whisper_translate"));
 	// bool no_context;        // do not use past transcription (if any) as initial prompt for the decoder
 	obs_properties_add_bool(whisper_params_group, "no_context", MT_("no_context"));
 	// bool single_segment;    // force single segment output (useful for streaming)
