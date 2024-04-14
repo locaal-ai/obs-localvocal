@@ -54,16 +54,44 @@ include(cmake/BuildCTranslate2.cmake)
 include(cmake/BuildSentencepiece.cmake)
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE ct2 sentencepiece)
 
+set(USE_SYSTEM_ONNXRUNTIME
+    OFF
+    CACHE STRING "Use system ONNX Runtime")
+
+set(DISABLE_ONNXRUNTIME_GPU
+    OFF
+    CACHE STRING "Disables GPU support of ONNX Runtime (Only valid on Linux)")
+
+if(DISABLE_ONNXRUNTIME_GPU)
+  target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE DISABLE_ONNXRUNTIME_GPU)
+endif()
+
+if(USE_SYSTEM_ONNXRUNTIME)
+  if(OS_LINUX)
+    find_package(Onnxruntime 1.16.3 REQUIRED)
+    set(Onnxruntime_INCLUDE_PATH
+        ${Onnxruntime_INCLUDE_DIR} ${Onnxruntime_INCLUDE_DIR}/onnxruntime
+        ${Onnxruntime_INCLUDE_DIR}/onnxruntime/core/session ${Onnxruntime_INCLUDE_DIR}/onnxruntime/core/providers/cpu)
+    target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE "${Onnxruntime_LIBRARIES}")
+    target_include_directories(${CMAKE_PROJECT_NAME} SYSTEM PUBLIC "${Onnxruntime_INCLUDE_PATH}")
+  else()
+    message(FATAL_ERROR "System ONNX Runtime is only supported on Linux!")
+  endif()
+else()
+  include(cmake/FetchOnnxruntime.cmake)
+endif()
+
 target_sources(
   ${CMAKE_PROJECT_NAME}
   PRIVATE src/plugin-main.c
           src/transcription-filter.cpp
           src/transcription-filter.c
-          src/whisper-utils/whisper-processing.cpp
           src/model-utils/model-downloader.cpp
           src/model-utils/model-downloader-ui.cpp
           src/model-utils/model-infos.cpp
+          src/whisper-utils/whisper-processing.cpp
           src/whisper-utils/whisper-utils.cpp
+          src/whisper-utils/silero-vad-onnx.cpp
           src/translation/translation.cpp)
 
 set_target_properties_plugin(${CMAKE_PROJECT_NAME} PROPERTIES OUTPUT_NAME ${_name})

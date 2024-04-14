@@ -3,6 +3,8 @@
 #include "model-utils/model-downloader.h"
 #include "whisper-processing.h"
 
+#include <obs-module.h>
+
 void update_whsiper_model_path(struct transcription_filter_data *gf, obs_data_t *s)
 {
 	// update the whisper model path
@@ -71,7 +73,7 @@ void update_whsiper_model_path(struct transcription_filter_data *gf, obs_data_t 
 		}
 	} else {
 		// model path did not change
-		obs_log(LOG_DEBUG, "model path did not change: %s == %s",
+		obs_log(gf->log_level, "Model path did not change: %s == %s",
 			gf->whisper_model_path.c_str(), new_model_path.c_str());
 	}
 }
@@ -110,7 +112,23 @@ void start_whisper_thread_with_path(struct transcription_filter_data *gf, const 
 		obs_log(LOG_ERROR, "cannot init whisper: whisper_context is not null");
 		return;
 	}
+
+	// initialize Silero VAD
+	char *silero_vad_model_file = obs_module_file("models/silero-vad/silero_vad.onnx");
+#ifdef _WIN32
+	std::wstring silero_vad_model_path;
+	silero_vad_model_path.assign(silero_vad_model_file,
+				     silero_vad_model_file + strlen(silero_vad_model_file));
+#else
+	std::string silero_vad_model_path = silero_vad_model_file;
+#endif
+	gf->vad.reset(new VadIterator(silero_vad_model_path, WHISPER_SAMPLE_RATE));
+
 	gf->whisper_context = init_whisper_context(path);
+	if (gf->whisper_context == nullptr) {
+		obs_log(LOG_ERROR, "Failed to initialize whisper context");
+		return;
+	}
 	gf->whisper_model_file_currently_loaded = path;
 	std::thread new_whisper_thread(whisper_loop, gf);
 	gf->whisper_thread.swap(new_whisper_thread);

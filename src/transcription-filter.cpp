@@ -944,7 +944,8 @@ obs_properties_t *transcription_filter_properties(void *data)
 	// int offset_ms;          // start offset in ms
 	// int duration_ms;        // audio duration to process in ms
 	// bool translate;
-	obs_properties_add_bool(whisper_params_group, "whisper_translate", MT_("translate"));
+	obs_properties_add_bool(whisper_params_group, "whisper_translate",
+				MT_("whisper_translate"));
 	// bool no_context;        // do not use past transcription (if any) as initial prompt for the decoder
 	obs_properties_add_bool(whisper_params_group, "no_context", MT_("no_context"));
 	// bool single_segment;    // force single segment output (useful for streaming)
