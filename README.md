@@ -132,3 +132,10 @@ To build with cuda add `CPU_OR_CUDA` as an environment variable (with `cpu`, `12
 > $env:CPU_OR_CUDA="12.2.0"
 > .github/scripts/Build-Windows.ps1 -Configuration Release
 ```
+
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=occ-ai/obs-localvocal&type=Date&theme=dark" />
+  <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=occ-ai/obs-localvocal&type=Date" />
+  <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=occ-ai/obs-localvocal&type=Date" />
+</picture>
