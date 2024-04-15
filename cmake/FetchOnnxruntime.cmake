@@ -60,6 +60,7 @@ if(APPLE)
   add_custom_command(
     TARGET "${CMAKE_PROJECT_NAME}"
     PRE_BUILD
+    VERBATIM
     COMMAND /usr/bin/codesign --force --verify --verbose --sign "${CODESIGN_IDENTITY}" "${Onnxruntime_LIB}")
   add_custom_command(
     TARGET "${CMAKE_PROJECT_NAME}"
