@@ -59,7 +59,7 @@ if(APPLE)
   # add a codesigning step
   add_custom_command(
     TARGET "${CMAKE_PROJECT_NAME}"
-    PRE_BUILD
+    PRE_BUILD VERBATIM
     COMMAND /usr/bin/codesign --force --verify --verbose --sign "${CODESIGN_IDENTITY}" "${Onnxruntime_LIB}")
   add_custom_command(
     TARGET "${CMAKE_PROJECT_NAME}"
