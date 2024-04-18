@@ -21,7 +21,8 @@ elseif(WIN32)
 
   # check CPU_OR_CUDA environment variable
   if(NOT DEFINED ENV{CPU_OR_CUDA})
-    message(FATAL_ERROR "Please set the CPU_OR_CUDA environment variable to either `cpu`, `clblast`, `12.2.0` or `11.8.0`")
+    message(
+      FATAL_ERROR "Please set the CPU_OR_CUDA environment variable to either `cpu`, `clblast`, `12.2.0` or `11.8.0`")
   endif()
 
   if($ENV{CPU_OR_CUDA} STREQUAL "cpu" OR $ENV{CPU_OR_CUDA} STREQUAL "clblast")
