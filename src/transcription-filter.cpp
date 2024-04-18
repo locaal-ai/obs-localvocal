@@ -769,7 +769,7 @@ void transcription_filter_defaults(obs_data_t *s)
 	obs_data_set_default_int(s, "log_level", LOG_DEBUG);
 	obs_data_set_default_bool(s, "log_words", false);
 	obs_data_set_default_bool(s, "caption_to_stream", false);
-	obs_data_set_default_string(s, "whisper_model_path", "Whisper Tiny En (74Mb)");
+	obs_data_set_default_string(s, "whisper_model_path", "Whisper Tiny English (74Mb)");
 	obs_data_set_default_string(s, "whisper_language_select", "en");
 	obs_data_set_default_string(s, "subtitle_sources", "none");
 	obs_data_set_default_bool(s, "step_by_step_processing", false);
