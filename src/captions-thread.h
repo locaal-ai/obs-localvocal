@@ -29,13 +29,13 @@ public:
 		workerThread.join();
 	}
 
-	void initialize(std::function<void(const std::string &)> callback, size_t maxSize,
-			std::chrono::seconds maxTime)
+	void initialize(std::function<void(const std::string &)> callback_, size_t maxSize_,
+			std::chrono::seconds maxTime_)
 	{
 		obs_log(LOG_INFO, "CaptionMonitor::initialize");
-		this->callback = callback;
-		this->maxSize = maxSize;
-		this->maxTime = maxTime;
+		this->callback = callback_;
+		this->maxSize = maxSize_;
+		this->maxTime = maxTime_;
 		this->initialized = true;
 		this->workerThread = std::thread(&CaptionMonitor::monitor, this);
 	}
