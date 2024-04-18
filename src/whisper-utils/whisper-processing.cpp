@@ -132,14 +132,21 @@ struct whisper_context *init_whisper_context(const std::string &model_path_in)
 		[](enum ggml_log_level level, const char *text, void *user_data) {
 			UNUSED_PARAMETER(level);
 			UNUSED_PARAMETER(user_data);
-			obs_log(LOG_INFO, "Whisper: %s", text);
+			// remove trailing newline
+			char *text_copy = bstrdup(text);
+			text_copy[strcspn(text_copy, "\n")] = 0;
+			obs_log(LOG_INFO, "Whisper: %s", text_copy);
+			bfree(text_copy);
 		},
 		nullptr);
 
 	struct whisper_context_params cparams = whisper_context_default_params();
 #ifdef LOCALVOCAL_WITH_CUDA
 	cparams.use_gpu = true;
-	obs_log(LOG_INFO, "Using GPU for inference, device %d", cparams.gpu_device);
+	obs_log(LOG_INFO, "Using CUDA GPU for inference, device %d", cparams.gpu_device);
+#elif defined(LOCALVOCAL_WITH_CLBLAST)
+	cparams.use_gpu = true;
+	obs_log(LOG_INFO, "Using OpenCL for inference");
 #else
 	cparams.use_gpu = false;
 	obs_log(LOG_INFO, "Using CPU for inference");
@@ -191,6 +198,16 @@ struct whisper_context *init_whisper_context(const std::string &model_path_in)
 struct DetectionResultWithText run_whisper_inference(struct transcription_filter_data *gf,
 						     const float *pcm32f_data, size_t pcm32f_size)
 {
+	if (gf == nullptr) {
+		obs_log(LOG_ERROR, "run_whisper_inference: gf is null");
+		return {DETECTION_RESULT_UNKNOWN, "", 0, 0};
+	}
+
+	if (pcm32f_data == nullptr || pcm32f_size == 0) {
+		obs_log(LOG_ERROR, "run_whisper_inference: pcm32f_data is null or size is 0");
+		return {DETECTION_RESULT_UNKNOWN, "", 0, 0};
+	}
+
 	obs_log(gf->log_level, "%s: processing %d samples, %.3f sec, %d threads", __func__,
 		int(pcm32f_size), float(pcm32f_size) / WHISPER_SAMPLE_RATE,
 		gf->whisper_params.n_threads);
@@ -201,8 +218,6 @@ struct DetectionResultWithText run_whisper_inference(struct transcription_filter
 		return {DETECTION_RESULT_UNKNOWN, "", 0, 0};
 	}
 
-	// set duration in ms
-	const uint64_t duration_ms = (uint64_t)(pcm32f_size * 1000 / WHISPER_SAMPLE_RATE);
 	// Get the duration in ms since the beginning of the stream (gf->start_timestamp_ms)
 	const uint64_t offset_ms =
 		(uint64_t)(std::chrono::duration_cast<std::chrono::milliseconds>(
@@ -226,6 +241,9 @@ struct DetectionResultWithText run_whisper_inference(struct transcription_filter
 		obs_log(LOG_WARNING, "failed to process audio, error %d", whisper_full_result);
 		return {DETECTION_RESULT_UNKNOWN, "", 0, 0};
 	} else {
+		// duration in ms
+		const uint64_t duration_ms = (uint64_t)(pcm32f_size * 1000 / WHISPER_SAMPLE_RATE);
+
 		const int n_segment = 0;
 		const char *text = whisper_full_get_segment_text(gf->whisper_context, n_segment);
 		const int64_t t0 = offset_ms;

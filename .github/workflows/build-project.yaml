@@ -246,7 +246,7 @@ jobs:
     needs: check-event
     strategy:
       matrix:
-        cublas: [cpu, 12.2.0, 11.8.0]
+        cublas: [cpu, clblast, 12.2.0, 11.8.0]
     defaults:
       run:
         shell: pwsh

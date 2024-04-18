@@ -92,6 +92,7 @@ target_sources(
           src/whisper-utils/whisper-processing.cpp
           src/whisper-utils/whisper-utils.cpp
           src/whisper-utils/silero-vad-onnx.cpp
-          src/translation/translation.cpp)
+          src/translation/translation.cpp
+          src/utils.cpp)
 
 set_target_properties_plugin(${CMAKE_PROJECT_NAME} PROPERTIES OUTPUT_NAME ${_name})

@@ -2,7 +2,7 @@
 #define WHISPER_PROCESSING_H
 
 // buffer size in msec
-#define DEFAULT_BUFFER_SIZE_MSEC 3000
+#define DEFAULT_BUFFER_SIZE_MSEC 2000
 // overlap in msec
 #define DEFAULT_OVERLAP_SIZE_MSEC 100
 
