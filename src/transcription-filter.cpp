@@ -332,7 +332,9 @@ void set_text_callback(struct transcription_filter_data *gf,
 
 	gf->last_text = str_copy;
 
-	gf->captions_monitor.addWords(split_words(str_copy));
+	if (gf->buffered_output) {
+		gf->captions_monitor.addWords(split_words(str_copy));
+	}
 
 	if (gf->caption_to_stream) {
 		obs_output_t *streaming_output = obs_frontend_get_streaming_output();
@@ -638,12 +640,14 @@ void *transcription_filter_create(obs_data_t *settings, obs_source_t *filter)
 
 				// set transform settings
 				obs_transform_info transform_info;
-				transform_info.pos.x = 1852.0;
-				transform_info.pos.y = 1034.0;
+				transform_info.pos.x = 962.0;
+				transform_info.pos.y = 959.0;
 				transform_info.bounds.x = 1769.0;
 				transform_info.bounds.y = 145.0;
 				transform_info.bounds_type =
 					obs_bounds_type::OBS_BOUNDS_SCALE_INNER;
+				transform_info.bounds_alignment = OBS_ALIGN_CENTER;
+				transform_info.alignment = OBS_ALIGN_CENTER;
 				transform_info.scale.x = 1.0;
 				transform_info.scale.y = 1.0;
 				transform_info.rot = 0.0;
@@ -942,7 +946,7 @@ obs_properties_t *transcription_filter_properties(void *data)
 		for (const std::string &prop_name :
 		     {"whisper_params_group", "log_words", "caption_to_stream", "buffer_size_msec",
 		      "overlap_size_msec", "step_by_step_processing", "min_sub_duration",
-		      "process_while_muted", "buffered_output"}) {
+		      "process_while_muted", "buffered_output", "vad_enabled", "log_level"}) {
 			obs_property_set_visible(obs_properties_get(props, prop_name.c_str()),
 						 show_hide);
 		}
@@ -977,17 +981,17 @@ obs_properties_t *transcription_filter_properties(void *data)
 
 	obs_properties_add_bool(ppts, "process_while_muted", MT_("process_while_muted"));
 
-	obs_properties_t *whisper_params_group = obs_properties_create();
-	obs_properties_add_group(ppts, "whisper_params_group", MT_("whisper_parameters"),
-				 OBS_GROUP_NORMAL, whisper_params_group);
+	obs_properties_add_bool(ppts, "vad_enabled", MT_("vad_enabled"));
 
-	obs_properties_add_bool(whisper_params_group, "vad_enabled", MT_("vad_enabled"));
-	obs_property_t *list = obs_properties_add_list(whisper_params_group, "log_level",
-						       MT_("log_level"), OBS_COMBO_TYPE_LIST,
-						       OBS_COMBO_FORMAT_INT);
+	obs_property_t *list = obs_properties_add_list(ppts, "log_level", MT_("log_level"),
+						       OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_INT);
 	obs_property_list_add_int(list, "DEBUG", LOG_DEBUG);
 	obs_property_list_add_int(list, "INFO", LOG_INFO);
 	obs_property_list_add_int(list, "WARNING", LOG_WARNING);
+
+	obs_properties_t *whisper_params_group = obs_properties_create();
+	obs_properties_add_group(ppts, "whisper_params_group", MT_("whisper_parameters"),
+				 OBS_GROUP_NORMAL, whisper_params_group);
 
 	// Add language selector
 	obs_property_t *whisper_language_select_list = obs_properties_add_list(

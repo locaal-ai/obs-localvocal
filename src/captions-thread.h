@@ -32,7 +32,6 @@ public:
 	void initialize(std::function<void(const std::string &)> callback_, size_t maxSize_,
 			std::chrono::seconds maxTime_)
 	{
-		obs_log(LOG_INFO, "CaptionMonitor::initialize");
 		this->callback = callback_;
 		this->maxSize = maxSize_;
 		this->maxTime = maxTime_;
@@ -49,8 +48,6 @@ public:
 			}
 			this->newDataAvailable = true;
 		}
-		obs_log(LOG_INFO, "CaptionMonitor::addWords: number of words in queue: %d",
-			wordQueue.size());
 		condVar.notify_all();
 	}
 
@@ -66,16 +63,12 @@ private:
 					   [this] { return this->newDataAvailable || this->stop; });
 
 			if (this->stop) {
-				obs_log(LOG_INFO, "CaptionMonitor::monitor: stopping");
 				break;
 			}
 
 			if (this->wordQueue.empty()) {
 				continue;
 			}
-
-			obs_log(LOG_INFO, "CaptionMonitor::monitor: wordQueue size: %d",
-				this->wordQueue.size());
 
 			// emit up to maxSize words from the wordQueue
 			std::vector<std::string> emitted;
@@ -99,8 +92,6 @@ private:
 				// flush the queue if it's full or we've reached the max time
 				size_t words_to_flush =
 					std::min(this->wordQueue.size(), this->maxSize);
-				obs_log(LOG_INFO, "CaptionMonitor::monitor: flushing %d words",
-					words_to_flush);
 				for (size_t i = 0; i < words_to_flush; ++i) {
 					wordQueue.pop_front();
 				}
