@@ -7,403 +7,403 @@
 static const std::map<std::string, std::string> whisper_available_lang = {
 	{
 		"auto",
-		"auto",
+		"Auto detect",
 	},
 	{
 		"en",
-		"english",
+		"English",
 	},
 	{
 		"zh",
-		"chinese",
+		"Chinese",
 	},
 	{
 		"de",
-		"german",
+		"German",
 	},
 	{
 		"es",
-		"spanish",
+		"Spanish",
 	},
 	{
 		"ru",
-		"russian",
+		"Russian",
 	},
 	{
 		"ko",
-		"korean",
+		"Korean",
 	},
 	{
 		"fr",
-		"french",
+		"French",
 	},
 	{
 		"ja",
-		"japanese",
+		"Japanese",
 	},
 	{
 		"pt",
-		"portuguese",
+		"Portuguese",
 	},
 	{
 		"tr",
-		"turkish",
+		"Turkish",
 	},
 	{
 		"pl",
-		"polish",
+		"Polish",
 	},
 	{
 		"ca",
-		"catalan",
+		"Catalan",
 	},
 	{
 		"nl",
-		"dutch",
+		"Dutch",
 	},
 	{
 		"ar",
-		"arabic",
+		"Arabic",
 	},
 	{
 		"sv",
-		"swedish",
+		"Swedish",
 	},
 	{
 		"it",
-		"italian",
+		"Italian",
 	},
 	{
 		"id",
-		"indonesian",
+		"Indonesian",
 	},
 	{
 		"hi",
-		"hindi",
+		"Hindi",
 	},
 	{
 		"fi",
-		"finnish",
+		"Finnish",
 	},
 	{
 		"vi",
-		"vietnamese",
+		"Vietnamese",
 	},
 	{
 		"he",
-		"hebrew",
+		"Hebrew",
 	},
 	{
 		"uk",
-		"ukrainian",
+		"Ukrainian",
 	},
 	{
 		"el",
-		"greek",
+		"Greek",
 	},
 	{
 		"ms",
-		"malay",
+		"Malay",
 	},
 	{
 		"cs",
-		"czech",
+		"Czech",
 	},
 	{
 		"ro",
-		"romanian",
+		"Romanian",
 	},
 	{
 		"da",
-		"danish",
+		"Danish",
 	},
 	{
 		"hu",
-		"hungarian",
+		"Hungarian",
 	},
 	{
 		"ta",
-		"tamil",
+		"Tamil",
 	},
 	{
 		"no",
-		"norwegian",
+		"Norwegian",
 	},
 	{
 		"th",
-		"thai",
+		"Thai",
 	},
 	{
 		"ur",
-		"urdu",
+		"Urdu",
 	},
 	{
 		"hr",
-		"croatian",
+		"Croatian",
 	},
 	{
 		"bg",
-		"bulgarian",
+		"Bulgarian",
 	},
 	{
 		"lt",
-		"lithuanian",
+		"Lithuanian",
 	},
 	{
 		"la",
-		"latin",
+		"Latin",
 	},
 	{
 		"mi",
-		"maori",
+		"Maori",
 	},
 	{
 		"ml",
-		"malayalam",
+		"Malayalam",
 	},
 	{
 		"cy",
-		"welsh",
+		"Welsh",
 	},
 	{
 		"sk",
-		"slovak",
+		"Slovak",
 	},
 	{
 		"te",
-		"telugu",
+		"Telugu",
 	},
 	{
 		"fa",
-		"persian",
+		"Persian",
 	},
 	{
 		"lv",
-		"latvian",
+		"Latvian",
 	},
 	{
 		"bn",
-		"bengali",
+		"Bengali",
 	},
 	{
 		"sr",
-		"serbian",
+		"Serbian",
 	},
 	{
 		"az",
-		"azerbaijani",
+		"Azerbaijani",
 	},
 	{
 		"sl",
-		"slovenian",
+		"Slovenian",
 	},
 	{
 		"kn",
-		"kannada",
+		"Kannada",
 	},
 	{
 		"et",
-		"estonian",
+		"Estonian",
 	},
 	{
 		"mk",
-		"macedonian",
+		"Macedonian",
 	},
 	{
 		"br",
-		"breton",
+		"Breton",
 	},
 	{
 		"eu",
-		"basque",
+		"Basque",
 	},
 	{
 		"is",
-		"icelandic",
+		"Icelandic",
 	},
 	{
 		"hy",
-		"armenian",
+		"Armenian",
 	},
 	{
 		"ne",
-		"nepali",
+		"Nepali",
 	},
 	{
 		"mn",
-		"mongolian",
+		"Mongolian",
 	},
 	{
 		"bs",
-		"bosnian",
+		"Bosnian",
 	},
 	{
 		"kk",
-		"kazakh",
+		"Kazakh",
 	},
 	{
 		"sq",
-		"albanian",
+		"Albanian",
 	},
 	{
 		"sw",
-		"swahili",
+		"Swahili",
 	},
 	{
 		"gl",
-		"galician",
+		"Galician",
 	},
 	{
 		"mr",
-		"marathi",
+		"Marathi",
 	},
 	{
 		"pa",
-		"punjabi",
+		"Punjabi",
 	},
 	{
 		"si",
-		"sinhala",
+		"Sinhala",
 	},
 	{
 		"km",
-		"khmer",
+		"Khmer",
 	},
 	{
 		"sn",
-		"shona",
+		"Shona",
 	},
 	{
 		"yo",
-		"yoruba",
+		"Yoruba",
 	},
 	{
 		"so",
-		"somali",
+		"Somali",
 	},
 	{
 		"af",
-		"afrikaans",
+		"Afrikaans",
 	},
 	{
 		"oc",
-		"occitan",
+		"Occitan",
 	},
 	{
 		"ka",
-		"georgian",
+		"Georgian",
 	},
 	{
 		"be",
-		"belarusian",
+		"Belarusian",
 	},
 	{
 		"tg",
-		"tajik",
+		"Tajik",
 	},
 	{
 		"sd",
-		"sindhi",
+		"Sindhi",
 	},
 	{
 		"gu",
-		"gujarati",
+		"Gujarati",
 	},
 	{
 		"am",
-		"amharic",
+		"Amharic",
 	},
 	{
 		"yi",
-		"yiddish",
+		"Yiddish",
 	},
 	{
 		"lo",
-		"lao",
+		"Lao",
 	},
 	{
 		"uz",
-		"uzbek",
+		"Uzbek",
 	},
 	{
 		"fo",
-		"faroese",
+		"Faroese",
 	},
 	{
 		"ht",
-		"haitian",
+		"Haitian",
 	},
 	{
 		"ps",
-		"pashto",
+		"Pashto",
 	},
 	{
 		"tk",
-		"turkmen",
+		"Turkmen",
 	},
 	{
 		"nn",
-		"nynorsk",
+		"Nynorsk",
 	},
 	{
 		"mt",
-		"maltese",
+		"Maltese",
 	},
 	{
 		"sa",
-		"sanskrit",
+		"Sanskrit",
 	},
 	{
 		"lb",
-		"luxembourgish",
+		"Luxembourgish",
 	},
 	{
 		"my",
-		"myanmar",
+		"Myanmar",
 	},
 	{
 		"bo",
-		"tibetan",
+		"Tibetan",
 	},
 	{
 		"tl",
-		"tagalog",
+		"Tagalog",
 	},
 	{
 		"mg",
-		"malagasy",
+		"Malagasy",
 	},
 	{
 		"as",
-		"assamese",
+		"Assamese",
 	},
 	{
 		"tt",
-		"tatar",
+		"Tatar",
 	},
 	{
 		"haw",
-		"hawaiian",
+		"Hawaiian",
 	},
 	{
 		"ln",
-		"lingala",
+		"Lingala",
 	},
 	{
 		"ha",
-		"hausa",
+		"Hausa",
 	},
 	{
 		"ba",
-		"bashkir",
+		"Bashkir",
 	},
 	{
 		"jw",
-		"javanese",
+		"Javanese",
 	},
 	{
 		"su",
-		"sundanese",
+		"Sundanese",
 	},
 };
 

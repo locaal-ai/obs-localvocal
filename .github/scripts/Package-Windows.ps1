@@ -4,7 +4,7 @@ param(
     [string] $Target = 'x64',
     [ValidateSet('Debug', 'RelWithDebInfo', 'Release', 'MinSizeRel')]
     [string] $Configuration = 'RelWithDebInfo',
-    [ValidateSet('cpu', '12.2.0', '11.8.0')]
+    [ValidateSet('cpu', 'clblast', '12.2.0', '11.8.0')]
     [string] $Cublas = 'cpu',
     [switch] $BuildInstaller,
     [switch] $SkipDeps
@@ -52,6 +52,8 @@ function Package {
     # Check if $cublas is cpu or cuda
     if ( $Cublas -eq 'cpu' ) {
         $CudaName = 'cpu'
+    } elseif ( $Cublas -eq 'cblast' ) {
+        $CudaName = 'cblast'
     } else {
         $CudaName = "cuda${Cublas}"
     }

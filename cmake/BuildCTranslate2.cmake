@@ -21,10 +21,11 @@ elseif(WIN32)
 
   # check CPU_OR_CUDA environment variable
   if(NOT DEFINED ENV{CPU_OR_CUDA})
-    message(FATAL_ERROR "Please set the CPU_OR_CUDA environment variable to either CPU or CUDA")
+    message(
+      FATAL_ERROR "Please set the CPU_OR_CUDA environment variable to either `cpu`, `clblast`, `12.2.0` or `11.8.0`")
   endif()
 
-  if($ENV{CPU_OR_CUDA} STREQUAL "cpu")
+  if($ENV{CPU_OR_CUDA} STREQUAL "cpu" OR $ENV{CPU_OR_CUDA} STREQUAL "clblast")
     FetchContent_Declare(
       ctranslate2_fetch
       URL https://github.com/occ-ai/obs-ai-ctranslate2-dep/releases/download/1.2.0/libctranslate2-windows-4.1.1-Release-cpu.zip

@@ -10,6 +10,7 @@
 #include "whisper-utils/whisper-utils.h"
 #include "translation/language_codes.h"
 #include "translation/translation.h"
+#include "utils.h"
 
 #include <algorithm>
 #include <fstream>
@@ -220,6 +221,35 @@ inline bool is_valid_lead_byte(const uint8_t *c)
 	return false;
 }
 
+void send_caption_to_source(const std::string &str_copy, struct transcription_filter_data *gf)
+{
+	if (!gf->text_source_mutex) {
+		obs_log(LOG_ERROR, "text_source_mutex is null");
+		return;
+	}
+
+	if (!gf->text_source) {
+		// attempt to acquire a weak ref to the text source if it's yet available
+		acquire_weak_text_source_ref(gf);
+	}
+
+	std::lock_guard<std::mutex> lock(*gf->text_source_mutex);
+
+	if (!gf->text_source) {
+		obs_log(gf->log_level, "text_source is null");
+		return;
+	}
+	auto target = obs_weak_source_get_source(gf->text_source);
+	if (!target) {
+		obs_log(gf->log_level, "text_source target is null");
+		return;
+	}
+	auto text_settings = obs_source_get_settings(target);
+	obs_data_set_string(text_settings, "text", str_copy.c_str());
+	obs_source_update(target, text_settings);
+	obs_source_release(target);
+}
+
 void set_text_callback(struct transcription_filter_data *gf,
 		       const DetectionResultWithText &resultIn)
 {
@@ -302,6 +332,10 @@ void set_text_callback(struct transcription_filter_data *gf,
 
 	gf->last_text = str_copy;
 
+	if (gf->buffered_output) {
+		gf->captions_monitor.addWords(split_words(str_copy));
+	}
+
 	if (gf->caption_to_stream) {
 		obs_output_t *streaming_output = obs_frontend_get_streaming_output();
 		if (streaming_output) {
@@ -360,31 +394,10 @@ void set_text_callback(struct transcription_filter_data *gf,
 			gf->sentence_number++;
 		}
 	} else {
-		if (!gf->text_source_mutex) {
-			obs_log(LOG_ERROR, "text_source_mutex is null");
-			return;
+		if (!gf->buffered_output) {
+			// Send the caption to the text source
+			send_caption_to_source(str_copy, gf);
 		}
-
-		if (!gf->text_source) {
-			// attempt to acquire a weak ref to the text source if it's yet available
-			acquire_weak_text_source_ref(gf);
-		}
-
-		std::lock_guard<std::mutex> lock(*gf->text_source_mutex);
-
-		if (!gf->text_source) {
-			obs_log(gf->log_level, "text_source is null");
-			return;
-		}
-		auto target = obs_weak_source_get_source(gf->text_source);
-		if (!target) {
-			obs_log(gf->log_level, "text_source target is null");
-			return;
-		}
-		auto text_settings = obs_source_get_settings(target);
-		obs_data_set_string(text_settings, "text", str_copy.c_str());
-		obs_source_update(target, text_settings);
-		obs_source_release(target);
 	}
 };
 
@@ -414,6 +427,7 @@ void transcription_filter_update(void *data, obs_data_t *s)
 	gf->process_while_muted = obs_data_get_bool(s, "process_while_muted");
 	gf->min_sub_duration = (int)obs_data_get_int(s, "min_sub_duration");
 	gf->last_sub_render_time = 0;
+	gf->buffered_output = obs_data_get_bool(s, "buffered_output");
 
 	bool new_translate = obs_data_get_bool(s, "translate");
 	gf->source_lang = obs_data_get_string(s, "translate_source_language");
@@ -552,6 +566,7 @@ void *transcription_filter_create(obs_data_t *settings, obs_source_t *filter)
 	gf->rename_file_to_match_recording =
 		obs_data_get_bool(settings, "rename_file_to_match_recording");
 	gf->process_while_muted = obs_data_get_bool(settings, "process_while_muted");
+	gf->buffered_output = obs_data_get_bool(settings, "buffered_output");
 
 	for (size_t i = 0; i < gf->channels; i++) {
 		circlebuf_init(&gf->input_buffers[i]);
@@ -592,16 +607,79 @@ void *transcription_filter_create(obs_data_t *settings, obs_source_t *filter)
 	obs_log(gf->log_level, "clear text source data");
 	gf->text_source = nullptr;
 	const char *subtitle_sources = obs_data_get_string(settings, "subtitle_sources");
-	if (subtitle_sources != nullptr) {
-		gf->text_source_name = bstrdup(subtitle_sources);
+	if (subtitle_sources == nullptr || strcmp(subtitle_sources, "none") == 0 ||
+	    strcmp(subtitle_sources, "(null)") == 0 || strlen(subtitle_sources) == 0) {
+		obs_log(LOG_INFO, "create text source");
+		// check if a source called "LocalVocal Subtitles" exists
+		obs_source_t *source = obs_get_source_by_name("LocalVocal Subtitles");
+		if (source) {
+			// source exists, release it
+			obs_source_release(source);
+		} else {
+			// create a new OBS text source called "LocalVocal Subtitles"
+			obs_source_t *scene_as_source = obs_frontend_get_current_scene();
+			obs_scene_t *scene = obs_scene_from_source(scene_as_source);
+			source = obs_source_create("text_ft2_source_v2", "LocalVocal Subtitles",
+						   nullptr, nullptr);
+			if (source) {
+				// add source to the current scene
+				obs_scene_add(scene, source);
+				// set source settings
+				obs_data_t *source_settings = obs_source_get_settings(source);
+				obs_data_set_bool(source_settings, "word_wrap", true);
+				obs_data_set_int(source_settings, "custom_width", 1760);
+				obs_data_t *font_data = obs_data_create();
+				obs_data_set_string(font_data, "face", "Arial");
+				obs_data_set_string(font_data, "style", "Regular");
+				obs_data_set_int(font_data, "size", 72);
+				obs_data_set_int(font_data, "flags", 0);
+				obs_data_set_obj(source_settings, "font", font_data);
+				obs_data_release(font_data);
+				obs_source_update(source, source_settings);
+				obs_data_release(source_settings);
+
+				// set transform settings
+				obs_transform_info transform_info;
+				transform_info.pos.x = 962.0;
+				transform_info.pos.y = 959.0;
+				transform_info.bounds.x = 1769.0;
+				transform_info.bounds.y = 145.0;
+				transform_info.bounds_type =
+					obs_bounds_type::OBS_BOUNDS_SCALE_INNER;
+				transform_info.bounds_alignment = OBS_ALIGN_CENTER;
+				transform_info.alignment = OBS_ALIGN_CENTER;
+				transform_info.scale.x = 1.0;
+				transform_info.scale.y = 1.0;
+				transform_info.rot = 0.0;
+				obs_sceneitem_t *source_sceneitem =
+					obs_scene_sceneitem_from_source(scene, source);
+				obs_sceneitem_set_info(source_sceneitem, &transform_info);
+				obs_sceneitem_release(source_sceneitem);
+
+				obs_source_release(source);
+			}
+			obs_source_release(scene_as_source);
+		}
+		gf->text_source_name = bstrdup("LocalVocal Subtitles");
+		obs_data_set_string(settings, "subtitle_sources", "LocalVocal Subtitles");
 	} else {
-		gf->text_source_name = nullptr;
+		// set the text source name
+		gf->text_source_name = bstrdup(subtitle_sources);
 	}
 	obs_log(gf->log_level, "clear paths and whisper context");
 	gf->whisper_model_file_currently_loaded = "";
 	gf->output_file_path = std::string("");
 	gf->whisper_model_path = std::string(""); // The update function will set the model path
 	gf->whisper_context = nullptr;
+
+	gf->captions_monitor.initialize(
+		[gf](const std::string &text) {
+			obs_log(LOG_INFO, "Captions: %s", text.c_str());
+			if (gf->buffered_output) {
+				send_caption_to_source(text, gf);
+			}
+		},
+		20, std::chrono::seconds(10));
 
 	obs_log(gf->log_level, "run update");
 	// get the settings updated on the filter data struct
@@ -662,12 +740,11 @@ bool subs_output_select_changed(obs_properties_t *props, obs_property_t *propert
 	// Show or hide the output filename selection input
 	const char *new_output = obs_data_get_string(settings, "subtitle_sources");
 	const bool show_hide = (strcmp(new_output, "text_file") == 0);
-	obs_property_set_visible(obs_properties_get(props, "subtitle_output_filename"), show_hide);
-	obs_property_set_visible(obs_properties_get(props, "subtitle_save_srt"), show_hide);
-	obs_property_set_visible(obs_properties_get(props, "truncate_output_file"), show_hide);
-	obs_property_set_visible(obs_properties_get(props, "only_while_recording"), show_hide);
-	obs_property_set_visible(obs_properties_get(props, "rename_file_to_match_recording"),
-				 show_hide);
+	for (const std::string &prop_name :
+	     {"subtitle_output_filename", "subtitle_save_srt", "truncate_output_file",
+	      "only_while_recording", "rename_file_to_match_recording"}) {
+		obs_property_set_visible(obs_properties_get(props, prop_name.c_str()), show_hide);
+	}
 	return true;
 }
 
@@ -691,11 +768,12 @@ void transcription_filter_defaults(obs_data_t *s)
 {
 	obs_log(LOG_INFO, "filter defaults");
 
+	obs_data_set_default_bool(s, "buffered_output", false);
 	obs_data_set_default_bool(s, "vad_enabled", true);
 	obs_data_set_default_int(s, "log_level", LOG_DEBUG);
-	obs_data_set_default_bool(s, "log_words", true);
+	obs_data_set_default_bool(s, "log_words", false);
 	obs_data_set_default_bool(s, "caption_to_stream", false);
-	obs_data_set_default_string(s, "whisper_model_path", "Whisper Tiny En (74Mb)");
+	obs_data_set_default_string(s, "whisper_model_path", "Whisper Tiny English (74Mb)");
 	obs_data_set_default_string(s, "whisper_language_select", "en");
 	obs_data_set_default_string(s, "subtitle_sources", "none");
 	obs_data_set_default_bool(s, "step_by_step_processing", false);
@@ -742,76 +820,11 @@ void transcription_filter_defaults(obs_data_t *s)
 
 obs_properties_t *transcription_filter_properties(void *data)
 {
-	obs_log(LOG_DEBUG, "Add filter properties");
-
 	struct transcription_filter_data *gf =
 		static_cast<struct transcription_filter_data *>(data);
 
 	obs_properties_t *ppts = obs_properties_create();
 
-	obs_properties_add_bool(ppts, "log_words", MT_("log_words"));
-	obs_properties_add_bool(ppts, "caption_to_stream", MT_("caption_to_stream"));
-
-	obs_properties_add_int_slider(ppts, "buffer_size_msec", MT_("buffer_size_msec"), 1000,
-				      DEFAULT_BUFFER_SIZE_MSEC, 50);
-	obs_properties_add_int_slider(ppts, "overlap_size_msec", MT_("overlap_size_msec"), 50, 300,
-				      50);
-
-	obs_property_t *step_by_step_processing = obs_properties_add_bool(
-		ppts, "step_by_step_processing", MT_("step_by_step_processing"));
-	obs_properties_add_int_slider(ppts, "step_size_msec", MT_("step_size_msec"), 1000,
-				      DEFAULT_BUFFER_SIZE_MSEC, 50);
-	obs_properties_add_int_slider(ppts, "min_sub_duration", MT_("min_sub_duration"), 1000, 5000,
-				      50);
-
-	obs_property_set_modified_callback(step_by_step_processing, [](obs_properties_t *props,
-								       obs_property_t *property,
-								       obs_data_t *settings) {
-		UNUSED_PARAMETER(property);
-		// Show/Hide the step size input
-		obs_property_set_visible(obs_properties_get(props, "step_size_msec"),
-					 obs_data_get_bool(settings, "step_by_step_processing"));
-		return true;
-	});
-
-	// add translation option group
-	obs_properties_t *translation_group = obs_properties_create();
-	obs_property_t *translation_group_prop = obs_properties_add_group(
-		ppts, "translate", MT_("translate"), OBS_GROUP_CHECKABLE, translation_group);
-	// add target language selection
-	obs_property_t *prop_tgt = obs_properties_add_list(
-		translation_group, "translate_target_language", MT_("target_language"),
-		OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_STRING);
-	obs_property_t *prop_src = obs_properties_add_list(
-		translation_group, "translate_source_language", MT_("source_language"),
-		OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_STRING);
-	obs_properties_add_bool(translation_group, "translate_add_context",
-				MT_("translate_add_context"));
-
-	// Populate the dropdown with the language codes
-	for (const auto &language : language_codes) {
-		obs_property_list_add_string(prop_tgt, language.second.c_str(),
-					     language.first.c_str());
-		obs_property_list_add_string(prop_src, language.second.c_str(),
-					     language.first.c_str());
-	}
-
-	// add callback to enable/disable translation group
-	obs_property_set_modified_callback(translation_group_prop, [](obs_properties_t *props,
-								      obs_property_t *property,
-								      obs_data_t *settings) {
-		UNUSED_PARAMETER(property);
-		// Show/Hide the translation group
-		const bool translate_enabled = obs_data_get_bool(settings, "translate");
-		for (const auto &prop : {"translate_target_language", "translate_source_language",
-					 "translate_add_context"}) {
-			obs_property_set_visible(obs_properties_get(props, prop),
-						 translate_enabled);
-		}
-		return true;
-	});
-
-	obs_properties_add_bool(ppts, "process_while_muted", MT_("process_while_muted"));
 	obs_property_t *subs_output =
 		obs_properties_add_list(ppts, "subtitle_sources", MT_("subtitle_sources"),
 					OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_STRING);
@@ -885,6 +898,43 @@ obs_properties_t *transcription_filter_properties(void *data)
 		return true;
 	});
 
+	// add translation option group
+	obs_properties_t *translation_group = obs_properties_create();
+	obs_property_t *translation_group_prop = obs_properties_add_group(
+		ppts, "translate", MT_("translate"), OBS_GROUP_CHECKABLE, translation_group);
+	// add target language selection
+	obs_property_t *prop_tgt = obs_properties_add_list(
+		translation_group, "translate_target_language", MT_("target_language"),
+		OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_STRING);
+	obs_property_t *prop_src = obs_properties_add_list(
+		translation_group, "translate_source_language", MT_("source_language"),
+		OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_STRING);
+	obs_properties_add_bool(translation_group, "translate_add_context",
+				MT_("translate_add_context"));
+
+	// Populate the dropdown with the language codes
+	for (const auto &language : language_codes) {
+		obs_property_list_add_string(prop_tgt, language.second.c_str(),
+					     language.first.c_str());
+		obs_property_list_add_string(prop_src, language.second.c_str(),
+					     language.first.c_str());
+	}
+
+	// add callback to enable/disable translation group
+	obs_property_set_modified_callback(translation_group_prop, [](obs_properties_t *props,
+								      obs_property_t *property,
+								      obs_data_t *settings) {
+		UNUSED_PARAMETER(property);
+		// Show/Hide the translation group
+		const bool translate_enabled = obs_data_get_bool(settings, "translate");
+		for (const auto &prop : {"translate_target_language", "translate_source_language",
+					 "translate_add_context"}) {
+			obs_property_set_visible(obs_properties_get(props, prop),
+						 translate_enabled);
+		}
+		return true;
+	});
+
 	obs_property_t *advanced_settings_prop =
 		obs_properties_add_bool(ppts, "advanced_settings", MT_("advanced_settings"));
 	obs_property_set_modified_callback(advanced_settings_prop, [](obs_properties_t *props,
@@ -893,22 +943,55 @@ obs_properties_t *transcription_filter_properties(void *data)
 		UNUSED_PARAMETER(property);
 		// If advanced settings is enabled, show the advanced settings group
 		const bool show_hide = obs_data_get_bool(settings, "advanced_settings");
-		obs_property_set_visible(obs_properties_get(props, "whisper_params_group"),
-					 show_hide);
+		for (const std::string &prop_name :
+		     {"whisper_params_group", "log_words", "caption_to_stream", "buffer_size_msec",
+		      "overlap_size_msec", "step_by_step_processing", "min_sub_duration",
+		      "process_while_muted", "buffered_output", "vad_enabled", "log_level"}) {
+			obs_property_set_visible(obs_properties_get(props, prop_name.c_str()),
+						 show_hide);
+		}
 		return true;
 	});
+
+	obs_properties_add_bool(ppts, "buffered_output", MT_("buffered_output"));
+	obs_properties_add_bool(ppts, "log_words", MT_("log_words"));
+	obs_properties_add_bool(ppts, "caption_to_stream", MT_("caption_to_stream"));
+
+	obs_properties_add_int_slider(ppts, "buffer_size_msec", MT_("buffer_size_msec"), 1000,
+				      DEFAULT_BUFFER_SIZE_MSEC, 250);
+	obs_properties_add_int_slider(ppts, "overlap_size_msec", MT_("overlap_size_msec"), 50, 300,
+				      50);
+
+	obs_property_t *step_by_step_processing = obs_properties_add_bool(
+		ppts, "step_by_step_processing", MT_("step_by_step_processing"));
+	obs_properties_add_int_slider(ppts, "step_size_msec", MT_("step_size_msec"), 1000,
+				      DEFAULT_BUFFER_SIZE_MSEC, 50);
+	obs_properties_add_int_slider(ppts, "min_sub_duration", MT_("min_sub_duration"), 1000, 5000,
+				      50);
+
+	obs_property_set_modified_callback(step_by_step_processing, [](obs_properties_t *props,
+								       obs_property_t *property,
+								       obs_data_t *settings) {
+		UNUSED_PARAMETER(property);
+		// Show/Hide the step size input
+		obs_property_set_visible(obs_properties_get(props, "step_size_msec"),
+					 obs_data_get_bool(settings, "step_by_step_processing"));
+		return true;
+	});
+
+	obs_properties_add_bool(ppts, "process_while_muted", MT_("process_while_muted"));
+
+	obs_properties_add_bool(ppts, "vad_enabled", MT_("vad_enabled"));
+
+	obs_property_t *list = obs_properties_add_list(ppts, "log_level", MT_("log_level"),
+						       OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_INT);
+	obs_property_list_add_int(list, "DEBUG", LOG_DEBUG);
+	obs_property_list_add_int(list, "INFO", LOG_INFO);
+	obs_property_list_add_int(list, "WARNING", LOG_WARNING);
 
 	obs_properties_t *whisper_params_group = obs_properties_create();
 	obs_properties_add_group(ppts, "whisper_params_group", MT_("whisper_parameters"),
 				 OBS_GROUP_NORMAL, whisper_params_group);
-
-	obs_properties_add_bool(whisper_params_group, "vad_enabled", MT_("vad_enabled"));
-	obs_property_t *list = obs_properties_add_list(whisper_params_group, "log_level",
-						       MT_("log_level"), OBS_COMBO_TYPE_LIST,
-						       OBS_COMBO_FORMAT_INT);
-	obs_property_list_add_int(list, "DEBUG", LOG_DEBUG);
-	obs_property_list_add_int(list, "INFO", LOG_INFO);
-	obs_property_list_add_int(list, "WARNING", LOG_WARNING);
 
 	// Add language selector
 	obs_property_t *whisper_language_select_list = obs_properties_add_list(

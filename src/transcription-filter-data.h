@@ -17,6 +17,7 @@
 
 #include "translation/translation.h"
 #include "whisper-utils/silero-vad-onnx.h"
+#include "captions-thread.h"
 
 #define MAX_PREPROC_CHANNELS 10
 
@@ -89,6 +90,7 @@ struct transcription_filter_data {
 	bool translate = false;
 	std::string source_lang;
 	std::string target_lang;
+	bool buffered_output = false;
 
 	// Last transcription result
 	std::string last_text;
@@ -112,6 +114,8 @@ struct transcription_filter_data {
 
 	// translation context
 	struct translation_context translation_ctx;
+
+	CaptionMonitor captions_monitor;
 
 	// ctor
 	transcription_filter_data()
