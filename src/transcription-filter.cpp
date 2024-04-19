@@ -507,7 +507,7 @@ void transcription_filter_update(void *data, obs_data_t *s)
 	}
 
 	obs_log(gf->log_level, "update whisper model");
-	update_whsiper_model_path(gf, s);
+	update_whsiper_model(gf, s);
 
 	obs_log(gf->log_level, "update whisper params");
 	std::lock_guard<std::mutex> lock(*gf->whisper_ctx_mutex);
@@ -805,6 +805,7 @@ void transcription_filter_defaults(obs_data_t *s)
 	obs_data_set_default_bool(s, "print_realtime", false);
 	obs_data_set_default_bool(s, "print_timestamps", false);
 	obs_data_set_default_bool(s, "token_timestamps", false);
+	obs_data_set_default_bool(s, "dtw_token_timestamps", false);
 	obs_data_set_default_double(s, "thold_pt", 0.01);
 	obs_data_set_default_double(s, "thold_ptsum", 0.01);
 	obs_data_set_default_int(s, "max_len", 0);
@@ -1043,6 +1044,9 @@ obs_properties_t *transcription_filter_properties(void *data)
 	obs_properties_add_bool(whisper_params_group, "print_timestamps", MT_("print_timestamps"));
 	// bool  token_timestamps; // enable token-level timestamps
 	obs_properties_add_bool(whisper_params_group, "token_timestamps", MT_("token_timestamps"));
+	// enable DTW timestamps
+	obs_properties_add_bool(whisper_params_group, "dtw_token_timestamps",
+				MT_("dtw_token_timestamps"));
 	// float thold_pt;         // timestamp token probability threshold (~0.01)
 	obs_properties_add_float_slider(whisper_params_group, "thold_pt", MT_("thold_pt"), 0.0f,
 					1.0f, 0.05f);

@@ -91,6 +91,7 @@ struct transcription_filter_data {
 	std::string source_lang;
 	std::string target_lang;
 	bool buffered_output = false;
+	bool enable_token_ts_dtw = false;
 
 	// Last transcription result
 	std::string last_text;

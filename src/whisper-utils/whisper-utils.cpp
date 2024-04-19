@@ -5,7 +5,7 @@
 
 #include <obs-module.h>
 
-void update_whsiper_model_path(struct transcription_filter_data *gf, obs_data_t *s)
+void update_whsiper_model(struct transcription_filter_data *gf, obs_data_t *s)
 {
 	// update the whisper model path
 	std::string new_model_path = obs_data_get_string(s, "whisper_model_path");
@@ -13,9 +13,12 @@ void update_whsiper_model_path(struct transcription_filter_data *gf, obs_data_t 
 
 	if (gf->whisper_model_path.empty() || gf->whisper_model_path != new_model_path ||
 	    is_external_model) {
-		// model path changed, reload the model
-		obs_log(gf->log_level, "model path changed from %s to %s",
-			gf->whisper_model_path.c_str(), new_model_path.c_str());
+
+		if (gf->whisper_model_path != new_model_path) {
+			// model path changed
+			obs_log(gf->log_level, "model path changed from %s to %s",
+				gf->whisper_model_path.c_str(), new_model_path.c_str());
+		}
 
 		// check if the new model is external file
 		if (!is_external_model) {
@@ -76,6 +79,21 @@ void update_whsiper_model_path(struct transcription_filter_data *gf, obs_data_t 
 		obs_log(gf->log_level, "Model path did not change: %s == %s",
 			gf->whisper_model_path.c_str(), new_model_path.c_str());
 	}
+
+	const bool new_dtw_timestamps = obs_data_get_bool(s, "dtw_token_timestamps");
+
+	if (new_dtw_timestamps != gf->enable_token_ts_dtw) {
+		// dtw_token_timestamps changed
+		obs_log(gf->log_level, "dtw_token_timestamps changed from %d to %d",
+			gf->enable_token_ts_dtw, new_dtw_timestamps);
+		gf->enable_token_ts_dtw = obs_data_get_bool(s, "dtw_token_timestamps");
+		shutdown_whisper_thread(gf);
+		start_whisper_thread_with_path(gf, gf->whisper_model_path);
+	} else {
+		// dtw_token_timestamps did not change
+		obs_log(gf->log_level, "dtw_token_timestamps did not change: %d == %d",
+			gf->enable_token_ts_dtw, new_dtw_timestamps);
+	}
 }
 
 void shutdown_whisper_thread(struct transcription_filter_data *gf)
@@ -124,7 +142,7 @@ void start_whisper_thread_with_path(struct transcription_filter_data *gf, const 
 #endif
 	gf->vad.reset(new VadIterator(silero_vad_model_path, WHISPER_SAMPLE_RATE));
 
-	gf->whisper_context = init_whisper_context(path);
+	gf->whisper_context = init_whisper_context(path, gf);
 	if (gf->whisper_context == nullptr) {
 		obs_log(LOG_ERROR, "Failed to initialize whisper context");
 		return;
@@ -132,4 +150,58 @@ void start_whisper_thread_with_path(struct transcription_filter_data *gf, const 
 	gf->whisper_model_file_currently_loaded = path;
 	std::thread new_whisper_thread(whisper_loop, gf);
 	gf->whisper_thread.swap(new_whisper_thread);
+}
+
+// Dummy function that finds start of overlap; to be replaced with actual function
+std::pair<int, int> findStartOfOverlap(const std::vector<whisper_token_data> &seq1,
+				       const std::vector<whisper_token_data> &seq2)
+{
+	for (int i = 0; i < seq1.size(); ++i) {
+		for (int j = 0; j < seq2.size(); ++j) {
+			if (seq1[i].id == seq2[j].id) {
+				int k = 0;
+				while (i + k < seq1.size() && j + k < seq2.size() &&
+				       seq1[i + k].id == seq2[j + k].id) {
+					k++;
+				}
+				if (k > 1) {
+					return {i, j};
+				}
+			}
+		}
+	}
+	return {-1, -1};
+}
+
+// Function to reconstruct a whole sentence from two sentences using overlap info
+std::vector<whisper_token_data> reconstructSentence(const std::vector<whisper_token_data> &seq1,
+						    const std::vector<whisper_token_data> &seq2)
+{
+	auto overlap = findStartOfOverlap(seq1, seq2);
+	std::vector<whisper_token_data> reconstructed;
+
+	if (overlap.first == -1 || overlap.second == -1) {
+		return reconstructed; // Return empty if no overlap found
+	}
+
+	// Add tokens from the first sequence up to the overlap
+	reconstructed.insert(reconstructed.end(), seq1.begin(), seq1.begin() + overlap.first);
+
+	// Determine the length of the overlap
+	int overlapLength = 0;
+	while (overlap.first + overlapLength < seq1.size() &&
+	       overlap.second + overlapLength < seq2.size() &&
+	       seq1[overlap.first + overlapLength].id == seq2[overlap.second + overlapLength].id) {
+		overlapLength++;
+	}
+
+	// Add overlapping tokens
+	reconstructed.insert(reconstructed.end(), seq1.begin() + overlap.first,
+			     seq1.begin() + overlap.first + overlapLength);
+
+	// Add remaining tokens from the second sequence
+	reconstructed.insert(reconstructed.end(), seq2.begin() + overlap.second + overlapLength,
+			     seq2.end());
+
+	return reconstructed;
 }
