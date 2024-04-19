@@ -17,24 +17,12 @@
 
 #include "translation/translation.h"
 #include "whisper-utils/silero-vad-onnx.h"
-#include "captions-thread.h"
+#include "whisper-utils/whisper-processing.h"
+#include "whisper-utils/token-buffer-thread.h"
 
 #define MAX_PREPROC_CHANNELS 10
 
 #define MT_ obs_module_text
-
-enum DetectionResult {
-	DETECTION_RESULT_UNKNOWN = 0,
-	DETECTION_RESULT_SILENCE = 1,
-	DETECTION_RESULT_SPEECH = 2,
-};
-
-struct DetectionResultWithText {
-	DetectionResult result;
-	std::string text;
-	uint64_t start_timestamp_ms;
-	uint64_t end_timestamp_ms;
-};
 
 struct transcription_filter_data {
 	obs_source_t *context; // obs filter source (this filter)
@@ -116,7 +104,7 @@ struct transcription_filter_data {
 	// translation context
 	struct translation_context translation_ctx;
 
-	CaptionMonitor captions_monitor;
+	TokenBufferThread captions_monitor;
 
 	// ctor
 	transcription_filter_data()

@@ -211,16 +211,14 @@ struct DetectionResultWithText run_whisper_inference(struct transcription_filter
 						     const float *pcm32f_data, size_t pcm32f_size,
 						     bool zero_start)
 {
-	static std::vector<whisper_token_data> last_tokens;
-
 	if (gf == nullptr) {
 		obs_log(LOG_ERROR, "run_whisper_inference: gf is null");
-		return {DETECTION_RESULT_UNKNOWN, "", 0, 0};
+		return {DETECTION_RESULT_UNKNOWN, "", 0, 0, {}};
 	}
 
 	if (pcm32f_data == nullptr || pcm32f_size == 0) {
 		obs_log(LOG_ERROR, "run_whisper_inference: pcm32f_data is null or size is 0");
-		return {DETECTION_RESULT_UNKNOWN, "", 0, 0};
+		return {DETECTION_RESULT_UNKNOWN, "", 0, 0, {}};
 	}
 
 	obs_log(gf->log_level, "%s: processing %d samples, %.3f sec, %d threads", __func__,
@@ -230,7 +228,7 @@ struct DetectionResultWithText run_whisper_inference(struct transcription_filter
 	std::lock_guard<std::mutex> lock(*gf->whisper_ctx_mutex);
 	if (gf->whisper_context == nullptr) {
 		obs_log(LOG_WARNING, "whisper context is null");
-		return {DETECTION_RESULT_UNKNOWN, "", 0, 0};
+		return {DETECTION_RESULT_UNKNOWN, "", 0, 0, {}};
 	}
 
 	// Get the duration in ms since the beginning of the stream (gf->start_timestamp_ms)
@@ -249,12 +247,12 @@ struct DetectionResultWithText run_whisper_inference(struct transcription_filter
 		obs_log(LOG_ERROR, "Whisper exception: %s. Filter restart is required", e.what());
 		whisper_free(gf->whisper_context);
 		gf->whisper_context = nullptr;
-		return {DETECTION_RESULT_UNKNOWN, "", 0, 0};
+		return {DETECTION_RESULT_UNKNOWN, "", 0, 0, {}};
 	}
 
 	if (whisper_full_result != 0) {
 		obs_log(LOG_WARNING, "failed to process audio, error %d", whisper_full_result);
-		return {DETECTION_RESULT_UNKNOWN, "", 0, 0};
+		return {DETECTION_RESULT_UNKNOWN, "", 0, 0, {}};
 	} else {
 		// duration in ms
 		const uint64_t duration_ms = (uint64_t)(pcm32f_size * 1000 / WHISPER_SAMPLE_RATE);
@@ -278,18 +276,19 @@ struct DetectionResultWithText run_whisper_inference(struct transcription_filter
 				whisper_full_get_token_data(gf->whisper_context, n_segment, j);
 			const char *token_str = whisper_token_to_str(gf->whisper_context, token.id);
 			bool keep = !end;
-			if (zero_start && token.t_dtw < 20) {
-				keep = false;
-			}
+			// if (zero_start && token.t_dtw < 20) {
+			// 	keep = false;
+			// }
 			if (token.t_dtw == -1) {
 				keep = false;
 			}
-			if ((token.t_dtw < 20 || token.t_dtw > segment_cutoff) && token.p < 0.8) {
-				keep = false;
-				if (token.t_dtw > segment_cutoff) {
-					end = true;
-				}
-			}
+            if ((j == n_tokens - 2 || j == n_tokens - 3) && token.p < 0.5) {
+                keep = false;
+            }
+            // if the second to last token is .id == 13 ('.'), don't keep it
+            if (j == n_tokens - 2 && token.id == 13) {
+                keep = false;
+            }
 
 			if (keep) {
 				text += token_str;
@@ -303,20 +302,6 @@ struct DetectionResultWithText run_whisper_inference(struct transcription_filter
 		sentence_p /= (float)n_tokens;
 		obs_log(LOG_INFO, "Decoded sentence: '%s'", text.c_str());
 		obs_log(LOG_INFO, "Token IDs: %s", tokenIds.c_str());
-
-        // reconstruct sentence
-        if (last_tokens.size() > 0) {
-            std::vector<whisper_token_data> sentence = reconstructSentence(last_tokens, tokens);
-            std::string sentence_str = "";
-            for (const whisper_token_data &token : sentence) {
-                const char *token_str = whisper_token_to_str(gf->whisper_context, token.id);
-                sentence_str += token_str;
-            }
-            obs_log(LOG_INFO, "Reconstructed sentence: '%s'", sentence_str.c_str());
-            last_tokens = sentence;
-        } else {
-            last_tokens = tokens;
-        }
 
 		// convert text to lowercase
 		std::string text_lower(text);
@@ -333,10 +318,10 @@ struct DetectionResultWithText run_whisper_inference(struct transcription_filter
 		}
 
 		if (text_lower.empty() || text_lower == ".") {
-			return {DETECTION_RESULT_SILENCE, "", 0, 0};
+			return {DETECTION_RESULT_SILENCE, "", 0, 0, {}};
 		}
 
-		return {DETECTION_RESULT_SPEECH, text_lower, offset_ms, offset_ms + duration_ms};
+		return {DETECTION_RESULT_SPEECH, text_lower, offset_ms, offset_ms + duration_ms, tokens};
 	}
 }
 
@@ -453,13 +438,13 @@ void process_audio_from_buffer(struct transcription_filter_data *gf)
 			set_text_callback(gf, inference_result);
 		} else if (inference_result.result == DETECTION_RESULT_SILENCE) {
 			// output inference result to a text source
-			set_text_callback(gf, {inference_result.result, "[silence]", 0, 0});
+			set_text_callback(gf, {inference_result.result, "[silence]", 0, 0, {}});
 		}
 	} else {
 		if (gf->log_words) {
 			obs_log(LOG_INFO, "skipping inference");
 		}
-		set_text_callback(gf, {DETECTION_RESULT_UNKNOWN, "[skip]", 0, 0});
+		set_text_callback(gf, {DETECTION_RESULT_UNKNOWN, "[skip]", 0, 0, {}});
 	}
 
 	// end of timer
@@ -470,6 +455,10 @@ void process_audio_from_buffer(struct transcription_filter_data *gf)
 		(int)duration);
 
 	if (last_step_in_segment) {
+        const uint64_t overlap_size_ms = (uint64_t)(gf->overlap_frames * 1000 / gf->sample_rate);
+        obs_log(gf->log_level, 
+            "copying %lu frames (%lu ms) from the end of the buffer (pos %lu) to the beginning", 
+            gf->overlap_frames, overlap_size_ms, gf->last_num_frames - gf->overlap_frames);
 		for (size_t c = 0; c < gf->channels; c++) {
 			// This is the last step in the segment - reset the copy buffer (include overlap frames)
 			// move overlap frames from the end of the last copy_buffers to the beginning
@@ -479,8 +468,8 @@ void process_audio_from_buffer(struct transcription_filter_data *gf)
 			// zero out the rest of the buffer, just in case
 			memset(gf->copy_buffers[c] + gf->overlap_frames, 0,
 			       (gf->frames - gf->overlap_frames) * sizeof(float));
-			gf->last_num_frames = gf->overlap_frames;
 		}
+        gf->last_num_frames = gf->overlap_frames;
 	}
 }
 

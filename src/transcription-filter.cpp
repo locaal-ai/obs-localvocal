@@ -4,6 +4,7 @@
 #include "plugin-support.h"
 #include "transcription-filter.h"
 #include "transcription-filter-data.h"
+#include "transcription-utils.h"
 #include "model-utils/model-downloader.h"
 #include "whisper-utils/whisper-processing.h"
 #include "whisper-utils/whisper-language.h"
@@ -187,40 +188,6 @@ void acquire_weak_text_source_ref(struct transcription_filter_data *gf)
 	}
 }
 
-#define is_lead_byte(c) (((c)&0xe0) == 0xc0 || ((c)&0xf0) == 0xe0 || ((c)&0xf8) == 0xf0)
-#define is_trail_byte(c) (((c)&0xc0) == 0x80)
-
-inline int lead_byte_length(const uint8_t c)
-{
-	if ((c & 0xe0) == 0xc0) {
-		return 2;
-	} else if ((c & 0xf0) == 0xe0) {
-		return 3;
-	} else if ((c & 0xf8) == 0xf0) {
-		return 4;
-	} else {
-		return 1;
-	}
-}
-
-inline bool is_valid_lead_byte(const uint8_t *c)
-{
-	const int length = lead_byte_length(c[0]);
-	if (length == 1) {
-		return true;
-	}
-	if (length == 2 && is_trail_byte(c[1])) {
-		return true;
-	}
-	if (length == 3 && is_trail_byte(c[1]) && is_trail_byte(c[2])) {
-		return true;
-	}
-	if (length == 4 && is_trail_byte(c[1]) && is_trail_byte(c[2]) && is_trail_byte(c[3])) {
-		return true;
-	}
-	return false;
-}
-
 void send_caption_to_source(const std::string &str_copy, struct transcription_filter_data *gf)
 {
 	if (!gf->text_source_mutex) {
@@ -267,44 +234,7 @@ void set_text_callback(struct transcription_filter_data *gf,
 	}
 	gf->last_sub_render_time = now;
 
-#ifdef _WIN32
-	// Some UTF8 charsets on Windows output have a bug, instead of 0xd? it outputs
-	// 0xf?, and 0xc? becomes 0xe?, so we need to fix it.
-	std::stringstream ss;
-	uint8_t *c_str = (uint8_t *)result.text.c_str();
-	for (size_t i = 0; i < result.text.size(); ++i) {
-		if (is_lead_byte(c_str[i])) {
-			// this is a unicode leading byte
-			// if the next char is 0xff - it's a bug char, replace it with 0x9f
-			if (c_str[i + 1] == 0xff) {
-				c_str[i + 1] = 0x9f;
-			}
-			if (!is_valid_lead_byte(c_str + i)) {
-				// This is a bug lead byte, because it's length 3 and the i+2 byte is also
-				// a lead byte
-				c_str[i] = c_str[i] - 0x20;
-			}
-		} else {
-			if (c_str[i] >= 0xf8) {
-				// this may be a malformed lead byte.
-				// lets see if it becomes a valid lead byte if we "fix" it
-				uint8_t buf_[4];
-				buf_[0] = c_str[i] - 0x20;
-				buf_[1] = c_str[i + 1];
-				buf_[2] = c_str[i + 2];
-				buf_[3] = c_str[i + 3];
-				if (is_valid_lead_byte(buf_)) {
-					// this is a malformed lead byte, fix it
-					c_str[i] = c_str[i] - 0x20;
-				}
-			}
-		}
-	}
-
-	std::string str_copy = (char *)c_str;
-#else
-	std::string str_copy = result.text;
-#endif
+    std::string str_copy = fix_utf8(result.text);
 
 	// remove trailing spaces, newlines, tabs or punctuation
 	str_copy.erase(std::find_if(str_copy.rbegin(), str_copy.rend(),
@@ -333,7 +263,7 @@ void set_text_callback(struct transcription_filter_data *gf,
 	gf->last_text = str_copy;
 
 	if (gf->buffered_output) {
-		gf->captions_monitor.addWords(split_words(str_copy));
+		gf->captions_monitor.addWords(result.tokens);
 	}
 
 	if (gf->caption_to_stream) {
@@ -673,13 +603,15 @@ void *transcription_filter_create(obs_data_t *settings, obs_source_t *filter)
 	gf->whisper_context = nullptr;
 
 	gf->captions_monitor.initialize(
+        gf,
 		[gf](const std::string &text) {
 			obs_log(LOG_INFO, "Captions: %s", text.c_str());
 			if (gf->buffered_output) {
 				send_caption_to_source(text, gf);
 			}
 		},
-		20, std::chrono::seconds(10));
+		20, 
+        std::chrono::seconds(10));
 
 	obs_log(gf->log_level, "run update");
 	// get the settings updated on the filter data struct
@@ -960,8 +892,8 @@ obs_properties_t *transcription_filter_properties(void *data)
 
 	obs_properties_add_int_slider(ppts, "buffer_size_msec", MT_("buffer_size_msec"), 1000,
 				      DEFAULT_BUFFER_SIZE_MSEC, 250);
-	obs_properties_add_int_slider(ppts, "overlap_size_msec", MT_("overlap_size_msec"), 50, 300,
-				      50);
+	obs_properties_add_int_slider(ppts, "overlap_size_msec", MT_("overlap_size_msec"), 250, DEFAULT_OVERLAP_SIZE_MSEC,
+				      250);
 
 	obs_property_t *step_by_step_processing = obs_properties_add_bool(
 		ppts, "step_by_step_processing", MT_("step_by_step_processing"));
