@@ -296,12 +296,12 @@ struct DetectionResultWithText run_whisper_inference(struct transcription_filter
 					    std::string(token_str) + "), ";
 				tokens.push_back(token);
 			}
-			obs_log(LOG_INFO, "Token %d: %d, %s, p: %.3f, dtw: %ld [keep: %d]", j,
+			obs_log(gf->log_level, "Token %d: %d, %s, p: %.3f, dtw: %ld [keep: %d]", j,
 				token.id, token_str, token.p, token.t_dtw, keep);
 		}
 		sentence_p /= (float)n_tokens;
-		obs_log(LOG_INFO, "Decoded sentence: '%s'", text.c_str());
-		obs_log(LOG_INFO, "Token IDs: %s", tokenIds.c_str());
+		obs_log(gf->log_level, "Decoded sentence: '%s'", text.c_str());
+		obs_log(gf->log_level, "Token IDs: %s", tokenIds.c_str());
 
 		// convert text to lowercase
 		std::string text_lower(text);
@@ -311,6 +311,21 @@ struct DetectionResultWithText run_whisper_inference(struct transcription_filter
 					      [](unsigned char ch) { return !std::isspace(ch); })
 					 .base(),
 				 text_lower.end());
+
+        // if suppression is enabled, check if the text is in the suppression list
+        if (!gf->suppress_sentences.empty()) {
+            std::string suppress_sentences_copy = gf->suppress_sentences;
+            size_t pos = 0;
+            std::string token;
+            while ((pos = suppress_sentences_copy.find("\n")) != std::string::npos) {
+                token = suppress_sentences_copy.substr(0, pos);
+                suppress_sentences_copy.erase(0, pos + 1);
+                if (text_lower == suppress_sentences_copy) {
+                    obs_log(gf->log_level, "Suppressing sentence: %s", text_lower.c_str());
+                    return {DETECTION_RESULT_SUPPRESSED, "", 0, 0, {}};
+                }
+            }
+        }
 
 		if (gf->log_words) {
 			obs_log(LOG_INFO, "[%s --> %s] (%.3f) %s", to_timestamp(t0).c_str(),
@@ -456,8 +471,8 @@ void process_audio_from_buffer(struct transcription_filter_data *gf)
 
 	if (last_step_in_segment) {
         const uint64_t overlap_size_ms = (uint64_t)(gf->overlap_frames * 1000 / gf->sample_rate);
-        obs_log(gf->log_level, 
-            "copying %lu frames (%lu ms) from the end of the buffer (pos %lu) to the beginning", 
+        obs_log(gf->log_level,
+            "copying %lu frames (%lu ms) from the end of the buffer (pos %lu) to the beginning",
             gf->overlap_frames, overlap_size_ms, gf->last_num_frames - gf->overlap_frames);
 		for (size_t c = 0; c < gf->channels; c++) {
 			// This is the last step in the segment - reset the copy buffer (include overlap frames)

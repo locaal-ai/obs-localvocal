@@ -19,6 +19,8 @@ const char *const PLUGIN_INFO_TEMPLATE =
 	"<a href=\"https://github.com/occ-ai\">OCC AI</a> ❤️ "
 	"<a href=\"https://www.patreon.com/RoyShilkrot\">Support & Follow</a>";
 
+const char* const SUPPRESS_SENTENCES_DEFAULT = "Thank you for watching\nThank you";
+
 #ifdef __cplusplus
 }
 #endif

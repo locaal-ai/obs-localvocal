@@ -45,7 +45,7 @@ void TokenBufferThread::addWords(const std::vector<whisper_token_data> &words)
         log_token_vector(words);
 
         // run reconstructSentence
-        std::vector<whisper_token_data> reconstructed = reconstructSentence(currentWords, words); 
+        std::vector<whisper_token_data> reconstructed = reconstructSentence(currentWords, words);
 
         log_token_vector(reconstructed);
 
@@ -56,6 +56,8 @@ void TokenBufferThread::addWords(const std::vector<whisper_token_data> &words)
         for (const auto &word : reconstructed) {
             wordQueue.push_back(word);
         }
+
+        newDataAvailable = true;
     }
     condVar.notify_all();
 }
@@ -102,11 +104,19 @@ void TokenBufferThread::monitor()
             this->wordQueue.push_front(*it);
         }
 
-        if (this->wordQueue.size() >= this->maxSize ||
-            std::chrono::steady_clock::now() - startTime >= this->maxTime) {
+        // check if we need to flush the queue
+        auto elapsedTime = std::chrono::duration_cast<std::chrono::seconds>(
+            std::chrono::steady_clock::now() - startTime);
+        if (this->wordQueue.size() >= this->maxSize || elapsedTime >= this->maxTime) {
             // flush the queue if it's full or we've reached the max time
             size_t words_to_flush =
                 std::min(this->wordQueue.size(), this->maxSize);
+            // make sure we leave at least 3 words in the queue
+            size_t words_remaining = this->wordQueue.size() - words_to_flush;
+            if (words_remaining < 3) {
+                words_to_flush -= 3 - words_remaining;
+            }
+            obs_log(LOG_INFO, "TokenBufferThread::monitor: flushing %d words", words_to_flush);
             for (size_t i = 0; i < words_to_flush; ++i) {
                 wordQueue.pop_front();
             }

@@ -164,7 +164,7 @@ std::pair<int, int> findStartOfOverlap(const std::vector<whisper_token_data> &se
     if (seq1.empty() || seq2.empty() || seq1.size() == 1 || seq2.size() == 1) {
         return {-1, -1};
     }
-    for (int i = 0; i < seq1.size() - 1; ++i) {
+    for (int i = seq1.size() - 2; i >= seq1.size() / 2; --i) {
         for (int j = 0; j < seq2.size() - 1; ++j) {
             if (seq1[i].id == seq2[j].id) {
                 // Check if the next token in both sequences is the same
@@ -194,17 +194,38 @@ std::vector<whisper_token_data> reconstructSentence(const std::vector<whisper_to
 	std::vector<whisper_token_data> reconstructed;
 
 	if (overlap.first == -1 || overlap.second == -1) {
+        if (seq1.empty() && seq2.empty()) {
+            return reconstructed;
+        }
+        if (seq1.empty()) {
+            return seq2;
+        }
+        if (seq2.empty()) {
+            return seq1;
+        }
+
 		// Return concat of seq1 and seq2 if no overlap found
-        
         // check if the last token of seq1 == the first token of seq2
-        if (!seq1.empty() && !seq2.empty() && seq1.back().id == seq2.front().id) {
+        if (seq1.back().id == seq2.front().id) {
             // don't add the last token of seq1
             reconstructed.insert(reconstructed.end(), seq1.begin(), seq1.end() - 1);
+            reconstructed.insert(reconstructed.end(), seq2.begin(), seq2.end());
+        } else if (seq2.size() > 1 && seq1.back().id == seq2[1].id) {
+            // check if the last token of seq1 == the second token of seq2
+            // don't add the last token of seq1
+            reconstructed.insert(reconstructed.end(), seq1.begin(), seq1.end() - 1);
+            // don't add the first token of seq2
+            reconstructed.insert(reconstructed.end(), seq2.begin() + 1, seq2.end());
+        } else if (seq1.size() > 1 && seq1[seq1.size() - 2].id == seq2.front().id) {
+            // check if the second to last token of seq1 == the first token of seq2
+            // don't add the last two tokens of seq1
+            reconstructed.insert(reconstructed.end(), seq1.begin(), seq1.end() - 2);
+            reconstructed.insert(reconstructed.end(), seq2.begin(), seq2.end());
         } else {
             // add all tokens of seq1
             reconstructed.insert(reconstructed.end(), seq1.begin(), seq1.end());
+            reconstructed.insert(reconstructed.end(), seq2.begin(), seq2.end());
         }
-        reconstructed.insert(reconstructed.end(), seq2.begin(), seq2.end());
         return reconstructed;
 	}
 
