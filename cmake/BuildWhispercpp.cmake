@@ -107,12 +107,12 @@ elseif(WIN32)
   install(FILES ${WHISPER_DLLS} DESTINATION "obs-plugins/64bit")
 
 else()
-  set(Whispercpp_Build_GIT_TAG "f22d27a385d34b1e544031efe8aa2e3d73922791")
+  set(Whispercpp_Build_GIT_TAG "7395c70a748753e3800b63e3422a2b558a097c80")
   set(WHISPER_EXTRA_CXX_FLAGS "-fPIC")
   set(WHISPER_ADDITIONAL_CMAKE_ARGS -DWHISPER_BLAS=OFF -DWHISPER_CUBLAS=OFF -DWHISPER_OPENBLAS=OFF -DWHISPER_NO_AVX=ON
                                     -DWHISPER_NO_AVX2=ON)
 
-  # On Linux and MacOS build a static Whisper library
+  # On Linux build a static Whisper library
   ExternalProject_Add(
     Whispercpp_Build
     DOWNLOAD_EXTRACT_TIMESTAMP true
@@ -133,7 +133,7 @@ else()
 
   ExternalProject_Get_Property(Whispercpp_Build INSTALL_DIR)
 
-  # on Linux and MacOS add the static Whisper library to the link line
+  # add the static Whisper library to the link line
   add_library(Whispercpp::Whisper STATIC IMPORTED)
   set_target_properties(
     Whispercpp::Whisper
