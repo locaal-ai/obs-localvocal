@@ -159,8 +159,8 @@ void start_whisper_thread_with_path(struct transcription_filter_data *gf, const 
 // Returns a pair of indices of the first overlapping tokens in the two sequences
 // If no overlap is found, the function returns {-1, -1}
 // Allows for a single token mismatch in the overlap
-std::pair<size_t, size_t> findStartOfOverlap(const std::vector<whisper_token_data> &seq1,
-					     const std::vector<whisper_token_data> &seq2)
+std::pair<int, int> findStartOfOverlap(const std::vector<whisper_token_data> &seq1,
+				       const std::vector<whisper_token_data> &seq2)
 {
 	if (seq1.empty() || seq2.empty() || seq1.size() == 1 || seq2.size() == 1) {
 		return {-1, -1};
@@ -211,13 +211,13 @@ std::vector<whisper_token_data> reconstructSentence(const std::vector<whisper_to
 			// don't add the last token of seq1
 			reconstructed.insert(reconstructed.end(), seq1.begin(), seq1.end() - 1);
 			reconstructed.insert(reconstructed.end(), seq2.begin(), seq2.end());
-		} else if (seq2.size() > 1 && seq1.back().id == seq2[1].id) {
+		} else if (seq2.size() > 1ull && seq1.back().id == seq2[1].id) {
 			// check if the last token of seq1 == the second token of seq2
 			// don't add the last token of seq1
 			reconstructed.insert(reconstructed.end(), seq1.begin(), seq1.end() - 1);
 			// don't add the first token of seq2
 			reconstructed.insert(reconstructed.end(), seq2.begin() + 1, seq2.end());
-		} else if (seq1.size() > 1 && seq1[seq1.size() - 2].id == seq2.front().id) {
+		} else if (seq1.size() > 1ull && seq1[seq1.size() - 2].id == seq2.front().id) {
 			// check if the second to last token of seq1 == the first token of seq2
 			// don't add the last two tokens of seq1
 			reconstructed.insert(reconstructed.end(), seq1.begin(), seq1.end() - 2);
