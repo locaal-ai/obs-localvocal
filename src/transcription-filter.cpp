@@ -234,7 +234,7 @@ void set_text_callback(struct transcription_filter_data *gf,
 	}
 	gf->last_sub_render_time = now;
 
-    std::string str_copy = fix_utf8(result.text);
+	std::string str_copy = fix_utf8(result.text);
 
 	// remove trailing spaces, newlines, tabs or punctuation
 	str_copy.erase(std::find_if(str_copy.rbegin(), str_copy.rend(),
@@ -363,7 +363,7 @@ void transcription_filter_update(void *data, obs_data_t *s)
 	gf->source_lang = obs_data_get_string(s, "translate_source_language");
 	gf->target_lang = obs_data_get_string(s, "translate_target_language");
 	gf->translation_ctx.add_context = obs_data_get_bool(s, "translate_add_context");
-    gf->suppress_sentences = obs_data_get_string(s, "suppress_sentences");
+	gf->suppress_sentences = obs_data_get_string(s, "suppress_sentences");
 
 	if (new_translate != gf->translate) {
 		if (new_translate) {
@@ -604,15 +604,14 @@ void *transcription_filter_create(obs_data_t *settings, obs_source_t *filter)
 	gf->whisper_context = nullptr;
 
 	gf->captions_monitor.initialize(
-        gf,
+		gf,
 		[gf](const std::string &text) {
 			obs_log(LOG_INFO, "Captions: %s", text.c_str());
 			if (gf->buffered_output) {
 				send_caption_to_source(text, gf);
 			}
 		},
-		30,
-        std::chrono::seconds(10));
+		30, std::chrono::seconds(10));
 
 	obs_log(gf->log_level, "run update");
 	// get the settings updated on the filter data struct
@@ -724,7 +723,7 @@ void transcription_filter_defaults(obs_data_t *s)
 	obs_data_set_default_string(s, "translate_target_language", "__es__");
 	obs_data_set_default_string(s, "translate_source_language", "__en__");
 	obs_data_set_default_bool(s, "translate_add_context", true);
-    obs_data_set_default_string(s, "suppress_sentences", SUPPRESS_SENTENCES_DEFAULT);
+	obs_data_set_default_string(s, "suppress_sentences", SUPPRESS_SENTENCES_DEFAULT);
 
 	// Whisper parameters
 	obs_data_set_default_int(s, "whisper_sampling_method", WHISPER_SAMPLING_BEAM_SEARCH);
@@ -894,8 +893,8 @@ obs_properties_t *transcription_filter_properties(void *data)
 
 	obs_properties_add_int_slider(ppts, "buffer_size_msec", MT_("buffer_size_msec"), 1000,
 				      DEFAULT_BUFFER_SIZE_MSEC, 250);
-	obs_properties_add_int_slider(ppts, "overlap_size_msec", MT_("overlap_size_msec"), 250, DEFAULT_OVERLAP_SIZE_MSEC,
-				      250);
+	obs_properties_add_int_slider(ppts, "overlap_size_msec", MT_("overlap_size_msec"), 250,
+				      DEFAULT_OVERLAP_SIZE_MSEC, 250);
 
 	obs_property_t *step_by_step_processing = obs_properties_add_bool(
 		ppts, "step_by_step_processing", MT_("step_by_step_processing"));
@@ -924,8 +923,9 @@ obs_properties_t *transcription_filter_properties(void *data)
 	obs_property_list_add_int(list, "INFO", LOG_INFO);
 	obs_property_list_add_int(list, "WARNING", LOG_WARNING);
 
-    // add a text input for sentences to suppress
-    obs_properties_add_text(ppts, "suppress_sentences", MT_("suppress_sentences"), OBS_TEXT_MULTILINE);
+	// add a text input for sentences to suppress
+	obs_properties_add_text(ppts, "suppress_sentences", MT_("suppress_sentences"),
+				OBS_TEXT_MULTILINE);
 
 	obs_properties_t *whisper_params_group = obs_properties_create();
 	obs_properties_add_group(ppts, "whisper_params_group", MT_("whisper_parameters"),

@@ -24,15 +24,16 @@ public:
 	TokenBufferThread() = default;
 
 	~TokenBufferThread();
-	void initialize(struct transcription_filter_data* gf, std::function<void(const std::string &)> callback_, size_t maxSize_,
+	void initialize(struct transcription_filter_data *gf,
+			std::function<void(const std::string &)> callback_, size_t maxSize_,
 			std::chrono::seconds maxTime_);
 
 	void addWords(const std::vector<whisper_token_data> &words);
 
 private:
 	void monitor();
-    void log_token_vector(const std::vector<whisper_token_data> &tokens);
-    struct transcription_filter_data *gf;
+	void log_token_vector(const std::vector<whisper_token_data> &tokens);
+	struct transcription_filter_data *gf;
 	std::deque<whisper_token_data> wordQueue;
 	std::thread workerThread;
 	std::mutex queueMutex;

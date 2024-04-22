@@ -2,7 +2,6 @@
 
 #include <sstream>
 
-
 #define is_lead_byte(c) (((c)&0xe0) == 0xc0 || ((c)&0xf0) == 0xe0 || ((c)&0xf8) == 0xf0)
 #define is_trail_byte(c) (((c)&0xc0) == 0x80)
 
@@ -73,7 +72,7 @@ std::string fix_utf8(const std::string &str)
 		}
 	}
 
-	return std::string((char*)c_str);
+	return std::string((char *)c_str);
 #else
 	return str;
 #endif

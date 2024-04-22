@@ -20,7 +20,7 @@ struct DetectionResultWithText {
 	std::string text;
 	uint64_t start_timestamp_ms;
 	uint64_t end_timestamp_ms;
-    std::vector<whisper_token_data> tokens;
+	std::vector<whisper_token_data> tokens;
 };
 
 void whisper_loop(void *data);

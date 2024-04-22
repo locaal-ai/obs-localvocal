@@ -282,13 +282,13 @@ struct DetectionResultWithText run_whisper_inference(struct transcription_filter
 			if (token.t_dtw == -1) {
 				keep = false;
 			}
-            if ((j == n_tokens - 2 || j == n_tokens - 3) && token.p < 0.5) {
-                keep = false;
-            }
-            // if the second to last token is .id == 13 ('.'), don't keep it
-            if (j == n_tokens - 2 && token.id == 13) {
-                keep = false;
-            }
+			if ((j == n_tokens - 2 || j == n_tokens - 3) && token.p < 0.5) {
+				keep = false;
+			}
+			// if the second to last token is .id == 13 ('.'), don't keep it
+			if (j == n_tokens - 2 && token.id == 13) {
+				keep = false;
+			}
 
 			if (keep) {
 				text += token_str;
@@ -312,20 +312,21 @@ struct DetectionResultWithText run_whisper_inference(struct transcription_filter
 					 .base(),
 				 text_lower.end());
 
-        // if suppression is enabled, check if the text is in the suppression list
-        if (!gf->suppress_sentences.empty()) {
-            std::string suppress_sentences_copy = gf->suppress_sentences;
-            size_t pos = 0;
-            std::string token;
-            while ((pos = suppress_sentences_copy.find("\n")) != std::string::npos) {
-                token = suppress_sentences_copy.substr(0, pos);
-                suppress_sentences_copy.erase(0, pos + 1);
-                if (text_lower == suppress_sentences_copy) {
-                    obs_log(gf->log_level, "Suppressing sentence: %s", text_lower.c_str());
-                    return {DETECTION_RESULT_SUPPRESSED, "", 0, 0, {}};
-                }
-            }
-        }
+		// if suppression is enabled, check if the text is in the suppression list
+		if (!gf->suppress_sentences.empty()) {
+			std::string suppress_sentences_copy = gf->suppress_sentences;
+			size_t pos = 0;
+			std::string token;
+			while ((pos = suppress_sentences_copy.find("\n")) != std::string::npos) {
+				token = suppress_sentences_copy.substr(0, pos);
+				suppress_sentences_copy.erase(0, pos + 1);
+				if (text_lower == suppress_sentences_copy) {
+					obs_log(gf->log_level, "Suppressing sentence: %s",
+						text_lower.c_str());
+					return {DETECTION_RESULT_SUPPRESSED, "", 0, 0, {}};
+				}
+			}
+		}
 
 		if (gf->log_words) {
 			obs_log(LOG_INFO, "[%s --> %s] (%.3f) %s", to_timestamp(t0).c_str(),
@@ -336,7 +337,8 @@ struct DetectionResultWithText run_whisper_inference(struct transcription_filter
 			return {DETECTION_RESULT_SILENCE, "", 0, 0, {}};
 		}
 
-		return {DETECTION_RESULT_SPEECH, text_lower, offset_ms, offset_ms + duration_ms, tokens};
+		return {DETECTION_RESULT_SPEECH, text_lower, offset_ms, offset_ms + duration_ms,
+			tokens};
 	}
 }
 
@@ -470,10 +472,12 @@ void process_audio_from_buffer(struct transcription_filter_data *gf)
 		(int)duration);
 
 	if (last_step_in_segment) {
-        const uint64_t overlap_size_ms = (uint64_t)(gf->overlap_frames * 1000 / gf->sample_rate);
-        obs_log(gf->log_level,
-            "copying %lu frames (%lu ms) from the end of the buffer (pos %lu) to the beginning",
-            gf->overlap_frames, overlap_size_ms, gf->last_num_frames - gf->overlap_frames);
+		const uint64_t overlap_size_ms =
+			(uint64_t)(gf->overlap_frames * 1000 / gf->sample_rate);
+		obs_log(gf->log_level,
+			"copying %lu frames (%lu ms) from the end of the buffer (pos %lu) to the beginning",
+			gf->overlap_frames, overlap_size_ms,
+			gf->last_num_frames - gf->overlap_frames);
 		for (size_t c = 0; c < gf->channels; c++) {
 			// This is the last step in the segment - reset the copy buffer (include overlap frames)
 			// move overlap frames from the end of the last copy_buffers to the beginning
@@ -484,7 +488,7 @@ void process_audio_from_buffer(struct transcription_filter_data *gf)
 			memset(gf->copy_buffers[c] + gf->overlap_frames, 0,
 			       (gf->frames - gf->overlap_frames) * sizeof(float));
 		}
-        gf->last_num_frames = gf->overlap_frames;
+		gf->last_num_frames = gf->overlap_frames;
 	}
 }
 
