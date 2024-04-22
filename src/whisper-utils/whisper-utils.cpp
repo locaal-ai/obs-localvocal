@@ -159,14 +159,14 @@ void start_whisper_thread_with_path(struct transcription_filter_data *gf, const 
 // Returns a pair of indices of the first overlapping tokens in the two sequences
 // If no overlap is found, the function returns {-1, -1}
 // Allows for a single token mismatch in the overlap
-std::pair<int, int> findStartOfOverlap(const std::vector<whisper_token_data> &seq1,
-				       const std::vector<whisper_token_data> &seq2)
+std::pair<size_t, size_t> findStartOfOverlap(const std::vector<whisper_token_data> &seq1,
+					     const std::vector<whisper_token_data> &seq2)
 {
 	if (seq1.empty() || seq2.empty() || seq1.size() == 1 || seq2.size() == 1) {
 		return {-1, -1};
 	}
-	for (int i = seq1.size() - 2; i >= seq1.size() / 2; --i) {
-		for (int j = 0; j < seq2.size() - 1; ++j) {
+	for (size_t i = seq1.size() - 2; i >= seq1.size() / 2; --i) {
+		for (size_t j = 0; j < seq2.size() - 1; ++j) {
 			if (seq1[i].id == seq2[j].id) {
 				// Check if the next token in both sequences is the same
 				if (seq1[i + 1].id == seq2[j + 1].id) {
@@ -234,7 +234,7 @@ std::vector<whisper_token_data> reconstructSentence(const std::vector<whisper_to
 	reconstructed.insert(reconstructed.end(), seq1.begin(), seq1.begin() + overlap.first);
 
 	// Determine the length of the overlap
-	int overlapLength = 0;
+	size_t overlapLength = 0;
 	while (overlap.first + overlapLength < seq1.size() &&
 	       overlap.second + overlapLength < seq2.size() &&
 	       seq1[overlap.first + overlapLength].id == seq2[overlap.second + overlapLength].id) {

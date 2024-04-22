@@ -211,6 +211,8 @@ struct DetectionResultWithText run_whisper_inference(struct transcription_filter
 						     const float *pcm32f_data, size_t pcm32f_size,
 						     bool zero_start)
 {
+	UNUSED_PARAMETER(zero_start);
+
 	if (gf == nullptr) {
 		obs_log(LOG_ERROR, "run_whisper_inference: gf is null");
 		return {DETECTION_RESULT_UNKNOWN, "", 0, 0, {}};
@@ -266,7 +268,6 @@ struct DetectionResultWithText run_whisper_inference(struct transcription_filter
 		const int n_tokens = whisper_full_n_tokens(gf->whisper_context, n_segment);
 		std::string text = "";
 		std::string tokenIds = "";
-		int64_t segment_cutoff = (int64_t)(duration_ms * 0.09);
 		std::vector<whisper_token_data> tokens;
 		bool end = false;
 		for (int j = 0; j < n_tokens; ++j) {
