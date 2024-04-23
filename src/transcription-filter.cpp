@@ -894,6 +894,7 @@ obs_properties_t *transcription_filter_properties(void *data)
 								    obs_property_t *property,
 								    obs_data_t *settings) {
 		UNUSED_PARAMETER(property);
+		UNUSED_PARAMETER(props);
 		// if buffered output is enabled set the overlap to max else set it to default
 		obs_data_set_int(settings, "overlap_size_msec",
 				 obs_data_get_bool(settings, "buffered_output")
