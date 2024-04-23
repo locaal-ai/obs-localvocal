@@ -133,14 +133,15 @@ struct whisper_context *init_whisper_context(const std::string &model_path_in,
 	whisper_log_set(
 		[](enum ggml_log_level level, const char *text, void *user_data) {
 			UNUSED_PARAMETER(level);
-			UNUSED_PARAMETER(user_data);
+			struct transcription_filter_data *ctx =
+				static_cast<struct transcription_filter_data *>(user_data);
 			// remove trailing newline
 			char *text_copy = bstrdup(text);
 			text_copy[strcspn(text_copy, "\n")] = 0;
-			obs_log(LOG_INFO, "Whisper: %s", text_copy);
+			obs_log(ctx->log_level, "Whisper: %s", text_copy);
 			bfree(text_copy);
 		},
-		nullptr);
+		gf);
 
 	struct whisper_context_params cparams = whisper_context_default_params();
 #ifdef LOCALVOCAL_WITH_CUDA
@@ -288,6 +289,12 @@ struct DetectionResultWithText run_whisper_inference(struct transcription_filter
 			if (j == n_tokens - 2 && token.id == 13) {
 				keep = false;
 			}
+			if (token.id > 50516 && token.id <= 51865) {
+				obs_log(gf->log_level,
+					"Large time token found (%d), this shouldn't happen",
+					token.id);
+				return {DETECTION_RESULT_UNKNOWN, "", 0, 0, {}};
+			}
 
 			if (keep) {
 				text += token_str;
@@ -427,26 +434,42 @@ void process_audio_from_buffer(struct transcription_filter_data *gf)
 
 		std::vector<timestamp_t> stamps = gf->vad->get_speech_timestamps();
 		if (stamps.size() == 0) {
+			obs_log(gf->log_level, "VAD detected no speech in %d frames",
+				resampled_16khz_frames);
 			skipped_inference = true;
+			// prevent copying the buffer to the beginning (overlap)
+			gf->last_num_frames = 0;
+			last_step_in_segment = false;
 		} else {
 			speech_start_frame = (stamps[0].start < 3000) ? 0 : stamps[0].start;
 			speech_end_frame = stamps.back().end;
-			obs_log(gf->log_level, "VAD detected speech from %d to %d", stamps[0].start,
-				stamps.back().end);
+			uint32_t number_of_frames = speech_end_frame - speech_start_frame;
+
+			obs_log(gf->log_level,
+				"VAD detected speech from %d to %d (%d frames, %d ms)",
+				speech_start_frame, speech_end_frame, number_of_frames,
+				number_of_frames * 1000 / WHISPER_SAMPLE_RATE);
 
 			// if the speech segment is less than 1 second - put the audio back into the buffer
 			// to be handled in the next iteration
-			if (speech_end_frame - speech_start_frame < WHISPER_SAMPLE_RATE) {
+			if (number_of_frames > 0 && number_of_frames < WHISPER_SAMPLE_RATE) {
 				// convert speech_start_frame and speech_end_frame to original sample rate
 				speech_start_frame =
 					speech_start_frame * gf->sample_rate / WHISPER_SAMPLE_RATE;
 				speech_end_frame =
 					speech_end_frame * gf->sample_rate / WHISPER_SAMPLE_RATE;
-				const uint32_t number_of_frames =
-					speech_end_frame - speech_start_frame;
+				number_of_frames = speech_end_frame - speech_start_frame;
+
+				// use memmove to copy the speech segment to the beginning of the buffer
+				for (size_t c = 0; c < gf->channels; c++) {
+					memmove(gf->copy_buffers[c],
+						gf->copy_buffers[c] + speech_start_frame,
+						number_of_frames * sizeof(float));
+				}
+
 				obs_log(gf->log_level,
-					"Speech segment is less than 1 second, keeping segment %d to %d in the buffer",
-					speech_start_frame, speech_end_frame);
+					"Speech segment is less than 1 second, moving %d to %d (len %d) to buffer start",
+					speech_start_frame, speech_end_frame, number_of_frames);
 				// no processing of the segment
 				skipped_inference = true;
 				// reset the last_num_frames to the number of frames in the buffer

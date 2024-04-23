@@ -880,7 +880,8 @@ obs_properties_t *transcription_filter_properties(void *data)
 		for (const std::string &prop_name :
 		     {"whisper_params_group", "log_words", "caption_to_stream", "buffer_size_msec",
 		      "overlap_size_msec", "step_by_step_processing", "min_sub_duration",
-		      "process_while_muted", "buffered_output", "vad_enabled", "log_level"}) {
+		      "process_while_muted", "buffered_output", "vad_enabled", "log_level",
+		      "suppress_sentences"}) {
 			obs_property_set_visible(obs_properties_get(props, prop_name.c_str()),
 						 show_hide);
 		}
@@ -935,7 +936,7 @@ obs_properties_t *transcription_filter_properties(void *data)
 
 	obs_property_t *list = obs_properties_add_list(ppts, "log_level", MT_("log_level"),
 						       OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_INT);
-	obs_property_list_add_int(list, "DEBUG", LOG_DEBUG);
+	obs_property_list_add_int(list, "DEBUG (Won't show)", LOG_DEBUG);
 	obs_property_list_add_int(list, "INFO", LOG_INFO);
 	obs_property_list_add_int(list, "WARNING", LOG_WARNING);
 
