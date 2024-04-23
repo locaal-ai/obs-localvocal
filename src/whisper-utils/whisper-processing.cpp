@@ -289,7 +289,7 @@ struct DetectionResultWithText run_whisper_inference(struct transcription_filter
 			if (j == n_tokens - 2 && token.id == 13) {
 				keep = false;
 			}
-			if (token.id > 50516 && token.id <= 51865) {
+			if (token.id > 50540 && token.id <= 51865) {
 				obs_log(gf->log_level,
 					"Large time token found (%d), this shouldn't happen",
 					token.id);

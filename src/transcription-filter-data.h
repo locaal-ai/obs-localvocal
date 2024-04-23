@@ -78,6 +78,7 @@ struct transcription_filter_data {
 	bool translate = false;
 	std::string source_lang;
 	std::string target_lang;
+	std::string translation_output;
 	bool buffered_output = false;
 	bool enable_token_ts_dtw = false;
 	std::string suppress_sentences;
@@ -86,9 +87,7 @@ struct transcription_filter_data {
 	std::string last_text;
 
 	// Text source to output the subtitles
-	obs_weak_source_t *text_source;
-	char *text_source_name;
-	std::mutex *text_source_mutex;
+	std::string text_source_name;
 	// Callback to set the text in the output text source (subtitles)
 	std::function<void(const DetectionResultWithText &result)> setTextCallback;
 	// Output file path to write the subtitles
@@ -118,8 +117,6 @@ struct transcription_filter_data {
 		resampler_to_whisper = nullptr;
 		whisper_model_path = "";
 		whisper_context = nullptr;
-		text_source = nullptr;
-		text_source_mutex = nullptr;
 		whisper_buf_mutex = nullptr;
 		whisper_ctx_mutex = nullptr;
 		wshiper_thread_cv = nullptr;
