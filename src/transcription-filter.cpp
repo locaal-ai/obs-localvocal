@@ -143,8 +143,8 @@ void transcription_filter_destroy(void *data)
 		gf->text_source = nullptr;
 	}
 
-	if (gf->resampler) {
-		audio_resampler_destroy(gf->resampler);
+	if (gf->resampler_to_whisper) {
+		audio_resampler_destroy(gf->resampler_to_whisper);
 	}
 
 	{
@@ -528,7 +528,7 @@ void *transcription_filter_create(obs_data_t *settings, obs_source_t *filter)
 	dst.format = AUDIO_FORMAT_FLOAT_PLANAR;
 	dst.speakers = convert_speaker_layout((uint8_t)1);
 
-	gf->resampler = audio_resampler_create(&dst, &src);
+	gf->resampler_to_whisper = audio_resampler_create(&dst, &src);
 
 	obs_log(gf->log_level, "setup mutexes and condition variables");
 	gf->whisper_buf_mutex = new std::mutex();
@@ -887,14 +887,29 @@ obs_properties_t *transcription_filter_properties(void *data)
 		return true;
 	});
 
-	obs_properties_add_bool(ppts, "buffered_output", MT_("buffered_output"));
+	obs_property_t *buffered_output_prop =
+		obs_properties_add_bool(ppts, "buffered_output", MT_("buffered_output"));
+	// add on-change handler for buffered_output
+	obs_property_set_modified_callback(buffered_output_prop, [](obs_properties_t *props,
+								    obs_property_t *property,
+								    obs_data_t *settings) {
+		UNUSED_PARAMETER(property);
+		// if buffered output is enabled set the overlap to max else set it to default
+		obs_data_set_int(settings, "overlap_size_msec",
+				 obs_data_get_bool(settings, "buffered_output")
+					 ? MAX_OVERLAP_SIZE_MSEC
+					 : DEFAULT_OVERLAP_SIZE_MSEC);
+		return true;
+	});
+
 	obs_properties_add_bool(ppts, "log_words", MT_("log_words"));
 	obs_properties_add_bool(ppts, "caption_to_stream", MT_("caption_to_stream"));
 
 	obs_properties_add_int_slider(ppts, "buffer_size_msec", MT_("buffer_size_msec"), 1000,
 				      DEFAULT_BUFFER_SIZE_MSEC, 250);
-	obs_properties_add_int_slider(ppts, "overlap_size_msec", MT_("overlap_size_msec"), 250,
-				      DEFAULT_OVERLAP_SIZE_MSEC, 250);
+	obs_properties_add_int_slider(ppts, "overlap_size_msec", MT_("overlap_size_msec"),
+				      MIN_OVERLAP_SIZE_MSEC, MAX_OVERLAP_SIZE_MSEC,
+				      (MAX_OVERLAP_SIZE_MSEC - MIN_OVERLAP_SIZE_MSEC) / 5);
 
 	obs_property_t *step_by_step_processing = obs_properties_add_bool(
 		ppts, "step_by_step_processing", MT_("step_by_step_processing"));

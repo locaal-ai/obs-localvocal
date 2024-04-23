@@ -52,7 +52,7 @@ struct transcription_filter_data {
 	struct circlebuf input_buffers[MAX_PREPROC_CHANNELS];
 
 	/* Resampler */
-	audio_resampler_t *resampler;
+	audio_resampler_t *resampler_to_whisper;
 
 	/* whisper */
 	std::string whisper_model_path;
@@ -115,7 +115,7 @@ struct transcription_filter_data {
 			copy_buffers[i] = nullptr;
 		}
 		context = nullptr;
-		resampler = nullptr;
+		resampler_to_whisper = nullptr;
 		whisper_model_path = "";
 		whisper_context = nullptr;
 		text_source = nullptr;

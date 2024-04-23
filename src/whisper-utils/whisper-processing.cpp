@@ -277,10 +277,8 @@ struct DetectionResultWithText run_whisper_inference(struct transcription_filter
 				whisper_full_get_token_data(gf->whisper_context, n_segment, j);
 			const char *token_str = whisper_token_to_str(gf->whisper_context, token.id);
 			bool keep = !end;
-			// if (zero_start && token.t_dtw < 20) {
-			// 	keep = false;
-			// }
-			if (token.t_dtw == -1) {
+			// if the token starts with '[' and ends with ']', don't keep it
+			if (token_str[0] == '[' && token_str[strlen(token_str) - 1] == ']') {
 				keep = false;
 			}
 			if ((j == n_tokens - 2 || j == n_tokens - 3) && token.p < 0.5) {
@@ -304,15 +302,6 @@ struct DetectionResultWithText run_whisper_inference(struct transcription_filter
 		obs_log(gf->log_level, "Decoded sentence: '%s'", text.c_str());
 		obs_log(gf->log_level, "Token IDs: %s", tokenIds.c_str());
 
-		// convert text to lowercase
-		std::string text_lower(text);
-		std::transform(text_lower.begin(), text_lower.end(), text_lower.begin(), ::tolower);
-		// trim whitespace (use lambda)
-		text_lower.erase(std::find_if(text_lower.rbegin(), text_lower.rend(),
-					      [](unsigned char ch) { return !std::isspace(ch); })
-					 .base(),
-				 text_lower.end());
-
 		// if suppression is enabled, check if the text is in the suppression list
 		if (!gf->suppress_sentences.empty()) {
 			std::string suppress_sentences_copy = gf->suppress_sentences;
@@ -321,9 +310,9 @@ struct DetectionResultWithText run_whisper_inference(struct transcription_filter
 			while ((pos = suppress_sentences_copy.find("\n")) != std::string::npos) {
 				token = suppress_sentences_copy.substr(0, pos);
 				suppress_sentences_copy.erase(0, pos + 1);
-				if (text_lower == suppress_sentences_copy) {
+				if (text == suppress_sentences_copy) {
 					obs_log(gf->log_level, "Suppressing sentence: %s",
-						text_lower.c_str());
+						text.c_str());
 					return {DETECTION_RESULT_SUPPRESSED, "", 0, 0, {}};
 				}
 			}
@@ -331,15 +320,14 @@ struct DetectionResultWithText run_whisper_inference(struct transcription_filter
 
 		if (gf->log_words) {
 			obs_log(LOG_INFO, "[%s --> %s] (%.3f) %s", to_timestamp(t0).c_str(),
-				to_timestamp(t1).c_str(), sentence_p, text_lower.c_str());
+				to_timestamp(t1).c_str(), sentence_p, text.c_str());
 		}
 
-		if (text_lower.empty() || text_lower == ".") {
+		if (text.empty() || text == ".") {
 			return {DETECTION_RESULT_SILENCE, "", 0, 0, {}};
 		}
 
-		return {DETECTION_RESULT_SPEECH, text_lower, offset_ms, offset_ms + duration_ms,
-			tokens};
+		return {DETECTION_RESULT_SPEECH, text, offset_ms, offset_ms + duration_ms, tokens};
 	}
 }
 
@@ -372,14 +360,14 @@ void process_audio_from_buffer(struct transcription_filter_data *gf)
 				num_new_frames_from_infos -= info_from_buf.frames;
 				circlebuf_push_front(&gf->info_buffer, &info_from_buf,
 						     size_of_audio_info);
-				last_step_in_segment =
-					true; // this is the final step in the segment
+				// this is the final step in the segment
+				last_step_in_segment = true;
 				break;
 			}
 		}
 
 		obs_log(gf->log_level,
-			"with %lu remaining to full segment, popped %d info-frames, pushing into buffer at %lu",
+			"with %lu remaining to full segment, popped %d info-frames, pushing at %lu (overlap)",
 			remaining_frames_to_full_segment, num_new_frames_from_infos,
 			gf->last_num_frames);
 
@@ -405,7 +393,7 @@ void process_audio_from_buffer(struct transcription_filter_data *gf)
 		}
 	} else {
 		gf->last_num_frames = num_new_frames_from_infos;
-		obs_log(gf->log_level, "first segment, %d frames to process",
+		obs_log(gf->log_level, "first segment, no overlap exists, %d frames to process",
 			(int)(gf->last_num_frames));
 	}
 
@@ -417,21 +405,24 @@ void process_audio_from_buffer(struct transcription_filter_data *gf)
 	auto start = std::chrono::high_resolution_clock::now();
 
 	// resample to 16kHz
-	float *output[MAX_PREPROC_CHANNELS];
-	uint32_t out_frames;
+	float *resampled_16khz[MAX_PREPROC_CHANNELS];
+	uint32_t resampled_16khz_frames;
 	uint64_t ts_offset;
-	audio_resampler_resample(gf->resampler, (uint8_t **)output, &out_frames, &ts_offset,
+	audio_resampler_resample(gf->resampler_to_whisper, (uint8_t **)resampled_16khz,
+				 &resampled_16khz_frames, &ts_offset,
 				 (const uint8_t **)gf->copy_buffers, (uint32_t)gf->last_num_frames);
 
-	obs_log(gf->log_level, "%d channels, %d frames, %f ms", (int)gf->channels, (int)out_frames,
-		(float)out_frames / WHISPER_SAMPLE_RATE * 1000.0f);
+	obs_log(gf->log_level, "%d channels, %d frames, %f ms", (int)gf->channels,
+		(int)resampled_16khz_frames,
+		(float)resampled_16khz_frames / WHISPER_SAMPLE_RATE * 1000.0f);
 
 	bool skipped_inference = false;
 	uint32_t speech_start_frame = 0;
-	uint32_t speech_end_frame = out_frames;
+	uint32_t speech_end_frame = resampled_16khz_frames;
 
 	if (gf->vad_enabled) {
-		std::vector<float> vad_input(output[0], output[0] + out_frames);
+		std::vector<float> vad_input(resampled_16khz[0],
+					     resampled_16khz[0] + resampled_16khz_frames);
 		gf->vad->process(vad_input);
 
 		std::vector<timestamp_t> stamps = gf->vad->get_speech_timestamps();
@@ -442,14 +433,35 @@ void process_audio_from_buffer(struct transcription_filter_data *gf)
 			speech_end_frame = stamps.back().end;
 			obs_log(gf->log_level, "VAD detected speech from %d to %d", stamps[0].start,
 				stamps.back().end);
+
+			// if the speech segment is less than 1 second - put the audio back into the buffer
+			// to be handled in the next iteration
+			if (speech_end_frame - speech_start_frame < WHISPER_SAMPLE_RATE) {
+				// convert speech_start_frame and speech_end_frame to original sample rate
+				speech_start_frame =
+					speech_start_frame * gf->sample_rate / WHISPER_SAMPLE_RATE;
+				speech_end_frame =
+					speech_end_frame * gf->sample_rate / WHISPER_SAMPLE_RATE;
+				const uint32_t number_of_frames =
+					speech_end_frame - speech_start_frame;
+				obs_log(gf->log_level,
+					"Speech segment is less than 1 second, keeping segment %d to %d in the buffer",
+					speech_start_frame, speech_end_frame);
+				// no processing of the segment
+				skipped_inference = true;
+				// reset the last_num_frames to the number of frames in the buffer
+				gf->last_num_frames = number_of_frames;
+				// prevent copying the buffer to the beginning (overlap)
+				last_step_in_segment = false;
+			}
 		}
 	}
 
 	if (!skipped_inference) {
 		// run inference
 		const struct DetectionResultWithText inference_result = run_whisper_inference(
-			gf, output[0] + speech_start_frame, speech_end_frame - speech_start_frame,
-			speech_start_frame == 0);
+			gf, resampled_16khz[0] + speech_start_frame,
+			speech_end_frame - speech_start_frame, speech_start_frame == 0);
 
 		if (inference_result.result == DETECTION_RESULT_SPEECH) {
 			// output inference result to a text source
