@@ -185,15 +185,9 @@ void set_text_callback(struct transcription_filter_data *gf,
 	}
 	gf->last_sub_render_time = now;
 
+	// recondition the text
 	std::string str_copy = fix_utf8(result.text);
-
-	// remove trailing spaces, newlines, tabs or punctuation
-	str_copy.erase(std::find_if(str_copy.rbegin(), str_copy.rend(),
-				    [](unsigned char ch) {
-					    return !std::isspace(ch) || !std::ispunct(ch);
-				    })
-			       .base(),
-		       str_copy.end());
+	str_copy = remove_leading_trailing_nonalpha(str_copy);
 
 	if (gf->translate) {
 		obs_log(gf->log_level, "Translating text. %s -> %s", gf->source_lang.c_str(),

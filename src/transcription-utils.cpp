@@ -77,3 +77,27 @@ std::string fix_utf8(const std::string &str)
 	return str;
 #endif
 }
+
+/*
+* Remove leading and trailing non-alphabetic characters from a string.
+* This function is used to remove leading and trailing spaces, newlines, tabs or punctuation.
+* @param str: the string to remove leading and trailing non-alphabetic characters from.
+* @return: the string with leading and trailing non-alphabetic characters removed.
+*/
+std::string remove_leading_trailing_nonalpha(const std::string &str)
+{
+	std::string str_copy = str;
+	// remove trailing spaces, newlines, tabs or punctuation
+	str_copy.erase(std::find_if(str_copy.rbegin(), str_copy.rend(),
+				    [](unsigned char ch) {
+					    return !std::isspace(ch) || !std::ispunct(ch);
+				    })
+			       .base(),
+		       str_copy.end());
+	// remove leading spaces, newlines, tabs or punctuation
+	str_copy.erase(str_copy.begin(),
+		       std::find_if(str_copy.begin(), str_copy.end(), [](unsigned char ch) {
+			       return !std::isspace(ch) || !std::ispunct(ch);
+		       }));
+	return str_copy;
+}
