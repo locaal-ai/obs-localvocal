@@ -17,24 +17,12 @@
 
 #include "translation/translation.h"
 #include "whisper-utils/silero-vad-onnx.h"
-#include "captions-thread.h"
+#include "whisper-utils/whisper-processing.h"
+#include "whisper-utils/token-buffer-thread.h"
 
 #define MAX_PREPROC_CHANNELS 10
 
 #define MT_ obs_module_text
-
-enum DetectionResult {
-	DETECTION_RESULT_UNKNOWN = 0,
-	DETECTION_RESULT_SILENCE = 1,
-	DETECTION_RESULT_SPEECH = 2,
-};
-
-struct DetectionResultWithText {
-	DetectionResult result;
-	std::string text;
-	uint64_t start_timestamp_ms;
-	uint64_t end_timestamp_ms;
-};
 
 struct transcription_filter_data {
 	obs_source_t *context; // obs filter source (this filter)
@@ -64,7 +52,7 @@ struct transcription_filter_data {
 	struct circlebuf input_buffers[MAX_PREPROC_CHANNELS];
 
 	/* Resampler */
-	audio_resampler_t *resampler;
+	audio_resampler_t *resampler_to_whisper;
 
 	/* whisper */
 	std::string whisper_model_path;
@@ -90,15 +78,16 @@ struct transcription_filter_data {
 	bool translate = false;
 	std::string source_lang;
 	std::string target_lang;
+	std::string translation_output;
 	bool buffered_output = false;
+	bool enable_token_ts_dtw = false;
+	std::string suppress_sentences;
 
 	// Last transcription result
 	std::string last_text;
 
 	// Text source to output the subtitles
-	obs_weak_source_t *text_source;
-	char *text_source_name;
-	std::mutex *text_source_mutex;
+	std::string text_source_name;
 	// Callback to set the text in the output text source (subtitles)
 	std::function<void(const DetectionResultWithText &result)> setTextCallback;
 	// Output file path to write the subtitles
@@ -115,7 +104,7 @@ struct transcription_filter_data {
 	// translation context
 	struct translation_context translation_ctx;
 
-	CaptionMonitor captions_monitor;
+	TokenBufferThread captions_monitor;
 
 	// ctor
 	transcription_filter_data()
@@ -125,11 +114,9 @@ struct transcription_filter_data {
 			copy_buffers[i] = nullptr;
 		}
 		context = nullptr;
-		resampler = nullptr;
+		resampler_to_whisper = nullptr;
 		whisper_model_path = "";
 		whisper_context = nullptr;
-		text_source = nullptr;
-		text_source_mutex = nullptr;
 		whisper_buf_mutex = nullptr;
 		whisper_ctx_mutex = nullptr;
 		wshiper_thread_cv = nullptr;

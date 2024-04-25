@@ -86,12 +86,14 @@ target_sources(
   PRIVATE src/plugin-main.c
           src/transcription-filter.cpp
           src/transcription-filter.c
+          src/transcription-utils.cpp
           src/model-utils/model-downloader.cpp
           src/model-utils/model-downloader-ui.cpp
           src/model-utils/model-infos.cpp
           src/whisper-utils/whisper-processing.cpp
           src/whisper-utils/whisper-utils.cpp
           src/whisper-utils/silero-vad-onnx.cpp
+          src/whisper-utils/token-buffer-thread.cpp
           src/translation/translation.cpp
           src/utils.cpp)
 

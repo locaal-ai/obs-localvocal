@@ -4,6 +4,7 @@
 #include "plugin-support.h"
 #include "transcription-filter.h"
 #include "transcription-filter-data.h"
+#include "transcription-utils.h"
 #include "model-utils/model-downloader.h"
 #include "whisper-utils/whisper-processing.h"
 #include "whisper-utils/whisper-language.h"
@@ -132,18 +133,8 @@ void transcription_filter_destroy(void *data)
 	obs_log(gf->log_level, "filter destroy");
 	shutdown_whisper_thread(gf);
 
-	if (gf->text_source_name) {
-		bfree(gf->text_source_name);
-		gf->text_source_name = nullptr;
-	}
-
-	if (gf->text_source) {
-		obs_weak_source_release(gf->text_source);
-		gf->text_source = nullptr;
-	}
-
-	if (gf->resampler) {
-		audio_resampler_destroy(gf->resampler);
+	if (gf->resampler_to_whisper) {
+		audio_resampler_destroy(gf->resampler_to_whisper);
 	}
 
 	{
@@ -159,87 +150,14 @@ void transcription_filter_destroy(void *data)
 	delete gf->whisper_buf_mutex;
 	delete gf->whisper_ctx_mutex;
 	delete gf->wshiper_thread_cv;
-	delete gf->text_source_mutex;
 
 	delete gf;
 }
 
-void acquire_weak_text_source_ref(struct transcription_filter_data *gf)
+void send_caption_to_source(const std::string &target_source_name, const std::string &str_copy,
+			    struct transcription_filter_data *gf)
 {
-	if (!gf->text_source_name) {
-		obs_log(gf->log_level, "text_source_name is null");
-		return;
-	}
-
-	std::lock_guard<std::mutex> lock(*gf->text_source_mutex);
-
-	// acquire a weak ref to the new text source
-	obs_source_t *source = obs_get_source_by_name(gf->text_source_name);
-	if (source) {
-		gf->text_source = obs_source_get_weak_source(source);
-		obs_source_release(source);
-		if (!gf->text_source) {
-			obs_log(LOG_ERROR, "failed to get weak source for text source %s",
-				gf->text_source_name);
-		}
-	} else {
-		obs_log(LOG_ERROR, "text source '%s' not found", gf->text_source_name);
-	}
-}
-
-#define is_lead_byte(c) (((c)&0xe0) == 0xc0 || ((c)&0xf0) == 0xe0 || ((c)&0xf8) == 0xf0)
-#define is_trail_byte(c) (((c)&0xc0) == 0x80)
-
-inline int lead_byte_length(const uint8_t c)
-{
-	if ((c & 0xe0) == 0xc0) {
-		return 2;
-	} else if ((c & 0xf0) == 0xe0) {
-		return 3;
-	} else if ((c & 0xf8) == 0xf0) {
-		return 4;
-	} else {
-		return 1;
-	}
-}
-
-inline bool is_valid_lead_byte(const uint8_t *c)
-{
-	const int length = lead_byte_length(c[0]);
-	if (length == 1) {
-		return true;
-	}
-	if (length == 2 && is_trail_byte(c[1])) {
-		return true;
-	}
-	if (length == 3 && is_trail_byte(c[1]) && is_trail_byte(c[2])) {
-		return true;
-	}
-	if (length == 4 && is_trail_byte(c[1]) && is_trail_byte(c[2]) && is_trail_byte(c[3])) {
-		return true;
-	}
-	return false;
-}
-
-void send_caption_to_source(const std::string &str_copy, struct transcription_filter_data *gf)
-{
-	if (!gf->text_source_mutex) {
-		obs_log(LOG_ERROR, "text_source_mutex is null");
-		return;
-	}
-
-	if (!gf->text_source) {
-		// attempt to acquire a weak ref to the text source if it's yet available
-		acquire_weak_text_source_ref(gf);
-	}
-
-	std::lock_guard<std::mutex> lock(*gf->text_source_mutex);
-
-	if (!gf->text_source) {
-		obs_log(gf->log_level, "text_source is null");
-		return;
-	}
-	auto target = obs_weak_source_get_source(gf->text_source);
+	auto target = obs_get_source_by_name(target_source_name.c_str());
 	if (!target) {
 		obs_log(gf->log_level, "text_source target is null");
 		return;
@@ -267,52 +185,9 @@ void set_text_callback(struct transcription_filter_data *gf,
 	}
 	gf->last_sub_render_time = now;
 
-#ifdef _WIN32
-	// Some UTF8 charsets on Windows output have a bug, instead of 0xd? it outputs
-	// 0xf?, and 0xc? becomes 0xe?, so we need to fix it.
-	std::stringstream ss;
-	uint8_t *c_str = (uint8_t *)result.text.c_str();
-	for (size_t i = 0; i < result.text.size(); ++i) {
-		if (is_lead_byte(c_str[i])) {
-			// this is a unicode leading byte
-			// if the next char is 0xff - it's a bug char, replace it with 0x9f
-			if (c_str[i + 1] == 0xff) {
-				c_str[i + 1] = 0x9f;
-			}
-			if (!is_valid_lead_byte(c_str + i)) {
-				// This is a bug lead byte, because it's length 3 and the i+2 byte is also
-				// a lead byte
-				c_str[i] = c_str[i] - 0x20;
-			}
-		} else {
-			if (c_str[i] >= 0xf8) {
-				// this may be a malformed lead byte.
-				// lets see if it becomes a valid lead byte if we "fix" it
-				uint8_t buf_[4];
-				buf_[0] = c_str[i] - 0x20;
-				buf_[1] = c_str[i + 1];
-				buf_[2] = c_str[i + 2];
-				buf_[3] = c_str[i + 3];
-				if (is_valid_lead_byte(buf_)) {
-					// this is a malformed lead byte, fix it
-					c_str[i] = c_str[i] - 0x20;
-				}
-			}
-		}
-	}
-
-	std::string str_copy = (char *)c_str;
-#else
-	std::string str_copy = result.text;
-#endif
-
-	// remove trailing spaces, newlines, tabs or punctuation
-	str_copy.erase(std::find_if(str_copy.rbegin(), str_copy.rend(),
-				    [](unsigned char ch) {
-					    return !std::isspace(ch) || !std::ispunct(ch);
-				    })
-			       .base(),
-		       str_copy.end());
+	// recondition the text
+	std::string str_copy = fix_utf8(result.text);
+	str_copy = remove_leading_trailing_nonalpha(str_copy);
 
 	if (gf->translate) {
 		obs_log(gf->log_level, "Translating text. %s -> %s", gf->source_lang.c_str(),
@@ -324,7 +199,13 @@ void set_text_callback(struct transcription_filter_data *gf,
 				obs_log(LOG_INFO, "Translation: '%s' -> '%s'", str_copy.c_str(),
 					translated_text.c_str());
 			}
-			str_copy = translated_text;
+			if (gf->translation_output == "none") {
+				// overwrite the original text with the translated text
+				str_copy = translated_text;
+			} else {
+				// send the translation to the selected source
+				send_caption_to_source(gf->translation_output, translated_text, gf);
+			}
 		} else {
 			obs_log(gf->log_level, "Failed to translate text");
 		}
@@ -333,7 +214,7 @@ void set_text_callback(struct transcription_filter_data *gf,
 	gf->last_text = str_copy;
 
 	if (gf->buffered_output) {
-		gf->captions_monitor.addWords(split_words(str_copy));
+		gf->captions_monitor.addWords(result.tokens);
 	}
 
 	if (gf->caption_to_stream) {
@@ -344,7 +225,7 @@ void set_text_callback(struct transcription_filter_data *gf,
 		}
 	}
 
-	if (gf->output_file_path != "" && !gf->text_source_name) {
+	if (gf->output_file_path != "" && gf->text_source_name.empty()) {
 		// Check if we should save the sentence
 		if (gf->save_only_while_recording && !obs_frontend_recording_active()) {
 			// We are not recording, do not save the sentence to file
@@ -396,7 +277,7 @@ void set_text_callback(struct transcription_filter_data *gf,
 	} else {
 		if (!gf->buffered_output) {
 			// Send the caption to the text source
-			send_caption_to_source(str_copy, gf);
+			send_caption_to_source(gf->text_source_name, str_copy, gf);
 		}
 	}
 };
@@ -427,12 +308,21 @@ void transcription_filter_update(void *data, obs_data_t *s)
 	gf->process_while_muted = obs_data_get_bool(s, "process_while_muted");
 	gf->min_sub_duration = (int)obs_data_get_int(s, "min_sub_duration");
 	gf->last_sub_render_time = 0;
-	gf->buffered_output = obs_data_get_bool(s, "buffered_output");
+	bool new_buffered_output = obs_data_get_bool(s, "buffered_output");
+	if (new_buffered_output != gf->buffered_output) {
+		gf->buffered_output = new_buffered_output;
+		gf->overlap_ms = gf->buffered_output ? MAX_OVERLAP_SIZE_MSEC
+						     : DEFAULT_OVERLAP_SIZE_MSEC;
+		gf->overlap_frames =
+			(size_t)((float)gf->sample_rate / (1000.0f / (float)gf->overlap_ms));
+	}
 
 	bool new_translate = obs_data_get_bool(s, "translate");
 	gf->source_lang = obs_data_get_string(s, "translate_source_language");
 	gf->target_lang = obs_data_get_string(s, "translate_target_language");
 	gf->translation_ctx.add_context = obs_data_get_bool(s, "translate_add_context");
+	gf->translation_output = obs_data_get_string(s, "translate_output");
+	gf->suppress_sentences = obs_data_get_string(s, "suppress_sentences");
 
 	if (new_translate != gf->translate) {
 		if (new_translate) {
@@ -451,19 +341,7 @@ void transcription_filter_update(void *data, obs_data_t *s)
 	    strcmp(new_text_source_name, "(null)") == 0 ||
 	    strcmp(new_text_source_name, "text_file") == 0 || strlen(new_text_source_name) == 0) {
 		// new selected text source is not valid, release the old one
-		if (gf->text_source) {
-			if (!gf->text_source_mutex) {
-				obs_log(LOG_ERROR, "text_source_mutex is null");
-				return;
-			}
-			std::lock_guard<std::mutex> lock(*gf->text_source_mutex);
-			old_weak_text_source = gf->text_source;
-			gf->text_source = nullptr;
-		}
-		if (gf->text_source_name) {
-			bfree(gf->text_source_name);
-			gf->text_source_name = nullptr;
-		}
+		gf->text_source_name.clear();
 		gf->output_file_path = "";
 		if (strcmp(new_text_source_name, "text_file") == 0) {
 			// set the output file path
@@ -475,24 +353,9 @@ void transcription_filter_update(void *data, obs_data_t *s)
 		}
 	} else {
 		// new selected text source is valid, check if it's different from the old one
-		if (gf->text_source_name == nullptr ||
-		    strcmp(new_text_source_name, gf->text_source_name) != 0) {
+		if (gf->text_source_name != new_text_source_name) {
 			// new text source is different from the old one, release the old one
-			if (gf->text_source) {
-				if (!gf->text_source_mutex) {
-					obs_log(LOG_ERROR, "text_source_mutex is null");
-					return;
-				}
-				std::lock_guard<std::mutex> lock(*gf->text_source_mutex);
-				old_weak_text_source = gf->text_source;
-				gf->text_source = nullptr;
-			}
-			if (gf->text_source_name) {
-				// free the old text source name
-				bfree(gf->text_source_name);
-				gf->text_source_name = nullptr;
-			}
-			gf->text_source_name = bstrdup(new_text_source_name);
+			gf->text_source_name = new_text_source_name;
 		}
 	}
 
@@ -507,7 +370,7 @@ void transcription_filter_update(void *data, obs_data_t *s)
 	}
 
 	obs_log(gf->log_level, "update whisper model");
-	update_whsiper_model_path(gf, s);
+	update_whsiper_model(gf, s);
 
 	obs_log(gf->log_level, "update whisper params");
 	std::lock_guard<std::mutex> lock(*gf->whisper_ctx_mutex);
@@ -597,15 +460,13 @@ void *transcription_filter_create(obs_data_t *settings, obs_source_t *filter)
 	dst.format = AUDIO_FORMAT_FLOAT_PLANAR;
 	dst.speakers = convert_speaker_layout((uint8_t)1);
 
-	gf->resampler = audio_resampler_create(&dst, &src);
+	gf->resampler_to_whisper = audio_resampler_create(&dst, &src);
 
 	obs_log(gf->log_level, "setup mutexes and condition variables");
 	gf->whisper_buf_mutex = new std::mutex();
 	gf->whisper_ctx_mutex = new std::mutex();
 	gf->wshiper_thread_cv = new std::condition_variable();
-	gf->text_source_mutex = new std::mutex();
 	obs_log(gf->log_level, "clear text source data");
-	gf->text_source = nullptr;
 	const char *subtitle_sources = obs_data_get_string(settings, "subtitle_sources");
 	if (subtitle_sources == nullptr || strcmp(subtitle_sources, "none") == 0 ||
 	    strcmp(subtitle_sources, "(null)") == 0 || strlen(subtitle_sources) == 0) {
@@ -619,8 +480,13 @@ void *transcription_filter_create(obs_data_t *settings, obs_source_t *filter)
 			// create a new OBS text source called "LocalVocal Subtitles"
 			obs_source_t *scene_as_source = obs_frontend_get_current_scene();
 			obs_scene_t *scene = obs_scene_from_source(scene_as_source);
+#ifdef _WIN32
+			source = obs_source_create("text_gdiplus_v2", "LocalVocal Subtitles",
+						   nullptr, nullptr);
+#else
 			source = obs_source_create("text_ft2_source_v2", "LocalVocal Subtitles",
 						   nullptr, nullptr);
+#endif
 			if (source) {
 				// add source to the current scene
 				obs_scene_add(scene, source);
@@ -660,11 +526,11 @@ void *transcription_filter_create(obs_data_t *settings, obs_source_t *filter)
 			}
 			obs_source_release(scene_as_source);
 		}
-		gf->text_source_name = bstrdup("LocalVocal Subtitles");
+		gf->text_source_name = "LocalVocal Subtitles";
 		obs_data_set_string(settings, "subtitle_sources", "LocalVocal Subtitles");
 	} else {
 		// set the text source name
-		gf->text_source_name = bstrdup(subtitle_sources);
+		gf->text_source_name = subtitle_sources;
 	}
 	obs_log(gf->log_level, "clear paths and whisper context");
 	gf->whisper_model_file_currently_loaded = "";
@@ -673,13 +539,14 @@ void *transcription_filter_create(obs_data_t *settings, obs_source_t *filter)
 	gf->whisper_context = nullptr;
 
 	gf->captions_monitor.initialize(
+		gf,
 		[gf](const std::string &text) {
 			obs_log(LOG_INFO, "Captions: %s", text.c_str());
 			if (gf->buffered_output) {
-				send_caption_to_source(text, gf);
+				send_caption_to_source(gf->text_source_name, text, gf);
 			}
 		},
-		20, std::chrono::seconds(10));
+		30, std::chrono::seconds(10));
 
 	obs_log(gf->log_level, "run update");
 	// get the settings updated on the filter data struct
@@ -791,6 +658,7 @@ void transcription_filter_defaults(obs_data_t *s)
 	obs_data_set_default_string(s, "translate_target_language", "__es__");
 	obs_data_set_default_string(s, "translate_source_language", "__en__");
 	obs_data_set_default_bool(s, "translate_add_context", true);
+	obs_data_set_default_string(s, "suppress_sentences", SUPPRESS_SENTENCES_DEFAULT);
 
 	// Whisper parameters
 	obs_data_set_default_int(s, "whisper_sampling_method", WHISPER_SAMPLING_BEAM_SEARCH);
@@ -805,6 +673,7 @@ void transcription_filter_defaults(obs_data_t *s)
 	obs_data_set_default_bool(s, "print_realtime", false);
 	obs_data_set_default_bool(s, "print_timestamps", false);
 	obs_data_set_default_bool(s, "token_timestamps", false);
+	obs_data_set_default_bool(s, "dtw_token_timestamps", false);
 	obs_data_set_default_double(s, "thold_pt", 0.01);
 	obs_data_set_default_double(s, "thold_ptsum", 0.01);
 	obs_data_set_default_int(s, "max_len", 0);
@@ -919,6 +788,15 @@ obs_properties_t *transcription_filter_properties(void *data)
 		obs_property_list_add_string(prop_src, language.second.c_str(),
 					     language.first.c_str());
 	}
+	// add option for routing the translation to an output source
+	obs_property_t *prop_output = obs_properties_add_list(translation_group, "translate_output",
+							      MT_("translate_output"),
+							      OBS_COMBO_TYPE_LIST,
+							      OBS_COMBO_FORMAT_STRING);
+	obs_property_list_add_string(prop_output, "Write to captions output", "none");
+	// TODO add file output option
+	// obs_property_list_add_string(...
+	obs_enum_sources(add_sources_to_list, prop_output);
 
 	// add callback to enable/disable translation group
 	obs_property_set_modified_callback(translation_group_prop, [](obs_properties_t *props,
@@ -928,7 +806,7 @@ obs_properties_t *transcription_filter_properties(void *data)
 		// Show/Hide the translation group
 		const bool translate_enabled = obs_data_get_bool(settings, "translate");
 		for (const auto &prop : {"translate_target_language", "translate_source_language",
-					 "translate_add_context"}) {
+					 "translate_add_context", "translate_output"}) {
 			obs_property_set_visible(obs_properties_get(props, prop),
 						 translate_enabled);
 		}
@@ -946,21 +824,38 @@ obs_properties_t *transcription_filter_properties(void *data)
 		for (const std::string &prop_name :
 		     {"whisper_params_group", "log_words", "caption_to_stream", "buffer_size_msec",
 		      "overlap_size_msec", "step_by_step_processing", "min_sub_duration",
-		      "process_while_muted", "buffered_output", "vad_enabled", "log_level"}) {
+		      "process_while_muted", "buffered_output", "vad_enabled", "log_level",
+		      "suppress_sentences"}) {
 			obs_property_set_visible(obs_properties_get(props, prop_name.c_str()),
 						 show_hide);
 		}
 		return true;
 	});
 
-	obs_properties_add_bool(ppts, "buffered_output", MT_("buffered_output"));
+	obs_property_t *buffered_output_prop =
+		obs_properties_add_bool(ppts, "buffered_output", MT_("buffered_output"));
+	// add on-change handler for buffered_output
+	obs_property_set_modified_callback(buffered_output_prop, [](obs_properties_t *props,
+								    obs_property_t *property,
+								    obs_data_t *settings) {
+		UNUSED_PARAMETER(property);
+		UNUSED_PARAMETER(props);
+		// if buffered output is enabled set the overlap to max else set it to default
+		obs_data_set_int(settings, "overlap_size_msec",
+				 obs_data_get_bool(settings, "buffered_output")
+					 ? MAX_OVERLAP_SIZE_MSEC
+					 : DEFAULT_OVERLAP_SIZE_MSEC);
+		return true;
+	});
+
 	obs_properties_add_bool(ppts, "log_words", MT_("log_words"));
 	obs_properties_add_bool(ppts, "caption_to_stream", MT_("caption_to_stream"));
 
 	obs_properties_add_int_slider(ppts, "buffer_size_msec", MT_("buffer_size_msec"), 1000,
 				      DEFAULT_BUFFER_SIZE_MSEC, 250);
-	obs_properties_add_int_slider(ppts, "overlap_size_msec", MT_("overlap_size_msec"), 50, 300,
-				      50);
+	obs_properties_add_int_slider(ppts, "overlap_size_msec", MT_("overlap_size_msec"),
+				      MIN_OVERLAP_SIZE_MSEC, MAX_OVERLAP_SIZE_MSEC,
+				      (MAX_OVERLAP_SIZE_MSEC - MIN_OVERLAP_SIZE_MSEC) / 5);
 
 	obs_property_t *step_by_step_processing = obs_properties_add_bool(
 		ppts, "step_by_step_processing", MT_("step_by_step_processing"));
@@ -985,9 +880,13 @@ obs_properties_t *transcription_filter_properties(void *data)
 
 	obs_property_t *list = obs_properties_add_list(ppts, "log_level", MT_("log_level"),
 						       OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_INT);
-	obs_property_list_add_int(list, "DEBUG", LOG_DEBUG);
+	obs_property_list_add_int(list, "DEBUG (Won't show)", LOG_DEBUG);
 	obs_property_list_add_int(list, "INFO", LOG_INFO);
 	obs_property_list_add_int(list, "WARNING", LOG_WARNING);
+
+	// add a text input for sentences to suppress
+	obs_properties_add_text(ppts, "suppress_sentences", MT_("suppress_sentences"),
+				OBS_TEXT_MULTILINE);
 
 	obs_properties_t *whisper_params_group = obs_properties_create();
 	obs_properties_add_group(ppts, "whisper_params_group", MT_("whisper_parameters"),
@@ -1043,6 +942,9 @@ obs_properties_t *transcription_filter_properties(void *data)
 	obs_properties_add_bool(whisper_params_group, "print_timestamps", MT_("print_timestamps"));
 	// bool  token_timestamps; // enable token-level timestamps
 	obs_properties_add_bool(whisper_params_group, "token_timestamps", MT_("token_timestamps"));
+	// enable DTW timestamps
+	obs_properties_add_bool(whisper_params_group, "dtw_token_timestamps",
+				MT_("dtw_token_timestamps"));
 	// float thold_pt;         // timestamp token probability threshold (~0.01)
 	obs_properties_add_float_slider(whisper_params_group, "thold_pt", MT_("thold_pt"), 0.0f,
 					1.0f, 0.05f);

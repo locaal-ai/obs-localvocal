@@ -5,6 +5,7 @@
 #include "plugin-support.h"
 #include "transcription-filter-data.h"
 #include "whisper-processing.h"
+#include "whisper-utils.h"
 
 #include <algorithm>
 #include <cctype>
@@ -109,7 +110,8 @@ bool vad_simple(float *pcmf32, size_t pcm32f_size, uint32_t sample_rate, float v
 	return true;
 }
 
-struct whisper_context *init_whisper_context(const std::string &model_path_in)
+struct whisper_context *init_whisper_context(const std::string &model_path_in,
+					     struct transcription_filter_data *gf)
 {
 	std::string model_path = model_path_in;
 
@@ -131,14 +133,15 @@ struct whisper_context *init_whisper_context(const std::string &model_path_in)
 	whisper_log_set(
 		[](enum ggml_log_level level, const char *text, void *user_data) {
 			UNUSED_PARAMETER(level);
-			UNUSED_PARAMETER(user_data);
+			struct transcription_filter_data *ctx =
+				static_cast<struct transcription_filter_data *>(user_data);
 			// remove trailing newline
 			char *text_copy = bstrdup(text);
 			text_copy[strcspn(text_copy, "\n")] = 0;
-			obs_log(LOG_INFO, "Whisper: %s", text_copy);
+			obs_log(ctx->log_level, "Whisper: %s", text_copy);
 			bfree(text_copy);
 		},
-		nullptr);
+		gf);
 
 	struct whisper_context_params cparams = whisper_context_default_params();
 #ifdef LOCALVOCAL_WITH_CUDA
@@ -151,6 +154,16 @@ struct whisper_context *init_whisper_context(const std::string &model_path_in)
 	cparams.use_gpu = false;
 	obs_log(LOG_INFO, "Using CPU for inference");
 #endif
+
+	cparams.dtw_token_timestamps = gf->enable_token_ts_dtw;
+	if (gf->enable_token_ts_dtw) {
+		obs_log(LOG_INFO, "DTW token timestamps enabled");
+		cparams.dtw_aheads_preset = WHISPER_AHEADS_TINY_EN;
+		// cparams.dtw_n_top = 4;
+	} else {
+		obs_log(LOG_INFO, "DTW token timestamps disabled");
+		cparams.dtw_aheads_preset = WHISPER_AHEADS_NONE;
+	}
 
 	struct whisper_context *ctx = nullptr;
 	try {
@@ -196,16 +209,19 @@ struct whisper_context *init_whisper_context(const std::string &model_path_in)
 }
 
 struct DetectionResultWithText run_whisper_inference(struct transcription_filter_data *gf,
-						     const float *pcm32f_data, size_t pcm32f_size)
+						     const float *pcm32f_data, size_t pcm32f_size,
+						     bool zero_start)
 {
+	UNUSED_PARAMETER(zero_start);
+
 	if (gf == nullptr) {
 		obs_log(LOG_ERROR, "run_whisper_inference: gf is null");
-		return {DETECTION_RESULT_UNKNOWN, "", 0, 0};
+		return {DETECTION_RESULT_UNKNOWN, "", 0, 0, {}};
 	}
 
 	if (pcm32f_data == nullptr || pcm32f_size == 0) {
 		obs_log(LOG_ERROR, "run_whisper_inference: pcm32f_data is null or size is 0");
-		return {DETECTION_RESULT_UNKNOWN, "", 0, 0};
+		return {DETECTION_RESULT_UNKNOWN, "", 0, 0, {}};
 	}
 
 	obs_log(gf->log_level, "%s: processing %d samples, %.3f sec, %d threads", __func__,
@@ -215,7 +231,7 @@ struct DetectionResultWithText run_whisper_inference(struct transcription_filter
 	std::lock_guard<std::mutex> lock(*gf->whisper_ctx_mutex);
 	if (gf->whisper_context == nullptr) {
 		obs_log(LOG_WARNING, "whisper context is null");
-		return {DETECTION_RESULT_UNKNOWN, "", 0, 0};
+		return {DETECTION_RESULT_UNKNOWN, "", 0, 0, {}};
 	}
 
 	// Get the duration in ms since the beginning of the stream (gf->start_timestamp_ms)
@@ -234,47 +250,92 @@ struct DetectionResultWithText run_whisper_inference(struct transcription_filter
 		obs_log(LOG_ERROR, "Whisper exception: %s. Filter restart is required", e.what());
 		whisper_free(gf->whisper_context);
 		gf->whisper_context = nullptr;
-		return {DETECTION_RESULT_UNKNOWN, "", 0, 0};
+		return {DETECTION_RESULT_UNKNOWN, "", 0, 0, {}};
 	}
 
 	if (whisper_full_result != 0) {
 		obs_log(LOG_WARNING, "failed to process audio, error %d", whisper_full_result);
-		return {DETECTION_RESULT_UNKNOWN, "", 0, 0};
+		return {DETECTION_RESULT_UNKNOWN, "", 0, 0, {}};
 	} else {
 		// duration in ms
 		const uint64_t duration_ms = (uint64_t)(pcm32f_size * 1000 / WHISPER_SAMPLE_RATE);
 
 		const int n_segment = 0;
-		const char *text = whisper_full_get_segment_text(gf->whisper_context, n_segment);
+		// const char *text = whisper_full_get_segment_text(gf->whisper_context, n_segment);
 		const int64_t t0 = offset_ms;
 		const int64_t t1 = offset_ms + duration_ms;
 
 		float sentence_p = 0.0f;
 		const int n_tokens = whisper_full_n_tokens(gf->whisper_context, n_segment);
+		std::string text = "";
+		std::string tokenIds = "";
+		std::vector<whisper_token_data> tokens;
+		bool end = false;
 		for (int j = 0; j < n_tokens; ++j) {
 			sentence_p += whisper_full_get_token_p(gf->whisper_context, n_segment, j);
+			// get token
+			whisper_token_data token =
+				whisper_full_get_token_data(gf->whisper_context, n_segment, j);
+			const char *token_str = whisper_token_to_str(gf->whisper_context, token.id);
+			bool keep = !end;
+			// if the token starts with '[' and ends with ']', don't keep it
+			if (token_str[0] == '[' && token_str[strlen(token_str) - 1] == ']') {
+				keep = false;
+			}
+			if ((j == n_tokens - 2 || j == n_tokens - 3) && token.p < 0.5) {
+				keep = false;
+			}
+			// if the second to last token is .id == 13 ('.'), don't keep it
+			if (j == n_tokens - 2 && token.id == 13) {
+				keep = false;
+			}
+			// token ids https://huggingface.co/openai/whisper-large-v3/raw/main/tokenizer.json
+			if (token.id > 50540 && token.id <= 51865) {
+				obs_log(gf->log_level,
+					"Large time token found (%d), this shouldn't happen",
+					token.id);
+				return {DETECTION_RESULT_UNKNOWN, "", 0, 0, {}};
+			}
+
+			if (keep) {
+				text += token_str;
+				tokenIds += std::to_string(token.id) + " (" +
+					    std::string(token_str) + "), ";
+				tokens.push_back(token);
+			}
+			obs_log(gf->log_level, "Token %d: %d, %s, p: %.3f, dtw: %ld [keep: %d]", j,
+				token.id, token_str, token.p, token.t_dtw, keep);
 		}
 		sentence_p /= (float)n_tokens;
+		obs_log(gf->log_level, "Decoded sentence: '%s'", text.c_str());
+		obs_log(gf->log_level, "Token IDs: %s", tokenIds.c_str());
 
-		// convert text to lowercase
-		std::string text_lower(text);
-		std::transform(text_lower.begin(), text_lower.end(), text_lower.begin(), ::tolower);
-		// trim whitespace (use lambda)
-		text_lower.erase(std::find_if(text_lower.rbegin(), text_lower.rend(),
-					      [](unsigned char ch) { return !std::isspace(ch); })
-					 .base(),
-				 text_lower.end());
+		// if suppression is enabled, check if the text is in the suppression list
+		if (!gf->suppress_sentences.empty()) {
+			std::string suppress_sentences_copy = gf->suppress_sentences;
+			size_t pos = 0;
+			std::string token;
+			while ((pos = suppress_sentences_copy.find("\n")) != std::string::npos) {
+				token = suppress_sentences_copy.substr(0, pos);
+				suppress_sentences_copy.erase(0, pos + 1);
+				if (text == suppress_sentences_copy) {
+					obs_log(gf->log_level, "Suppressing sentence: %s",
+						text.c_str());
+					return {DETECTION_RESULT_SUPPRESSED, "", 0, 0, {}};
+				}
+			}
+		}
 
 		if (gf->log_words) {
 			obs_log(LOG_INFO, "[%s --> %s] (%.3f) %s", to_timestamp(t0).c_str(),
-				to_timestamp(t1).c_str(), sentence_p, text_lower.c_str());
+				to_timestamp(t1).c_str(), sentence_p, text.c_str());
 		}
 
-		if (text_lower.empty() || text_lower == ".") {
-			return {DETECTION_RESULT_SILENCE, "", 0, 0};
+		if (text.empty() || text == ".") {
+			return {DETECTION_RESULT_SILENCE, "", 0, 0, {}};
 		}
 
-		return {DETECTION_RESULT_SPEECH, text_lower, offset_ms, offset_ms + duration_ms};
+		return {DETECTION_RESULT_SPEECH, text, offset_ms, offset_ms + duration_ms, tokens};
 	}
 }
 
@@ -307,14 +368,14 @@ void process_audio_from_buffer(struct transcription_filter_data *gf)
 				num_new_frames_from_infos -= info_from_buf.frames;
 				circlebuf_push_front(&gf->info_buffer, &info_from_buf,
 						     size_of_audio_info);
-				last_step_in_segment =
-					true; // this is the final step in the segment
+				// this is the final step in the segment
+				last_step_in_segment = true;
 				break;
 			}
 		}
 
 		obs_log(gf->log_level,
-			"with %lu remaining to full segment, popped %d info-frames, pushing into buffer at %lu",
+			"with %lu remaining to full segment, popped %d info-frames, pushing at %lu (overlap)",
 			remaining_frames_to_full_segment, num_new_frames_from_infos,
 			gf->last_num_frames);
 
@@ -340,7 +401,7 @@ void process_audio_from_buffer(struct transcription_filter_data *gf)
 		}
 	} else {
 		gf->last_num_frames = num_new_frames_from_infos;
-		obs_log(gf->log_level, "first segment, %d frames to process",
+		obs_log(gf->log_level, "first segment, no overlap exists, %d frames to process",
 			(int)(gf->last_num_frames));
 	}
 
@@ -352,51 +413,92 @@ void process_audio_from_buffer(struct transcription_filter_data *gf)
 	auto start = std::chrono::high_resolution_clock::now();
 
 	// resample to 16kHz
-	float *output[MAX_PREPROC_CHANNELS];
-	uint32_t out_frames;
+	float *resampled_16khz[MAX_PREPROC_CHANNELS];
+	uint32_t resampled_16khz_frames;
 	uint64_t ts_offset;
-	audio_resampler_resample(gf->resampler, (uint8_t **)output, &out_frames, &ts_offset,
+	audio_resampler_resample(gf->resampler_to_whisper, (uint8_t **)resampled_16khz,
+				 &resampled_16khz_frames, &ts_offset,
 				 (const uint8_t **)gf->copy_buffers, (uint32_t)gf->last_num_frames);
 
-	obs_log(gf->log_level, "%d channels, %d frames, %f ms", (int)gf->channels, (int)out_frames,
-		(float)out_frames / WHISPER_SAMPLE_RATE * 1000.0f);
+	obs_log(gf->log_level, "%d channels, %d frames, %f ms", (int)gf->channels,
+		(int)resampled_16khz_frames,
+		(float)resampled_16khz_frames / WHISPER_SAMPLE_RATE * 1000.0f);
 
 	bool skipped_inference = false;
 	uint32_t speech_start_frame = 0;
-	uint32_t speech_end_frame = out_frames;
+	uint32_t speech_end_frame = resampled_16khz_frames;
 
 	if (gf->vad_enabled) {
-		std::vector<float> vad_input(output[0], output[0] + out_frames);
+		std::vector<float> vad_input(resampled_16khz[0],
+					     resampled_16khz[0] + resampled_16khz_frames);
 		gf->vad->process(vad_input);
 
-		auto stamps = gf->vad->get_speech_timestamps();
+		std::vector<timestamp_t> stamps = gf->vad->get_speech_timestamps();
 		if (stamps.size() == 0) {
+			obs_log(gf->log_level, "VAD detected no speech in %d frames",
+				resampled_16khz_frames);
 			skipped_inference = true;
+			// prevent copying the buffer to the beginning (overlap)
+			gf->last_num_frames = 0;
+			last_step_in_segment = false;
 		} else {
-			speech_start_frame = stamps[0].start;
+			speech_start_frame = (stamps[0].start < 3000) ? 0 : stamps[0].start;
 			speech_end_frame = stamps.back().end;
-			obs_log(gf->log_level, "VAD detected speech from %d to %d",
-				speech_start_frame, speech_end_frame);
+			uint32_t number_of_frames = speech_end_frame - speech_start_frame;
+
+			obs_log(gf->log_level,
+				"VAD detected speech from %d to %d (%d frames, %d ms)",
+				speech_start_frame, speech_end_frame, number_of_frames,
+				number_of_frames * 1000 / WHISPER_SAMPLE_RATE);
+
+			// if the speech segment is less than 1 second - put the audio back into the buffer
+			// to be handled in the next iteration
+			if (number_of_frames > 0 && number_of_frames < WHISPER_SAMPLE_RATE) {
+				// convert speech_start_frame and speech_end_frame to original sample rate
+				speech_start_frame =
+					speech_start_frame * gf->sample_rate / WHISPER_SAMPLE_RATE;
+				speech_end_frame =
+					speech_end_frame * gf->sample_rate / WHISPER_SAMPLE_RATE;
+				number_of_frames = speech_end_frame - speech_start_frame;
+
+				// use memmove to copy the speech segment to the beginning of the buffer
+				for (size_t c = 0; c < gf->channels; c++) {
+					memmove(gf->copy_buffers[c],
+						gf->copy_buffers[c] + speech_start_frame,
+						number_of_frames * sizeof(float));
+				}
+
+				obs_log(gf->log_level,
+					"Speech segment is less than 1 second, moving %d to %d (len %d) to buffer start",
+					speech_start_frame, speech_end_frame, number_of_frames);
+				// no processing of the segment
+				skipped_inference = true;
+				// reset the last_num_frames to the number of frames in the buffer
+				gf->last_num_frames = number_of_frames;
+				// prevent copying the buffer to the beginning (overlap)
+				last_step_in_segment = false;
+			}
 		}
 	}
 
 	if (!skipped_inference) {
 		// run inference
 		const struct DetectionResultWithText inference_result = run_whisper_inference(
-			gf, output[0] + speech_start_frame, speech_end_frame - speech_start_frame);
+			gf, resampled_16khz[0] + speech_start_frame,
+			speech_end_frame - speech_start_frame, speech_start_frame == 0);
 
 		if (inference_result.result == DETECTION_RESULT_SPEECH) {
 			// output inference result to a text source
 			set_text_callback(gf, inference_result);
 		} else if (inference_result.result == DETECTION_RESULT_SILENCE) {
 			// output inference result to a text source
-			set_text_callback(gf, {inference_result.result, "[silence]", 0, 0});
+			set_text_callback(gf, {inference_result.result, "[silence]", 0, 0, {}});
 		}
 	} else {
 		if (gf->log_words) {
 			obs_log(LOG_INFO, "skipping inference");
 		}
-		set_text_callback(gf, {DETECTION_RESULT_UNKNOWN, "[skip]", 0, 0});
+		set_text_callback(gf, {DETECTION_RESULT_UNKNOWN, "[skip]", 0, 0, {}});
 	}
 
 	// end of timer
@@ -407,6 +509,12 @@ void process_audio_from_buffer(struct transcription_filter_data *gf)
 		(int)duration);
 
 	if (last_step_in_segment) {
+		const uint64_t overlap_size_ms =
+			(uint64_t)(gf->overlap_frames * 1000 / gf->sample_rate);
+		obs_log(gf->log_level,
+			"copying %lu frames (%lu ms) from the end of the buffer (pos %lu) to the beginning",
+			gf->overlap_frames, overlap_size_ms,
+			gf->last_num_frames - gf->overlap_frames);
 		for (size_t c = 0; c < gf->channels; c++) {
 			// This is the last step in the segment - reset the copy buffer (include overlap frames)
 			// move overlap frames from the end of the last copy_buffers to the beginning
@@ -416,8 +524,8 @@ void process_audio_from_buffer(struct transcription_filter_data *gf)
 			// zero out the rest of the buffer, just in case
 			memset(gf->copy_buffers[c] + gf->overlap_frames, 0,
 			       (gf->frames - gf->overlap_frames) * sizeof(float));
-			gf->last_num_frames = gf->overlap_frames;
 		}
+		gf->last_num_frames = gf->overlap_frames;
 	}
 }
 
