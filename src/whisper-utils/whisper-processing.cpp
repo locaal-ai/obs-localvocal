@@ -282,6 +282,10 @@ struct DetectionResultWithText run_whisper_inference(struct transcription_filter
 			if (token_str[0] == '[' && token_str[strlen(token_str) - 1] == ']') {
 				keep = false;
 			}
+			// if the token starts with '<|' and ends with '|>', don't keep it
+			if (token_str[0] == '<' && token_str[strlen(token_str) - 1] == '>') {
+				keep = false;
+			}
 			if ((j == n_tokens - 2 || j == n_tokens - 3) && token.p < 0.5) {
 				keep = false;
 			}
