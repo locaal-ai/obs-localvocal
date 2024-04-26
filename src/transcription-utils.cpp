@@ -2,6 +2,7 @@
 
 #include <sstream>
 #include <algorithm>
+#include <vector>
 
 #define is_lead_byte(c) (((c)&0xe0) == 0xc0 || ((c)&0xf0) == 0xe0 || ((c)&0xf8) == 0xf0)
 #define is_trail_byte(c) (((c)&0xc0) == 0x80)
@@ -101,4 +102,17 @@ std::string remove_leading_trailing_nonalpha(const std::string &str)
 			       return !std::isspace(ch) || !std::ispunct(ch);
 		       }));
 	return str_copy;
+}
+
+std::vector<std::string> split(const std::string &string, char delimiter)
+{
+	std::vector<std::string> tokens;
+	std::string token;
+	std::istringstream tokenStream(string);
+	while (std::getline(tokenStream, token, delimiter)) {
+		if (!token.empty()) {
+			tokens.push_back(token);
+		}
+	}
+	return tokens;
 }
