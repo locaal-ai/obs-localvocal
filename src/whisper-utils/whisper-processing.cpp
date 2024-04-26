@@ -6,6 +6,7 @@
 #include "transcription-filter-data.h"
 #include "whisper-processing.h"
 #include "whisper-utils.h"
+#include "transcription-utils.h"
 
 #include <algorithm>
 #include <cctype>
@@ -282,6 +283,10 @@ struct DetectionResultWithText run_whisper_inference(struct transcription_filter
 			if (token_str[0] == '[' && token_str[strlen(token_str) - 1] == ']') {
 				keep = false;
 			}
+			// if this is a special token, don't keep it
+			if (token.id >= 50256) {
+				keep = false;
+			}
 			if ((j == n_tokens - 2 || j == n_tokens - 3) && token.p < 0.5) {
 				keep = false;
 			}
@@ -312,20 +317,18 @@ struct DetectionResultWithText run_whisper_inference(struct transcription_filter
 
 		// if suppression is enabled, check if the text is in the suppression list
 		if (!gf->suppress_sentences.empty()) {
-			std::string suppress_sentences_copy = gf->suppress_sentences;
-			size_t pos = 0;
-			std::string token;
-			while ((pos = suppress_sentences_copy.find("\n")) != std::string::npos) {
-				token = suppress_sentences_copy.substr(0, pos);
-				suppress_sentences_copy.erase(0, pos + 1);
-				if (text == suppress_sentences_copy) {
-					obs_log(gf->log_level, "Suppressing sentence: %s",
+			// split the suppression list by newline into individual sentences
+			std::vector<std::string> suppress_sentences_list =
+				split(gf->suppress_sentences, '\n');
+			// check if the text is in the suppression list
+			for (const std::string &suppress_sentence : suppress_sentences_list) {
+				if (text.find(suppress_sentence) != std::string::npos) {
+					obs_log(gf->log_level, "Suppressed sentence: '%s'",
 						text.c_str());
-					return {DETECTION_RESULT_SUPPRESSED, "", 0, 0, {}};
+					return {DETECTION_RESULT_UNKNOWN, "", 0, 0, {}};
 				}
 			}
 		}
-
 		if (gf->log_words) {
 			obs_log(LOG_INFO, "[%s --> %s] (%.3f) %s", to_timestamp(t0).c_str(),
 				to_timestamp(t1).c_str(), sentence_p, text.c_str());
