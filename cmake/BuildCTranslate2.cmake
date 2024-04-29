@@ -126,7 +126,7 @@ else()
   ExternalProject_Get_Property(ct2_build INSTALL_DIR)
 
   add_library(ct2::ct2 STATIC IMPORTED GLOBAL)
-  add_dependencies(ct2::ct2 ct2_build)
+  add_dependencies(ct2::ct2 ct2_build cpu_features_build)
   set_target_properties(ct2::ct2 PROPERTIES IMPORTED_LOCATION ${INSTALL_DIR}/${CT2_LIB_INSTALL_LOCATION})
   set_target_properties(ct2::ct2 PROPERTIES INTERFACE_INCLUDE_DIRECTORIES ${INSTALL_DIR}/include)
 
