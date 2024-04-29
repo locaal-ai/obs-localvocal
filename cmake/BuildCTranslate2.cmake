@@ -64,7 +64,6 @@ else()
   set(CPU_FEATURES_VERSION "0.9.0")
   set(CPU_FEATURES_URL "https://github.com/google/cpu_features.git")
   set(CPU_FEATURES_CMAKE_ARGS -DBUILD_TESTS=OFF -DBUILD_SHARED_LIBS=OFF)
-
   ExternalProject_Add(
     cpu_features_build
     GIT_REPOSITORY ${CPU_FEATURES_URL}
@@ -74,7 +73,10 @@ else()
     CMAKE_GENERATOR ${CMAKE_GENERATOR}
     INSTALL_COMMAND ${CMAKE_COMMAND} --install <BINARY_DIR> --config ${CMAKE_BUILD_TYPE}
     CMAKE_ARGS -DCMAKE_GENERATOR_PLATFORM=${CMAKE_GENERATOR_PLATFORM} -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
-               -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} ${CPU_FEATURES_CMAKE_ARGS})
+               -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} ${CPU_FEATURES_CMAKE_ARGS}
+    LOG_CONFIGURE ON
+    LOG_BUILD ON
+    LOG_INSTALL ON)
   ExternalProject_Get_Property(cpu_features_build INSTALL_DIR)
 
   add_library(cpu_features STATIC IMPORTED GLOBAL)
@@ -116,7 +118,11 @@ else()
                -DWITH_PROFILING=OFF
                -DBUILD_CLI=OFF
                ${CT2_OPENBLAS_CMAKE_ARGS}
-               ${CT2_CMAKE_PLATFORM_OPTIONS})
+               ${CT2_CMAKE_PLATFORM_OPTIONS}
+    LOG_CONFIGURE ON
+    LOG_BUILD ON
+    LOG_INSTALL ON)
+
   ExternalProject_Get_Property(ct2_build INSTALL_DIR)
 
   add_library(ct2::ct2 STATIC IMPORTED GLOBAL)
