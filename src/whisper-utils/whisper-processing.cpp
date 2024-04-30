@@ -393,7 +393,8 @@ void process_audio_from_buffer(struct transcription_filter_data *gf)
 	}
 
 	obs_log(gf->log_level, "processing %lu frames (%d ms), start timestamp %llu",
-		gf->last_num_frames, (int)(gf->last_num_frames * 1000.0f / gf->sample_rate),
+		gf->last_num_frames,
+		(int)((float)gf->last_num_frames * 1000.0f / (float)gf->sample_rate),
 		start_timestamp);
 
 	// time the audio processing
