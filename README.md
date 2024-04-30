@@ -14,20 +14,26 @@
 
 LocalVocal live-streaming AI assistant plugin allows you to transcribe, locally on your machine, audio speech into text and perform various language processing functions on the text using AI / LLMs (Large Language Models). ✅ No GPU required, ✅ no cloud costs, ✅ no network and ✅ no downtime! Privacy first - all data stays on your machine.
 
-If this free plugin has been valuable to you consider adding a ⭐ to this GH repo, rating it [on OBS](https://obsproject.com/forum/resources/localvocal-live-stream-ai-assistant.1769/), subscribing to [my YouTube channel](https://www.youtube.com/@royshilk) where I post updates, and supporting my work: https://github.com/sponsors/royshil
+If this free plugin has been valuable to you consider adding a ⭐ to this GH repo, rating it [on OBS](https://obsproject.com/forum/resources/localvocal-live-stream-ai-assistant.1769/), subscribing to [my YouTube channel](https://www.youtube.com/@royshilk) where I post updates, and supporting my work on [GitHub](https://github.com/sponsors/royshil) or [Patreon](https://www.patreon.com/RoyShilkrot) 🙏
+
+For a standalone captioning and translation free open tool consider our [LexiSynth](https://github.com/occ-ai/lexisynth), which also does speech synthesis.
+
+Internally the plugin is running a neural network ([OpenAI Whisper](https://github.com/openai/whisper)) locally to predict in real time the speech and provide captions.
+It's using the [Whisper.cpp](https://github.com/ggerganov/whisper.cpp) project from [ggerganov](https://github.com/ggerganov) to run the Whisper network efficiently on CPUs and GPUs.
+
+## Usage
 
 <p align="center">
   <a href="https://youtu.be/5XqTMqpui3Q" target="_blank">
-    <img width="27%" src="https://github-production-user-asset-6210df.s3.amazonaws.com/441170/267728411-334551b8-6a7f-42bf-8434-6ad6b512a401.jpeg" />
+    <img width="30%" src="https://github-production-user-asset-6210df.s3.amazonaws.com/441170/267728411-334551b8-6a7f-42bf-8434-6ad6b512a401.jpeg" />
   </a>
   <a href="https://youtu.be/Q34LQsx-nlg" target="_blank">
-    <img width="27%" src="https://github-production-user-asset-6210df.s3.amazonaws.com/441170/271725640-3e5edd4a-9d07-4d19-b631-c70f91c73c27.PNG" />
+    <img width="30%" src="https://github-production-user-asset-6210df.s3.amazonaws.com/441170/271725640-3e5edd4a-9d07-4d19-b631-c70f91c73c27.PNG" />
   </a>
   <a href="https://youtu.be/4BTmoKr0YMw" target="_blank">
-    <img width="27%" src="https://github-production-user-asset-6210df.s3.amazonaws.com/441170/283315931-70c0c583-d1dc-4bd6-9ace-86c8e47f1229.jpg" />
+    <img width="30%" src="https://github-production-user-asset-6210df.s3.amazonaws.com/441170/283315931-70c0c583-d1dc-4bd6-9ace-86c8e47f1229.jpg" />
   </a>
   <br/>
-  https://youtu.be/5XqTMqpui3Q & https://youtu.be/Q34LQsx-nlg & https://youtu.be/4BTmoKr0YMw
 </p>
 
 Do more with LocalVocal:
@@ -39,21 +45,17 @@ Do more with LocalVocal:
 Current Features:
 - Transcribe audio to text in real time in 100 languages
 - Display captions on screen using text sources
-- Send captions to a file (which can be read by external sources)
+- Send captions to a .txt or .srt file (to read by external sources or video playback) with and without aggregation option
+- Sync'ed captions with OBS recording timestamps
 - Send captions on a RTMP stream to e.g. YouTube, Twitch
-- Bring your own Whisper model (GGML)
-- Translate captions in real time to major languages
-- CUDA support and Apple Arm64 support
+- Bring your own Whisper model (any GGML)
+- Translate captions in real time to major languages (both Whisper built-in translation as well as NMT models with [CTranslate2](https://github.com/OpenNMT/CTranslate2))
+- CUDA, OpenCL, Apple Arm64, AVX & SSE acceleration support
 
 Roadmap:
-- Remove unwanted words from the transcription
-- Summarize the text and show "highlights" on screen
-- Detect key moments in the stream and allow triggering events (like replay)
-- Detect emotions/sentiment and allow triggering events (like changing the scene or colors etc.)
-
-Internally the plugin is running a neural network ([OpenAI Whisper](https://github.com/openai/whisper)) locally to predict in real time the speech and provide captions.
-
-It's using the [Whisper.cpp](https://github.com/ggerganov/whisper.cpp) project from [ggerganov](https://github.com/ggerganov) to run the Whisper network in a very efficient way on CPUs and GPUs.
+- More robust built-in translation options
+- Additional output options: .vtt, .ssa, .sub, etc.
+- Speaker diarization (detecting speakers in a multi-person audio stream)
 
 Check out our other plugins:
 - [Background Removal](https://github.com/occ-ai/obs-backgroundremoval) removes background from webcam without a green screen.
@@ -96,9 +98,12 @@ $ ./.github/scripts/package-macos -c Release
 
 ### Linux (Ubuntu)
 
-Use the CI scripts again
+For successfully building on linux, first clone the repo, then from the repo directory:
 ```sh
-$ ./.github/scripts/build-linux.sh
+$ sudo apt install -y libssl-dev
+$ export OBS_PLUGINS_PATH=$(pwd)/release/RelWithDebInfo/lib/x86_64-linux-gnu/obs-plugins
+$ export OBS_PLUGINS_DATA_PATH=$(pwd)/release/RelWithDebInfo/share/obs/obs-plugins
+$ ./.github/scripts/build-linux
 ```
 
 Copy the results to the standard OBS folders on Ubuntu
@@ -106,7 +111,7 @@ Copy the results to the standard OBS folders on Ubuntu
 $ sudo cp -R release/RelWithDebInfo/lib/* /usr/lib/x86_64-linux-gnu/
 $ sudo cp -R release/RelWithDebInfo/share/* /usr/share/
 ```
-Note: The official [OBS plugins guide](https://obsproject.com/kb/plugins-guide) recommends adding plugins to the `~/.config/obs-studio/plugins` folder.
+Note: The official [OBS plugins guide](https://obsproject.com/kb/plugins-guide) recommends adding plugins to the `~/.config/obs-studio/plugins` folder. This has to do with the way you *installed* OBS.
 
 ### Windows
 
