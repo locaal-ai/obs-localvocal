@@ -5,7 +5,7 @@
 
 #include <obs-module.h>
 
-void update_whsiper_model(struct transcription_filter_data *gf, obs_data_t *s)
+void update_whisper_model(struct transcription_filter_data *gf, obs_data_t *s)
 {
 	// update the whisper model path
 	std::string new_model_path = obs_data_get_string(s, "whisper_model_path");
@@ -140,6 +140,7 @@ void start_whisper_thread_with_path(struct transcription_filter_data *gf, const 
 #else
 	std::string silero_vad_model_path = silero_vad_model_file;
 #endif
+	bfree(silero_vad_model_file);
 	// roughly following https://github.com/SYSTRAN/faster-whisper/blob/master/faster_whisper/vad.py
 	// for silero vad parameters
 	gf->vad.reset(new VadIterator(silero_vad_model_path, WHISPER_SAMPLE_RATE, 64, 0.5f, 1000,

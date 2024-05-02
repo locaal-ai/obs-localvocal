@@ -101,17 +101,23 @@ $ ./.github/scripts/package-macos -c Release
 For successfully building on linux, first clone the repo, then from the repo directory:
 ```sh
 $ sudo apt install -y libssl-dev
-$ export OBS_PLUGINS_PATH=$(pwd)/release/RelWithDebInfo/lib/x86_64-linux-gnu/obs-plugins
-$ export OBS_PLUGINS_DATA_PATH=$(pwd)/release/RelWithDebInfo/share/obs/obs-plugins
 $ ./.github/scripts/build-linux
 ```
 
 Copy the results to the standard OBS folders on Ubuntu
 ```sh
-$ sudo cp -R release/RelWithDebInfo/lib/* /usr/lib/x86_64-linux-gnu/
+$ sudo cp -R release/RelWithDebInfo/lib/* /usr/lib/
 $ sudo cp -R release/RelWithDebInfo/share/* /usr/share/
 ```
 Note: The official [OBS plugins guide](https://obsproject.com/kb/plugins-guide) recommends adding plugins to the `~/.config/obs-studio/plugins` folder. This has to do with the way you *installed* OBS.
+
+In case the above doesn't work, attempt to copy the files to the `~/.config` folder:
+```sh
+$ mkdir -p ~/.config/obs-studio/plugins/obs-localvocal/bin/64bit
+$ cp -R release/RelWithDebInfo/lib/x86_64-linux-gnu/obs-plugins/* ~/.config/obs-studio/plugins/obs-localvocal/bin/64bit/
+$ mkdir -p ~/.config/obs-studio/plugins/obs-localvocal/data
+$ cp -R release/RelWithDebInfo/share/obs/obs-plugins/obs-localvocal/* ~/.config/obs-studio/plugins/obs-localvocal/data/
+```
 
 ### Windows
 

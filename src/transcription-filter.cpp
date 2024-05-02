@@ -189,7 +189,24 @@ void set_text_callback(struct transcription_filter_data *gf,
 	std::string str_copy = fix_utf8(result.text);
 	str_copy = remove_leading_trailing_nonalpha(str_copy);
 
-	if (gf->translate) {
+	// if suppression is enabled, check if the text is in the suppression list
+	if (!gf->suppress_sentences.empty()) {
+		// split the suppression list by newline into individual sentences
+		std::vector<std::string> suppress_sentences_list =
+			split(gf->suppress_sentences, '\n');
+		// check if the text is in the suppression list
+		for (const std::string &suppress_sentence : suppress_sentences_list) {
+			if (str_copy == suppress_sentence) {
+				obs_log(gf->log_level, "Suppressed sentence: '%s'",
+					str_copy.c_str());
+				gf->last_text = str_copy;
+				return; // do not process the sentence
+			}
+		}
+	}
+
+	if (gf->translate && !str_copy.empty() && str_copy != gf->last_text &&
+	    result.result == DETECTION_RESULT_SPEECH) {
 		obs_log(gf->log_level, "Translating text. %s -> %s", gf->source_lang.c_str(),
 			gf->target_lang.c_str());
 		std::string translated_text;
@@ -370,7 +387,7 @@ void transcription_filter_update(void *data, obs_data_t *s)
 	}
 
 	obs_log(gf->log_level, "update whisper model");
-	update_whsiper_model(gf, s);
+	update_whisper_model(gf, s);
 
 	obs_log(gf->log_level, "update whisper params");
 	std::lock_guard<std::mutex> lock(*gf->whisper_ctx_mutex);

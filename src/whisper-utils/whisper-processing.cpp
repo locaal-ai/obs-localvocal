@@ -287,7 +287,10 @@ struct DetectionResultWithText run_whisper_inference(struct transcription_filter
 			if (token.id >= 50256) {
 				keep = false;
 			}
-			if ((j == n_tokens - 2 || j == n_tokens - 3) && token.p < 0.5) {
+			if (j == n_tokens - 2 && token.p < 0.5) {
+				keep = false;
+			}
+			if (j == n_tokens - 3 && token.p < 0.4) {
 				keep = false;
 			}
 			// if the second to last token is .id == 13 ('.'), don't keep it
@@ -295,7 +298,7 @@ struct DetectionResultWithText run_whisper_inference(struct transcription_filter
 				keep = false;
 			}
 			// token ids https://huggingface.co/openai/whisper-large-v3/raw/main/tokenizer.json
-			if (token.id > 50540 && token.id <= 51865) {
+			if (token.id > 50566 && token.id <= 51865) {
 				obs_log(gf->log_level,
 					"Large time token found (%d), this shouldn't happen",
 					token.id);
@@ -315,20 +318,6 @@ struct DetectionResultWithText run_whisper_inference(struct transcription_filter
 		obs_log(gf->log_level, "Decoded sentence: '%s'", text.c_str());
 		obs_log(gf->log_level, "Token IDs: %s", tokenIds.c_str());
 
-		// if suppression is enabled, check if the text is in the suppression list
-		if (!gf->suppress_sentences.empty()) {
-			// split the suppression list by newline into individual sentences
-			std::vector<std::string> suppress_sentences_list =
-				split(gf->suppress_sentences, '\n');
-			// check if the text is in the suppression list
-			for (const std::string &suppress_sentence : suppress_sentences_list) {
-				if (text.find(suppress_sentence) != std::string::npos) {
-					obs_log(gf->log_level, "Suppressed sentence: '%s'",
-						text.c_str());
-					return {DETECTION_RESULT_UNKNOWN, "", 0, 0, {}};
-				}
-			}
-		}
 		if (gf->log_words) {
 			obs_log(LOG_INFO, "[%s --> %s] (%.3f) %s", to_timestamp(t0).c_str(),
 				to_timestamp(t1).c_str(), sentence_p, text.c_str());
@@ -346,7 +335,7 @@ void process_audio_from_buffer(struct transcription_filter_data *gf)
 {
 	uint32_t num_new_frames_from_infos = 0;
 	uint64_t start_timestamp = 0;
-	bool last_step_in_segment = false;
+	bool save_overlap_region = true;
 
 	{
 		// scoped lock the buffer mutex
@@ -354,6 +343,10 @@ void process_audio_from_buffer(struct transcription_filter_data *gf)
 
 		// We need (gf->frames - gf->last_num_frames) new frames for a full segment,
 		const size_t remaining_frames_to_full_segment = gf->frames - gf->last_num_frames;
+
+		obs_log(gf->log_level,
+			"processing audio from buffer, %lu existing frames, %lu frames needed to full segment (%d frames)",
+			gf->last_num_frames, remaining_frames_to_full_segment, gf->frames);
 
 		// pop infos from the info buffer and mark the beginning timestamp from the first
 		// info as the beginning timestamp of the segment
@@ -371,14 +364,12 @@ void process_audio_from_buffer(struct transcription_filter_data *gf)
 				num_new_frames_from_infos -= info_from_buf.frames;
 				circlebuf_push_front(&gf->info_buffer, &info_from_buf,
 						     size_of_audio_info);
-				// this is the final step in the segment
-				last_step_in_segment = true;
 				break;
 			}
 		}
 
 		obs_log(gf->log_level,
-			"with %lu remaining to full segment, popped %d info-frames, pushing at %lu (overlap)",
+			"with %lu remaining to full segment, popped %d frames from info buffer, pushed at %lu (overlap)",
 			remaining_frames_to_full_segment, num_new_frames_from_infos,
 			gf->last_num_frames);
 
@@ -392,24 +383,18 @@ void process_audio_from_buffer(struct transcription_filter_data *gf)
 	}
 
 	if (gf->last_num_frames > 0) {
+		obs_log(gf->log_level, "full segment, %lu frames overlap, %lu frames to process",
+			gf->last_num_frames, gf->last_num_frames + num_new_frames_from_infos);
 		gf->last_num_frames += num_new_frames_from_infos;
-		if (!last_step_in_segment) {
-			// Mid-segment process
-			obs_log(gf->log_level, "mid-segment, now %d frames left to full segment",
-				(int)(gf->frames - gf->last_num_frames));
-		} else {
-			// Final step in segment
-			obs_log(gf->log_level, "full segment, %d frames to process",
-				(int)(gf->last_num_frames));
-		}
 	} else {
 		gf->last_num_frames = num_new_frames_from_infos;
-		obs_log(gf->log_level, "first segment, no overlap exists, %d frames to process",
-			(int)(gf->last_num_frames));
+		obs_log(gf->log_level, "first segment, no overlap exists, %lu frames to process",
+			gf->last_num_frames);
 	}
 
-	obs_log(gf->log_level, "processing %d frames (%d ms), start timestamp %llu ",
-		(int)gf->last_num_frames, (int)(gf->last_num_frames * 1000 / gf->sample_rate),
+	obs_log(gf->log_level, "processing %lu frames (%d ms), start timestamp %llu",
+		gf->last_num_frames,
+		(int)((float)gf->last_num_frames * 1000.0f / (float)gf->sample_rate),
 		start_timestamp);
 
 	// time the audio processing
@@ -442,44 +427,38 @@ void process_audio_from_buffer(struct transcription_filter_data *gf)
 				resampled_16khz_frames);
 			skipped_inference = true;
 			// prevent copying the buffer to the beginning (overlap)
-			gf->last_num_frames = 0;
-			last_step_in_segment = false;
+			save_overlap_region = false;
 		} else {
-			speech_start_frame = (stamps[0].start < 3000) ? 0 : stamps[0].start;
+			// if the vad finds that start within the first 10% of the buffer, set the start to 0
+			speech_start_frame = (stamps[0].start < (int)(resampled_16khz_frames / 10))
+						     ? 0
+						     : stamps[0].start;
 			speech_end_frame = stamps.back().end;
 			uint32_t number_of_frames = speech_end_frame - speech_start_frame;
+
+			// if the speech is pressed up against the end of the buffer
+			// apply the overlapped region, else don't
+			save_overlap_region = (speech_end_frame == resampled_16khz_frames);
 
 			obs_log(gf->log_level,
 				"VAD detected speech from %d to %d (%d frames, %d ms)",
 				speech_start_frame, speech_end_frame, number_of_frames,
 				number_of_frames * 1000 / WHISPER_SAMPLE_RATE);
 
-			// if the speech segment is less than 1 second - put the audio back into the buffer
-			// to be handled in the next iteration
+			// if the speech is less than 1 second - pad with zeros and send for inference
 			if (number_of_frames > 0 && number_of_frames < WHISPER_SAMPLE_RATE) {
-				// convert speech_start_frame and speech_end_frame to original sample rate
-				speech_start_frame =
-					speech_start_frame * gf->sample_rate / WHISPER_SAMPLE_RATE;
-				speech_end_frame =
-					speech_end_frame * gf->sample_rate / WHISPER_SAMPLE_RATE;
-				number_of_frames = speech_end_frame - speech_start_frame;
-
-				// use memmove to copy the speech segment to the beginning of the buffer
-				for (size_t c = 0; c < gf->channels; c++) {
-					memmove(gf->copy_buffers[c],
-						gf->copy_buffers[c] + speech_start_frame,
-						number_of_frames * sizeof(float));
-				}
-
 				obs_log(gf->log_level,
-					"Speech segment is less than 1 second, moving %d to %d (len %d) to buffer start",
-					speech_start_frame, speech_end_frame, number_of_frames);
-				// no processing of the segment
-				skipped_inference = true;
-				// reset the last_num_frames to the number of frames in the buffer
-				gf->last_num_frames = number_of_frames;
-				// prevent copying the buffer to the beginning (overlap)
-				last_step_in_segment = false;
+					"Speech segment is less than 1 second, padding with zeros to 1 second");
+				// copy the speech segment to the beginning of the resampled buffer
+				// use memmove to copy the speech segment to the beginning of the buffer
+				memmove(resampled_16khz[0], resampled_16khz[0] + speech_start_frame,
+					number_of_frames * sizeof(float));
+				// zero out the rest of the buffer
+				memset(resampled_16khz[0] + number_of_frames, 0,
+				       (WHISPER_SAMPLE_RATE - number_of_frames) * sizeof(float));
+
+				speech_start_frame = 0;
+				speech_end_frame = WHISPER_SAMPLE_RATE;
 			}
 		}
 	}
@@ -511,24 +490,29 @@ void process_audio_from_buffer(struct transcription_filter_data *gf)
 	obs_log(gf->log_level, "audio processing of %lu ms data took %d ms", last_num_frames_ms,
 		(int)duration);
 
-	if (last_step_in_segment) {
+	if (save_overlap_region) {
 		const uint64_t overlap_size_ms =
 			(uint64_t)(gf->overlap_frames * 1000 / gf->sample_rate);
 		obs_log(gf->log_level,
-			"copying %lu frames (%lu ms) from the end of the buffer (pos %lu) to the beginning",
+			"copying %lu overlap frames (%lu ms) from the end of the buffer (pos %lu) to the beginning",
 			gf->overlap_frames, overlap_size_ms,
 			gf->last_num_frames - gf->overlap_frames);
 		for (size_t c = 0; c < gf->channels; c++) {
-			// This is the last step in the segment - reset the copy buffer (include overlap frames)
+			// zero out the copy buffer, just in case
+			memset(gf->copy_buffers[c], 0, gf->frames * sizeof(float));
 			// move overlap frames from the end of the last copy_buffers to the beginning
-			memcpy(gf->copy_buffers[c],
-			       gf->copy_buffers[c] + gf->last_num_frames - gf->overlap_frames,
-			       gf->overlap_frames * sizeof(float));
-			// zero out the rest of the buffer, just in case
-			memset(gf->copy_buffers[c] + gf->overlap_frames, 0,
-			       (gf->frames - gf->overlap_frames) * sizeof(float));
+			memmove(gf->copy_buffers[c],
+				gf->copy_buffers[c] + gf->last_num_frames - gf->overlap_frames,
+				gf->overlap_frames * sizeof(float));
 		}
 		gf->last_num_frames = gf->overlap_frames;
+	} else {
+		obs_log(gf->log_level, "no overlap needed. zeroing out the copy buffer");
+		// zero out the copy buffer, just in case
+		for (size_t c = 0; c < gf->channels; c++) {
+			memset(gf->copy_buffers[c], 0, gf->frames * sizeof(float));
+		}
+		gf->last_num_frames = 0;
 	}
 }
 
