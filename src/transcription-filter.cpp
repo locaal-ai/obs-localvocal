@@ -387,7 +387,7 @@ void transcription_filter_update(void *data, obs_data_t *s)
 	}
 
 	obs_log(gf->log_level, "update whisper model");
-	update_whsiper_model(gf, s);
+	update_whisper_model(gf, s);
 
 	obs_log(gf->log_level, "update whisper params");
 	std::lock_guard<std::mutex> lock(*gf->whisper_ctx_mutex);
