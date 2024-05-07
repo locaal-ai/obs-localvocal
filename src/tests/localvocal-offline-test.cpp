@@ -410,30 +410,18 @@ void release_context(transcription_filter_data *gf)
 
 int wmain(int argc, wchar_t *argv[])
 {
-	if (argc < 9) {
+	if (argc < 3) {
 		std::cout
-			<< "Usage: localvocal-offline-test <audio-file> <whisper-language> <source-language> <target-language> <whisper-model-path> <silero-vad-model-file> <ct2-model-folder> <config_json_file>"
+			<< "Usage: localvocal-offline-test <audio-file> <config_json_file>"
 			<< std::endl;
 		return 1;
 	}
 
 	std::wstring file = argv[1];
-	std::wstring whisperLanguage = argv[2];
-	std::wstring sourceLanguage = argv[3];
-	std::wstring targetLanguage = argv[4];
-	std::wstring whisperModelPath = argv[5];
-	std::wstring sileroVadModelFile = argv[6];
-	std::wstring ct2ModelFolder = argv[7];
-	std::wstring configJsonFile = argv[8];
+    std::wstring configJsonFile = argv[2];
 
 	std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
 	std::string filenameStr = converter.to_bytes(file);
-	std::string whisperModelPathStr = converter.to_bytes(whisperModelPath);
-	std::string sileroVadModelFileStr = converter.to_bytes(sileroVadModelFile);
-	std::string sourceLanguageStr = converter.to_bytes(sourceLanguage);
-	std::string targetLanguageStr = converter.to_bytes(targetLanguage);
-	std::string whisperLanguageStr = converter.to_bytes(whisperLanguage);
-	std::string ct2ModelFolderStr = converter.to_bytes(ct2ModelFolder);
 
 	// read the configuration json file
 	std::ifstream config_stream(configJsonFile);
@@ -444,6 +432,14 @@ int wmain(int argc, wchar_t *argv[])
 	nlohmann::json config;
 	config_stream >> config;
 	config_stream.close();
+
+    // get the configuration values
+	std::string whisperModelPathStr = config["whisper_model_path"];
+	std::string sileroVadModelFileStr = config["silero_vad_model_file"];
+	std::string sourceLanguageStr = config["source_language"];
+	std::string targetLanguageStr = config["target_language"];
+	std::string whisperLanguageStr = config["whisper_language"];
+	std::string ct2ModelFolderStr = config["ct2_model_folder"];
 
 	std::cout << "LocalVocal Offline Test" << std::endl;
 	transcription_filter_data *gf = nullptr;

@@ -21,12 +21,22 @@ def calculate_cer(ref_text, hyp_text):
     cer = distance / len(ref_text)
     return cer
 
-def read_text_from_file(file_path):
+def compare_tokens(ref_tokens, hyp_tokens):
+    comparisons = []
+    for ref_token, hyp_token in zip(ref_tokens, hyp_tokens):
+        distance = Levenshtein.distance(ref_token, hyp_token)
+        comparison = {'ref_token': ref_token, 'hyp_token': hyp_token, 'error_rate': distance / len(ref_token)}
+        comparisons.append(comparison)
+    return comparisons
+
+def read_text_from_file(file_path, join_sentences=True):
     with open(file_path, 'r', encoding='utf-8', errors='ignore') as file:
         sentences = file.readlines()
     sentences = [sentence.strip() for sentence in sentences]
     # merge into a single string
-    return ' '.join(sentences)
+    if join_sentences:
+        return ' '.join(sentences)
+    return sentences
 
 parser = argparse.ArgumentParser(description='Evaluate output')
 parser.add_argument('ref_file_path', type=str, help='Path to the reference file')
@@ -43,3 +53,14 @@ print("Character Error Rate (CER):", cer)
 html_diff = visualize_differences(ref_text, hyp_text)
 with open("diff_visualization.html", "w", encoding="utf-8") as file:
     file.write(html_diff)
+
+from Bio.Align import PairwiseAligner
+
+aligner = PairwiseAligner()
+
+alignments = aligner.align(ref_text, hyp_text)
+
+# write the first alignment to a file
+with open("alignment.txt", "w", encoding="utf-8") as file:
+    file.write(alignments[0].format())
+
