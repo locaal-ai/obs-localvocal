@@ -3,7 +3,6 @@
 #include <codecvt>
 #include <vector>
 
-#include "argparse/argparse.hpp"
 #include "transcription-filter-data.h"
 #include "transcription-filter.h"
 #include "transcription-utils.h"
@@ -161,7 +160,8 @@ read_audio_file(const char *filename, std::function<void(int, int)> initializati
 
 transcription_filter_data *create_context(int sample_rate, int channels,
 					  const std::string &whisper_model_path,
-					  const std::string &silero_vad_model_file)
+					  const std::string &silero_vad_model_file,
+					  const std::string &ct2ModelFolder)
 {
 	struct transcription_filter_data *gf = new transcription_filter_data();
 
@@ -264,9 +264,12 @@ transcription_filter_data *create_context(int sample_rate, int channels,
 	gf->whisper_params.length_penalty = -1;
 	gf->active = true;
 
-	build_and_enable_translation(
-		gf,
-		"C:/Users/roysh/AppData/Roaming/obs-studio/plugin_config/obs-localvocal/models/m2m-100-418M");
+	if (gf->source_lang.empty() || gf->target_lang.empty()) {
+		obs_log(gf->log_level, "Source or target translation language is empty");
+	} else {
+		obs_log(gf->log_level, "Creating translation context");
+		build_and_enable_translation(gf, ct2ModelFolder.c_str());
+	}
 
 	start_whisper_thread_with_path(gf, whisper_model_path, silero_vad_model_file.c_str());
 
@@ -444,12 +447,20 @@ void release_context(transcription_filter_data *gf)
 
 int wmain(int argc, wchar_t *argv[])
 {
+	if (argc < 8) {
+		std::cout
+			<< "Usage: localvocal-offline-test <audio-file> <whisper-language> <source-language> <target-language> <whisper-model-path> <silero-vad-model-file> <ct2-model-folder>"
+			<< std::endl;
+		return 1;
+	}
+
 	std::wstring file = argv[1];
-	std::wstring whisperModelPath = argv[5];
-	std::wstring sileroVadModelFile = argv[6];
 	std::wstring whisperLanguage = argv[2];
 	std::wstring sourceLanguage = argv[3];
 	std::wstring targetLanguage = argv[4];
+	std::wstring whisperModelPath = argv[5];
+	std::wstring sileroVadModelFile = argv[6];
+	std::wstring ct2ModelFolder = argv[7];
 
 	std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
 	std::string filenameStr = converter.to_bytes(file);
@@ -458,6 +469,7 @@ int wmain(int argc, wchar_t *argv[])
 	std::string sourceLanguageStr = converter.to_bytes(sourceLanguage);
 	std::string targetLanguageStr = converter.to_bytes(targetLanguage);
 	std::string whisperLanguageStr = converter.to_bytes(whisperLanguage);
+	std::string ct2ModelFolderStr = converter.to_bytes(ct2ModelFolder);
 
 	std::cout << "LocalVocal Offline Test" << std::endl;
 	transcription_filter_data *gf = nullptr;
@@ -465,9 +477,16 @@ int wmain(int argc, wchar_t *argv[])
 	std::vector<std::vector<uint8_t>> audio =
 		read_audio_file(filenameStr.c_str(), [&](int sample_rate, int channels) {
 			gf = create_context(sample_rate, channels, whisperModelPathStr,
-					    sileroVadModelFileStr);
-			gf->source_lang = sourceLanguageStr;
-			gf->target_lang = targetLanguageStr;
+					    sileroVadModelFileStr, ct2ModelFolderStr);
+			if (sourceLanguageStr.empty() || targetLanguageStr.empty() ||
+			    sourceLanguageStr == "none" || targetLanguageStr == "none") {
+				obs_log(gf->log_level,
+					"Source or target translation language are empty or disabled");
+			} else {
+				obs_log(gf->log_level, "Setting translation languages");
+				gf->source_lang = sourceLanguageStr;
+				gf->target_lang = targetLanguageStr;
+			}
 			gf->whisper_params.language = whisperLanguageStr.c_str();
 		});
 
