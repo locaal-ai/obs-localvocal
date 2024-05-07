@@ -79,6 +79,7 @@ struct transcription_filter_data {
 	bool buffered_output = false;
 	bool enable_token_ts_dtw = false;
 	std::string suppress_sentences;
+	bool fix_utf8 = true;
 
 	// Last transcription result
 	std::string last_text;

@@ -15,6 +15,9 @@
 
 void obs_log(int log_level, const char *format, ...)
 {
+	if (log_level == LOG_DEBUG) {
+		return;
+	}
 	// print timestamp in format [HH:MM:SS.mmm], use std::chrono::system_clock
 	auto now = std::chrono::system_clock::now();
 	auto now_ms = std::chrono::time_point_cast<std::chrono::milliseconds>(now);
@@ -46,6 +49,10 @@ void obs_log(int log_level, const char *format, ...)
 		printf("[UNKNOWN] ");
 		break;
 	}
+	// convert format to wstring
+	std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
+	std::wstring wformat = converter.from_bytes(format);
+
 	// print format with arguments with utf-8 support
 	va_list args;
 	va_start(args, format);
@@ -165,7 +172,7 @@ transcription_filter_data *create_context(int sample_rate, int channels,
 {
 	struct transcription_filter_data *gf = new transcription_filter_data();
 
-	gf->log_level = LOG_INFO;
+	gf->log_level = LOG_DEBUG;
 	gf->channels = channels;
 	gf->sample_rate = sample_rate;
 	gf->frames = (size_t)((float)gf->sample_rate / (1000.0f / 3000.0));
@@ -173,13 +180,13 @@ transcription_filter_data *create_context(int sample_rate, int channels,
 	gf->step_size_msec = 3000;
 	gf->min_sub_duration = 3000;
 	gf->last_sub_render_time = 0;
-	gf->log_level = 1;
 	gf->save_srt = false;
 	gf->truncate_output_file = false;
 	gf->save_only_while_recording = false;
 	gf->rename_file_to_match_recording = false;
 	gf->process_while_muted = false;
 	gf->buffered_output = false;
+	gf->fix_utf8 = true;
 
 	for (size_t i = 0; i < gf->channels; i++) {
 		circlebuf_init(&gf->input_buffers[i]);
@@ -284,8 +291,28 @@ void set_text_callback(struct transcription_filter_data *gf,
 	DetectionResultWithText result = resultIn;
 
 	if (!result.text.empty() && result.result == DETECTION_RESULT_SPEECH) {
-		std::string str_copy = fix_utf8(result.text);
+		std::string str_copy = result.text;
+		if (gf->fix_utf8) {
+			str_copy = fix_utf8(str_copy);
+		}
 		str_copy = remove_leading_trailing_nonalpha(str_copy);
+
+		// if suppression is enabled, check if the text is in the suppression list
+		if (!gf->suppress_sentences.empty()) {
+			// split the suppression list by newline into individual sentences
+			std::vector<std::string> suppress_sentences_list =
+				split(gf->suppress_sentences, '\n');
+			// check if the text is in the suppression list
+			for (const std::string &suppress_sentence : suppress_sentences_list) {
+				// check if str_copy starts with the suppress sentence
+				if (str_copy.find(suppress_sentence) == 0) {
+					obs_log(LOG_INFO, "Suppressed sentence: '%s'",
+						str_copy.c_str());
+					gf->last_text = str_copy;
+					return; // do not process the sentence
+				}
+			}
+		}
 
 		if (gf->translate) {
 			obs_log(gf->log_level, "Translating text. %s -> %s",
@@ -329,21 +356,6 @@ void set_text_callback(struct transcription_filter_data *gf,
 	std::string str_copy = fix_utf8(result.text);
 	str_copy = remove_leading_trailing_nonalpha(str_copy);
 
-	// if suppression is enabled, check if the text is in the suppression list
-	if (!gf->suppress_sentences.empty()) {
-		// split the suppression list by newline into individual sentences
-		std::vector<std::string> suppress_sentences_list =
-			split(gf->suppress_sentences, '\n');
-		// check if the text is in the suppression list
-		for (const std::string &suppress_sentence : suppress_sentences_list) {
-			if (str_copy == suppress_sentence) {
-				obs_log(gf->log_level, "Suppressed sentence: '%s'",
-					str_copy.c_str());
-				gf->last_text = str_copy;
-				return; // do not process the sentence
-			}
-		}
-	}
 
 	if (gf->translate && !str_copy.empty() && str_copy != gf->last_text &&
 	    result.result == DETECTION_RESULT_SPEECH) {
@@ -447,9 +459,9 @@ void release_context(transcription_filter_data *gf)
 
 int wmain(int argc, wchar_t *argv[])
 {
-	if (argc < 8) {
+	if (argc < 9) {
 		std::cout
-			<< "Usage: localvocal-offline-test <audio-file> <whisper-language> <source-language> <target-language> <whisper-model-path> <silero-vad-model-file> <ct2-model-folder>"
+			<< "Usage: localvocal-offline-test <audio-file> <whisper-language> <source-language> <target-language> <whisper-model-path> <silero-vad-model-file> <ct2-model-folder> <config_json_file>"
 			<< std::endl;
 		return 1;
 	}
@@ -461,6 +473,7 @@ int wmain(int argc, wchar_t *argv[])
 	std::wstring whisperModelPath = argv[5];
 	std::wstring sileroVadModelFile = argv[6];
 	std::wstring ct2ModelFolder = argv[7];
+	std::wstring configJsonFile = argv[8];
 
 	std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
 	std::string filenameStr = converter.to_bytes(file);
@@ -470,6 +483,16 @@ int wmain(int argc, wchar_t *argv[])
 	std::string targetLanguageStr = converter.to_bytes(targetLanguage);
 	std::string whisperLanguageStr = converter.to_bytes(whisperLanguage);
 	std::string ct2ModelFolderStr = converter.to_bytes(ct2ModelFolder);
+
+	// read the configuration json file
+	std::ifstream config_stream(configJsonFile);
+	if (!config_stream.is_open()) {
+		std::cout << "Failed to open config file" << std::endl;
+		return 1;
+	}
+	nlohmann::json config;
+	config_stream >> config;
+	config_stream.close();
 
 	std::cout << "LocalVocal Offline Test" << std::endl;
 	transcription_filter_data *gf = nullptr;
@@ -488,6 +511,24 @@ int wmain(int argc, wchar_t *argv[])
 				gf->target_lang = targetLanguageStr;
 			}
 			gf->whisper_params.language = whisperLanguageStr.c_str();
+			if (config.contains("fix_utf8")) {
+				obs_log(LOG_INFO, "Setting fix_utf8 to %s",
+					config["fix_utf8"] ? "true" : "false");
+				gf->fix_utf8 = config["fix_utf8"];
+			}
+			if (config.contains("suppress_sentences")) {
+				obs_log(LOG_INFO, "Setting suppress_sentences to %ls",
+					config["suppress_sentences"].get<std::string>().c_str());
+				gf->suppress_sentences =
+					config["suppress_sentences"].get<std::string>();
+			}
+			if (config.contains("overlap_ms")) {
+				obs_log(LOG_INFO, "Setting overlap_ms to %d",
+					config["overlap_ms"].get<int>());
+				gf->overlap_ms = config["overlap_ms"];
+				gf->overlap_frames = (size_t)((float)gf->sample_rate /
+							      (1000.0f / (float)gf->overlap_ms));
+			}
 		});
 
 	if (gf == nullptr) {
@@ -499,17 +540,24 @@ int wmain(int argc, wchar_t *argv[])
 		return 1;
 	}
 
+	// truncate the output file
+	std::ofstream output_file(gf->output_file_path, std::ios::trunc);
+	output_file.close();
+
 	// fill up the whisper buffer
 	{
 		obs_log(LOG_INFO, "Filling up whisper buffer");
 		std::lock_guard<std::mutex> lock(gf->whisper_buf_mutex); // scoped lock
-		const int frames = 4096;
+		int frames = 4096;
 		const int frame_size_bytes = sizeof(float);
-		const int frames_size_bytes = frames * frame_size_bytes;
+		int frames_size_bytes = frames * frame_size_bytes;
 		int frames_count = 0;
 		while (true) {
-			if (frames_count >= audio[0].size() / frame_size_bytes) {
-				break;
+			// check if there are enough frames left in the audio buffer
+			if ((frames_count + frames) > (audio[0].size() / frame_size_bytes)) {
+				// only take the remaining frames
+				frames = audio[0].size() / frame_size_bytes - frames_count;
+				frames_size_bytes = frames * frame_size_bytes;
 			}
 			// push back current audio data to input circlebuf
 			for (size_t c = 0; c < gf->channels; c++) {
@@ -525,6 +573,9 @@ int wmain(int argc, wchar_t *argv[])
 			info.timestamp = frames_count * 1000 / gf->sample_rate;
 			circlebuf_push_back(&gf->info_buffer, &info, sizeof(info));
 			frames_count += frames;
+			if (frames_count >= audio[0].size() / frame_size_bytes) {
+				break;
+			}
 		}
 	}
 
