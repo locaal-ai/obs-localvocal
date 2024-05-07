@@ -8,8 +8,10 @@
 #include "model-utils/model-downloader.h"
 #include "whisper-utils/whisper-processing.h"
 #include "whisper-utils/whisper-language.h"
+#include "whisper-utils/whisper-model-utils.h"
 #include "whisper-utils/whisper-utils.h"
 #include "translation/language_codes.h"
+#include "translation/translation-utils.h"
 #include "translation/translation.h"
 #include "utils.h"
 
@@ -23,37 +25,6 @@
 #endif
 
 #include <QString>
-
-inline enum speaker_layout convert_speaker_layout(uint8_t channels)
-{
-	switch (channels) {
-	case 0:
-		return SPEAKERS_UNKNOWN;
-	case 1:
-		return SPEAKERS_MONO;
-	case 2:
-		return SPEAKERS_STEREO;
-	case 3:
-		return SPEAKERS_2POINT1;
-	case 4:
-		return SPEAKERS_4POINT0;
-	case 5:
-		return SPEAKERS_4POINT1;
-	case 6:
-		return SPEAKERS_5POINT1;
-	case 8:
-		return SPEAKERS_7POINT1;
-	default:
-		return SPEAKERS_UNKNOWN;
-	}
-}
-
-inline uint64_t now_ms()
-{
-	return std::chrono::duration_cast<std::chrono::milliseconds>(
-		       std::chrono::system_clock::now().time_since_epoch())
-		.count();
-}
 
 bool add_sources_to_list(void *list_property, obs_source_t *source)
 {
@@ -97,13 +68,8 @@ struct obs_audio_data *transcription_filter_filter_audio(void *data, struct obs_
 		return audio;
 	}
 
-	if (!gf->whisper_buf_mutex || !gf->whisper_ctx_mutex) {
-		obs_log(LOG_ERROR, "whisper mutexes are null");
-		return audio;
-	}
-
 	{
-		std::lock_guard<std::mutex> lock(*gf->whisper_buf_mutex); // scoped lock
+		std::lock_guard<std::mutex> lock(gf->whisper_buf_mutex); // scoped lock
 		// push back current audio data to input circlebuf
 		for (size_t c = 0; c < gf->channels; c++) {
 			circlebuf_push_back(&gf->input_buffers[c], audio->data[c],
@@ -138,7 +104,7 @@ void transcription_filter_destroy(void *data)
 	}
 
 	{
-		std::lock_guard<std::mutex> lockbuf(*gf->whisper_buf_mutex);
+		std::lock_guard<std::mutex> lockbuf(gf->whisper_buf_mutex);
 		bfree(gf->copy_buffers[0]);
 		gf->copy_buffers[0] = nullptr;
 		for (size_t i = 0; i < gf->channels; i++) {
@@ -147,11 +113,7 @@ void transcription_filter_destroy(void *data)
 	}
 	circlebuf_free(&gf->info_buffer);
 
-	delete gf->whisper_buf_mutex;
-	delete gf->whisper_ctx_mutex;
-	delete gf->wshiper_thread_cv;
-
-	delete gf;
+	bfree(gf);
 }
 
 void send_caption_to_source(const std::string &target_source_name, const std::string &str_copy,
@@ -381,16 +343,11 @@ void transcription_filter_update(void *data, obs_data_t *s)
 		obs_weak_source_release(old_weak_text_source);
 	}
 
-	if (gf->whisper_ctx_mutex == nullptr) {
-		obs_log(LOG_ERROR, "whisper_ctx_mutex is null");
-		return;
-	}
-
 	obs_log(gf->log_level, "update whisper model");
 	update_whisper_model(gf, s);
 
 	obs_log(gf->log_level, "update whisper params");
-	std::lock_guard<std::mutex> lock(*gf->whisper_ctx_mutex);
+	std::lock_guard<std::mutex> lock(gf->whisper_ctx_mutex);
 
 	gf->whisper_params = whisper_full_default_params(
 		(whisper_sampling_strategy)obs_data_get_int(s, "whisper_sampling_method"));
@@ -425,7 +382,8 @@ void *transcription_filter_create(obs_data_t *settings, obs_source_t *filter)
 {
 	obs_log(LOG_INFO, "LocalVocal filter create");
 
-	struct transcription_filter_data *gf = new transcription_filter_data();
+	void *data = bmalloc(sizeof(struct transcription_filter_data));
+	struct transcription_filter_data *gf = new (data) transcription_filter_data();
 
 	// Get the number of channels for the input source
 	gf->channels = audio_output_get_channels(obs_get_audio());
@@ -479,10 +437,6 @@ void *transcription_filter_create(obs_data_t *settings, obs_source_t *filter)
 
 	gf->resampler_to_whisper = audio_resampler_create(&dst, &src);
 
-	obs_log(gf->log_level, "setup mutexes and condition variables");
-	gf->whisper_buf_mutex = new std::mutex();
-	gf->whisper_ctx_mutex = new std::mutex();
-	gf->wshiper_thread_cv = new std::condition_variable();
 	obs_log(gf->log_level, "clear text source data");
 	const char *subtitle_sources = obs_data_get_string(settings, "subtitle_sources");
 	if (subtitle_sources == nullptr || strcmp(subtitle_sources, "none") == 0 ||
