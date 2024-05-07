@@ -271,13 +271,6 @@ transcription_filter_data *create_context(int sample_rate, int channels,
 	gf->whisper_params.length_penalty = -1;
 	gf->active = true;
 
-	if (gf->source_lang.empty() || gf->target_lang.empty()) {
-		obs_log(gf->log_level, "Source or target translation language is empty");
-	} else {
-		obs_log(gf->log_level, "Creating translation context");
-		build_and_enable_translation(gf, ct2ModelFolder.c_str());
-	}
-
 	start_whisper_thread_with_path(gf, whisper_model_path, silero_vad_model_file.c_str());
 
 	obs_log(gf->log_level, "context created");
@@ -338,49 +331,7 @@ void set_text_callback(struct transcription_filter_data *gf,
 	}
 
 	/*
-	DetectionResultWithText result = resultIn;
-	uint64_t now = now_ms();
-	if (result.text.empty() || result.result != DETECTION_RESULT_SPEECH) {
-		// check if we should clear the current sub depending on the minimum subtitle duration
-		if ((now - gf->last_sub_render_time) > gf->min_sub_duration) {
-			// clear the current sub, run an empty sub
-			result.text = "";
-		} else {
-			// nothing to do, the incoming sub is empty
-			return;
-		}
-	}
-	gf->last_sub_render_time = now;
 
-	// recondition the text
-	std::string str_copy = fix_utf8(result.text);
-	str_copy = remove_leading_trailing_nonalpha(str_copy);
-
-
-	if (gf->translate && !str_copy.empty() && str_copy != gf->last_text &&
-	    result.result == DETECTION_RESULT_SPEECH) {
-		obs_log(gf->log_level, "Translating text. %s -> %s", gf->source_lang.c_str(),
-			gf->target_lang.c_str());
-		std::string translated_text;
-		if (translate(gf->translation_ctx, str_copy, gf->source_lang, gf->target_lang,
-			      translated_text) == OBS_POLYGLOT_TRANSLATION_SUCCESS) {
-			if (gf->log_words) {
-				obs_log(LOG_INFO, "Translation: '%s' -> '%s'", str_copy.c_str(),
-					translated_text.c_str());
-			}
-			if (gf->translation_output == "none") {
-				// overwrite the original text with the translated text
-				str_copy = translated_text;
-			} else {
-				// send the translation to the selected source
-				// send_caption_to_source(gf->translation_output, translated_text, gf);
-			}
-		} else {
-			obs_log(gf->log_level, "Failed to translate text");
-		}
-	}
-
-	gf->last_text = str_copy;
 
 	if (gf->buffered_output) {
 		gf->captions_monitor.addWords(result.tokens);
@@ -503,12 +454,13 @@ int wmain(int argc, wchar_t *argv[])
 					    sileroVadModelFileStr, ct2ModelFolderStr);
 			if (sourceLanguageStr.empty() || targetLanguageStr.empty() ||
 			    sourceLanguageStr == "none" || targetLanguageStr == "none") {
-				obs_log(gf->log_level,
+				obs_log(LOG_INFO,
 					"Source or target translation language are empty or disabled");
 			} else {
-				obs_log(gf->log_level, "Setting translation languages");
+				obs_log(LOG_INFO, "Setting translation languages");
 				gf->source_lang = sourceLanguageStr;
 				gf->target_lang = targetLanguageStr;
+                build_and_enable_translation(gf, ct2ModelFolderStr.c_str());
 			}
 			gf->whisper_params.language = whisperLanguageStr.c_str();
 			if (config.contains("fix_utf8")) {
