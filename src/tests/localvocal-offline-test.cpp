@@ -411,14 +411,13 @@ void release_context(transcription_filter_data *gf)
 int wmain(int argc, wchar_t *argv[])
 {
 	if (argc < 3) {
-		std::cout
-			<< "Usage: localvocal-offline-test <audio-file> <config_json_file>"
-			<< std::endl;
+		std::cout << "Usage: localvocal-offline-test <audio-file> <config_json_file>"
+			  << std::endl;
 		return 1;
 	}
 
 	std::wstring file = argv[1];
-    std::wstring configJsonFile = argv[2];
+	std::wstring configJsonFile = argv[2];
 
 	std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
 	std::string filenameStr = converter.to_bytes(file);
@@ -433,13 +432,14 @@ int wmain(int argc, wchar_t *argv[])
 	config_stream >> config;
 	config_stream.close();
 
-    // get the configuration values
+	// get the configuration values
 	std::string whisperModelPathStr = config["whisper_model_path"];
 	std::string sileroVadModelFileStr = config["silero_vad_model_file"];
 	std::string sourceLanguageStr = config["source_language"];
 	std::string targetLanguageStr = config["target_language"];
 	std::string whisperLanguageStr = config["whisper_language"];
 	std::string ct2ModelFolderStr = config["ct2_model_folder"];
+	std::string logLevelStr = config["log_level"];
 
 	std::cout << "LocalVocal Offline Test" << std::endl;
 	transcription_filter_data *gf = nullptr;
@@ -456,7 +456,7 @@ int wmain(int argc, wchar_t *argv[])
 				obs_log(LOG_INFO, "Setting translation languages");
 				gf->source_lang = sourceLanguageStr;
 				gf->target_lang = targetLanguageStr;
-                build_and_enable_translation(gf, ct2ModelFolderStr.c_str());
+				build_and_enable_translation(gf, ct2ModelFolderStr.c_str());
 			}
 			gf->whisper_params.language = whisperLanguageStr.c_str();
 			if (config.contains("fix_utf8")) {
@@ -476,6 +476,16 @@ int wmain(int argc, wchar_t *argv[])
 				gf->overlap_ms = config["overlap_ms"];
 				gf->overlap_frames = (size_t)((float)gf->sample_rate /
 							      (1000.0f / (float)gf->overlap_ms));
+			}
+			// set log level
+			if (logLevelStr == "debug") {
+				gf->log_level = LOG_DEBUG;
+			} else if (logLevelStr == "info") {
+				gf->log_level = LOG_INFO;
+			} else if (logLevelStr == "warning") {
+				gf->log_level = LOG_WARNING;
+			} else if (logLevelStr == "error") {
+				gf->log_level = LOG_ERROR;
 			}
 		});
 

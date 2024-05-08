@@ -50,6 +50,8 @@ cer = calculate_cer(ref_text, hyp_text)
 print("Word Error Rate (WER):", wer)
 print("Character Error Rate (CER):", cer)
 
+ref_text = '\n'.join(read_text_from_file(args.ref_file_path, join_sentences=False))
+hyp_text = '\n'.join(read_text_from_file(args.hyp_file_path, join_sentences=False))
 html_diff = visualize_differences(ref_text, hyp_text)
 with open("diff_visualization.html", "w", encoding="utf-8") as file:
     file.write(html_diff)

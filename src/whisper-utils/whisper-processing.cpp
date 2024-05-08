@@ -419,7 +419,7 @@ void process_audio_from_buffer(struct transcription_filter_data *gf)
 	if (gf->vad_enabled) {
 		std::vector<float> vad_input(resampled_16khz[0],
 					     resampled_16khz[0] + resampled_16khz_frames);
-		gf->vad->process(vad_input);
+		gf->vad->process(vad_input, false);
 
 		std::vector<timestamp_t> stamps = gf->vad->get_speech_timestamps();
 		if (stamps.size() == 0) {

@@ -76,36 +76,46 @@ With all the `.dll`s in place in the `.\release\Release\test` folder the test to
 The tool expects the following arguments:
 
 - audio/video file
+- configuration file in JSON
+
+For example, this is a valid run command:
+
+```powershell
+obs-localvocal> .\release\Release\test\obs-localvocal-tests.exe "C:\Users\roysh\Downloads\audio.mp3" ".\config.json"
+```
+### Configuration
+
+The tool must receive configuration to test different parameters of the algorithm.
+
 - whisper language
 - translation source language (or `none`)
 - translation target language (or `none`)
 - whisper model `.bin` file
 - silero VAD model file e.g. `silero_vad.onnx`
 - CT2 model *folder* (whitin which the model and json files can be found)
-- configuration file
+- fix UTF8 characters
+- suppress sentences
+- overlap in milliseconds
 
 The Whisper languages are listed in [whisper-language.h](../whisper-utils/whisper-language.h) and the CT2 language codes are listed in [language_codes.h](../translation/language_codes.h). They roughly match except CT2 has underscores e.g. `ko` -> `__ko__`, `ja` -> `__ja__`.
 
-For example, this is a valid run command:
-
-```powershell
-obs-localvocal> .\release\Release\test\obs-localvocal-tests.exe "C:\Users\roysh\Downloads\audio.mp3" ko __ko__ __ja__ "C:\Users\roysh\AppData\Roaming\obs-studio\plugin_config\obs-localvocal\models\ggml-model-whisper-small\ggml-model-whisper-small.bin" "C:\Users\roysh\Downloads\obs-localvocal\data\models\silero-vad\silero_vad.onnx" "C:\Users\roysh\AppData\Roaming\obs-studio\plugin_config\obs-localvocal\models\m2m-100-418M" ".\config.json"
-```
-
-If you've used the OBS plugin to download a Whisper model and a CT2 model then you would find those in the OBS plugin config folders as visible above. It is recommended to do so.
-
-### Configuration
-
-The tool can receive configuration to test different parameters of the algorithm.
 
 The JSON config file can look e.g. like
 ```
 {
+    "whisper_language": "ko",
+    "source_language": "none",
+    "target_language": "none",
+    "whisper_model_path": ".../obs-localvocal/models/ggml-model-whisper-small/ggml-model-whisper-small.bin",
+    "silero_vad_model_file": ".../obs-localvocal/data/models/silero-vad/silero_vad.onnx",
+    "ct2_model_folder": ".../obs-localvocal/models/m2m-100-418M",
     "fix_utf8": true,
-    "suppress_sentences": "끝까지 시청해주셔서 감사합니다\n구독과 좋아요 부탁드립니다!\nMBC 뉴스 안영백입니다.\nMBC 뉴스 이덕영입니다\n구독과 좋아요 눌러주세요!\n구독과 좋아요 부탁드",
+    "suppress_sentences": "끝까지 시청해주셔서 감사합니다/n구독과 좋아요 부탁드립니다!/nMBC 뉴스 안영백입니다./nMBC 뉴스 이덕영입니다/n구독과 좋아요 눌러주세요!/n구독과 좋아요 부탁드",
     "overlap_ms": 150
 }
 ```
+
+If you've used the OBS plugin to download a Whisper model and a CT2 model then you would find those in the OBS plugin config folders as visible above. It is recommended to do so.
 
 Give the path to this file to the tool.
 
@@ -131,15 +141,25 @@ It would also output verbose running log to the console, e.g.
 To translate with Whisper, set the whisper output language to your desired output and the CT2 languages to `none`.
 For example this would be a Japanese translation with Whisper:
 
-```powershell
-obs-localvocal> .\release\Release\test\obs-localvocal-tests.exe "C:\Users\roysh\Downloads\audio.mp3" ja none none "...\ggml-model-whisper-small.bin" "...\silero_vad.onnx" "...\m2m-100-418M" ".\config.json"
+```json
+{
+    "whisper_language": "ja",
+    "source_language": "none",
+    "target_language": "none",
+    // ...
+}
 ```
 
 To translate with CT2, make sure the Whisper output is in the spoken language and that it matches the source language.
 For example this would be a Korean-to-Japanese translation with CT2 M2M100:
 
-```powershell
-obs-localvocal> .\release\Release\test\obs-localvocal-tests.exe "C:\Users\roysh\Downloads\audio.mp3" ko __ko__ __ja__ "...\ggml-model-whisper-small.bin" "...\silero_vad.onnx" "...\m2m-100-418M" ".\config.json"
+```json
+{
+    "whisper_language": "ko",
+    "source_language": "__ko__",
+    "target_language": "__ja__",
+    // ...
+}
 ```
 
 ## Evaluation of the results
