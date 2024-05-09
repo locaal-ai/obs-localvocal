@@ -2,6 +2,7 @@
 #include <fstream>
 #include <iostream>
 #include <string>
+#include <regex>
 
 #include <obs-module.h>
 
@@ -13,6 +14,19 @@ std::string find_file_in_folder_by_name(const std::string &folder_path,
 {
 	for (const auto &entry : std::filesystem::directory_iterator(folder_path)) {
 		if (entry.path().filename() == file_name) {
+			return entry.path().string();
+		}
+	}
+	return "";
+}
+
+// Find a file in a folder by expression
+std::string find_file_in_folder_by_regex_expression(const std::string &folder_path,
+						    const std::string &file_name_regex)
+{
+	for (const auto &entry : std::filesystem::directory_iterator(folder_path)) {
+		if (std::regex_match(entry.path().filename().string(),
+				     std::regex(file_name_regex))) {
 			return entry.path().string();
 		}
 	}
