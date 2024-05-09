@@ -165,10 +165,10 @@ read_audio_file(const char *filename, std::function<void(int, int)> initializati
 
 #endif
 
-transcription_filter_data *create_context(int sample_rate, int channels,
-					  const std::string &whisper_model_path,
-					  const std::string &silero_vad_model_file,
-					  const std::string &ct2ModelFolder)
+transcription_filter_data *
+create_context(int sample_rate, int channels, const std::string &whisper_model_path,
+	       const std::string &silero_vad_model_file, const std::string &ct2ModelFolder,
+	       const whisper_sampling_strategy whisper_sampling_method = WHISPER_SAMPLING_GREEDY)
 {
 	struct transcription_filter_data *gf = new transcription_filter_data();
 
@@ -244,7 +244,7 @@ transcription_filter_data *create_context(int sample_rate, int channels,
 	gf->suppress_sentences = "";
 	gf->translate = false;
 
-	gf->whisper_params = whisper_full_default_params(WHISPER_SAMPLING_GREEDY);
+	gf->whisper_params = whisper_full_default_params(whisper_sampling_method);
 	gf->whisper_params.duration_ms = 3000;
 	gf->whisper_params.language = "en";
 	gf->whisper_params.initial_prompt = "";
@@ -319,7 +319,7 @@ void set_text_callback(struct transcription_filter_data *gf,
 						str_copy.c_str(), translated_text.c_str());
 				}
 				// overwrite the original text with the translated text
-				str_copy = translated_text;
+				str_copy = str_copy + " -> " + translated_text;
 			} else {
 				obs_log(gf->log_level, "Failed to translate text");
 			}
@@ -440,6 +440,7 @@ int wmain(int argc, wchar_t *argv[])
 	std::string whisperLanguageStr = config["whisper_language"];
 	std::string ct2ModelFolderStr = config["ct2_model_folder"];
 	std::string logLevelStr = config["log_level"];
+	whisper_sampling_strategy whisper_sampling_method = config["whisper_sampling_method"];
 
 	std::cout << "LocalVocal Offline Test" << std::endl;
 	transcription_filter_data *gf = nullptr;
@@ -447,7 +448,8 @@ int wmain(int argc, wchar_t *argv[])
 	std::vector<std::vector<uint8_t>> audio =
 		read_audio_file(filenameStr.c_str(), [&](int sample_rate, int channels) {
 			gf = create_context(sample_rate, channels, whisperModelPathStr,
-					    sileroVadModelFileStr, ct2ModelFolderStr);
+					    sileroVadModelFileStr, ct2ModelFolderStr,
+					    whisper_sampling_method);
 			if (sourceLanguageStr.empty() || targetLanguageStr.empty() ||
 			    sourceLanguageStr == "none" || targetLanguageStr == "none") {
 				obs_log(LOG_INFO,
