@@ -96,6 +96,8 @@ The tool must receive configuration to test different parameters of the algorith
 - fix UTF8 characters
 - suppress sentences
 - overlap in milliseconds
+- log level (debug, info, warning, error)
+- whisper sampling strategy (0 = greedy, 1 = beam)
 
 The Whisper languages are listed in [whisper-language.h](../whisper-utils/whisper-language.h) and the CT2 language codes are listed in [language_codes.h](../translation/language_codes.h). They roughly match except CT2 has underscores e.g. `ko` -> `__ko__`, `ja` -> `__ja__`.
 
@@ -111,7 +113,9 @@ The JSON config file can look e.g. like
     "ct2_model_folder": ".../obs-localvocal/models/m2m-100-418M",
     "fix_utf8": true,
     "suppress_sentences": "끝까지 시청해주셔서 감사합니다/n구독과 좋아요 부탁드립니다!/nMBC 뉴스 안영백입니다./nMBC 뉴스 이덕영입니다/n구독과 좋아요 눌러주세요!/n구독과 좋아요 부탁드",
-    "overlap_ms": 150
+    "overlap_ms": 150,
+    "log_level": "debug",
+    "whisper_sampling_method": 0
 }
 ```
 
