@@ -7,8 +7,8 @@ if(APPLE)
 
   FetchContent_Declare(
     ctranslate2_fetch
-    URL https://github.com/occ-ai/obs-ai-ctranslate2-dep/releases/download/1.1.1/libctranslate2-macos-Release-1.1.1.tar.gz
-    URL_HASH SHA256=da04d88ecc1ea105f8ee672e4eab33af96e50c999c5cc8170e105e110392182b)
+    URL https://github.com/occ-ai/obs-ai-ctranslate2-dep/releases/download/1.2.0/libctranslate2-macos-Release-1.2.0.tar.gz
+    URL_HASH SHA256=9029F19B0F50E5EDC14473479EDF0A983F7D6FA00BE61DC1B01BF8AA7F1CDB1B)
   FetchContent_MakeAvailable(ctranslate2_fetch)
 
   add_library(ct2 INTERFACE)
