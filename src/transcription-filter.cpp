@@ -147,9 +147,14 @@ void set_text_callback(struct transcription_filter_data *gf,
 	}
 	gf->last_sub_render_time = now;
 
-	// recondition the text
-	std::string str_copy = fix_utf8(result.text);
-	str_copy = remove_leading_trailing_nonalpha(str_copy);
+    std::string str_copy = result.text;
+
+	// recondition the text - only if the output is not English
+    if (gf->whisper_params.language != "en") {
+        str_copy = fix_utf8(str_copy);
+    } else {
+        str_copy = remove_leading_trailing_nonalpha(str_copy);
+    }
 
 	// if suppression is enabled, check if the text is in the suppression list
 	if (!gf->suppress_sentences.empty()) {
