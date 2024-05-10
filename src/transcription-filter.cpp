@@ -150,7 +150,8 @@ void set_text_callback(struct transcription_filter_data *gf,
 	std::string str_copy = result.text;
 
 	// recondition the text - only if the output is not English
-	if (gf->whisper_params.language != "en") {
+	if (gf->whisper_params.language != nullptr &&
+	    strcmp(gf->whisper_params.language, "en") != 0) {
 		str_copy = fix_utf8(str_copy);
 	} else {
 		str_copy = remove_leading_trailing_nonalpha(str_copy);
