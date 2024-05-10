@@ -101,6 +101,7 @@ struct transcription_filter_data {
 
 	// translation context
 	struct translation_context translation_ctx;
+	std::string translation_model_index;
 
 	TokenBufferThread captions_monitor;
 

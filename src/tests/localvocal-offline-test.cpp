@@ -13,6 +13,10 @@
 #include <stdarg.h>
 #include <string.h>
 
+#ifdef _WIN32
+#include <Windows.h>
+#endif
+
 void obs_log(int log_level, const char *format, ...)
 {
 	if (log_level == LOG_DEBUG) {
@@ -107,6 +111,18 @@ read_audio_file(const char *filename, std::function<void(int, int)> initializati
 
 	// print information about the file
 	av_dump_format(formatContext, 0, filename, 0);
+
+	// if the sample format is not float, return
+	if (formatContext->streams[audioStreamIndex]->codecpar->format != AV_SAMPLE_FMT_FLTP) {
+		obs_log(LOG_ERROR,
+			"Sample format is not float (it is %s). Encode the audio file with float sample format."
+			" For example, use the command 'ffmpeg -i input.mp3 -c:a pcm_f32le output.wav' to "
+			"convert the audio file to float format.",
+			av_get_sample_fmt_name(
+				(AVSampleFormat)formatContext->streams[audioStreamIndex]
+					->codecpar->format));
+		return {};
+	}
 
 	initialization_callback(formatContext->streams[audioStreamIndex]->codecpar->sample_rate,
 				formatContext->streams[audioStreamIndex]->codecpar->channels);
@@ -416,6 +432,11 @@ int wmain(int argc, wchar_t *argv[])
 		return 1;
 	}
 
+#ifdef _WIN32
+	// Set console output to UTF-8
+	SetConsoleOutputCP(CP_UTF8);
+#endif
+
 	std::wstring file = argv[1];
 	std::wstring configJsonFile = argv[2];
 
@@ -501,6 +522,7 @@ int wmain(int argc, wchar_t *argv[])
 	}
 
 	// truncate the output file
+	obs_log(LOG_INFO, "Truncating output file");
 	std::ofstream output_file(gf->output_file_path, std::ios::trunc);
 	output_file.close();
 

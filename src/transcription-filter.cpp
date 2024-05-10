@@ -308,10 +308,17 @@ void transcription_filter_update(void *data, obs_data_t *s)
 	gf->translation_ctx.add_context = obs_data_get_bool(s, "translate_add_context");
 	gf->translation_output = obs_data_get_string(s, "translate_output");
 	gf->suppress_sentences = obs_data_get_string(s, "suppress_sentences");
+	gf->translation_model_index = obs_data_get_string(s, "translate_model");
 
 	if (new_translate != gf->translate) {
 		if (new_translate) {
-			start_translation(gf);
+			if (gf->translation_model_index != "whisper-based-translation") {
+				start_translation(gf);
+			} else {
+				// whisper-based translation
+				obs_log(gf->log_level, "Starting whisper-based translation...");
+				gf->translate = false;
+			}
 		} else {
 			gf->translate = false;
 		}
@@ -358,7 +365,12 @@ void transcription_filter_update(void *data, obs_data_t *s)
 	gf->whisper_params = whisper_full_default_params(
 		(whisper_sampling_strategy)obs_data_get_int(s, "whisper_sampling_method"));
 	gf->whisper_params.duration_ms = (int)obs_data_get_int(s, "buffer_size_msec");
-	gf->whisper_params.language = obs_data_get_string(s, "whisper_language_select");
+	if (!new_translate || gf->translation_model_index != "whisper-based-translation") {
+		gf->whisper_params.language = obs_data_get_string(s, "whisper_language_select");
+	} else {
+		// take the language from gf->target_lang
+		gf->whisper_params.language = language_codes_2_reverse[gf->target_lang].c_str();
+	}
 	gf->whisper_params.initial_prompt = obs_data_get_string(s, "initial_prompt");
 	gf->whisper_params.n_threads = (int)obs_data_get_int(s, "n_threads");
 	gf->whisper_params.n_max_text_ctx = (int)obs_data_get_int(s, "n_max_text_ctx");
@@ -635,6 +647,7 @@ void transcription_filter_defaults(obs_data_t *s)
 	obs_data_set_default_string(s, "translate_target_language", "__es__");
 	obs_data_set_default_string(s, "translate_source_language", "__en__");
 	obs_data_set_default_bool(s, "translate_add_context", true);
+	obs_data_set_default_string(s, "translate_model", "whisper-based-translation");
 	obs_data_set_default_string(s, "suppress_sentences", SUPPRESS_SENTENCES_DEFAULT);
 
 	// Whisper parameters
@@ -748,6 +761,21 @@ obs_properties_t *transcription_filter_properties(void *data)
 	obs_properties_t *translation_group = obs_properties_create();
 	obs_property_t *translation_group_prop = obs_properties_add_group(
 		ppts, "translate", MT_("translate"), OBS_GROUP_CHECKABLE, translation_group);
+
+	// add translatio model selection
+	obs_property_t *prop_translate_model = obs_properties_add_list(
+		translation_group, "translate_model", MT_("translate_model"), OBS_COMBO_TYPE_LIST,
+		OBS_COMBO_FORMAT_STRING);
+	// Populate the dropdown with the translation models
+	// add "Whisper-Based Translation" option
+	obs_property_list_add_string(prop_translate_model, MT_("Whisper-Based-Translation"),
+				     "whisper-based-translation");
+	for (const auto &model_info : models_info) {
+		if (model_info.second.type == MODEL_TYPE_TRANSLATION) {
+			obs_property_list_add_string(prop_translate_model, model_info.first.c_str(),
+						     model_info.first.c_str());
+		}
+	}
 	// add target language selection
 	obs_property_t *prop_tgt = obs_properties_add_list(
 		translation_group, "translate_target_language", MT_("target_language"),
@@ -782,8 +810,9 @@ obs_properties_t *transcription_filter_properties(void *data)
 		UNUSED_PARAMETER(property);
 		// Show/Hide the translation group
 		const bool translate_enabled = obs_data_get_bool(settings, "translate");
-		for (const auto &prop : {"translate_target_language", "translate_source_language",
-					 "translate_add_context", "translate_output"}) {
+		for (const auto &prop :
+		     {"translate_target_language", "translate_source_language",
+		      "translate_add_context", "translate_output", "translate_model"}) {
 			obs_property_set_visible(obs_properties_get(props, prop),
 						 translate_enabled);
 		}

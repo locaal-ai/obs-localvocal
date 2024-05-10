@@ -11,6 +11,8 @@
 #include <algorithm>
 #include <cctype>
 #include <cfloat>
+#include <chrono>
+#include <cmath>
 
 #ifdef _WIN32
 #include <fstream>
