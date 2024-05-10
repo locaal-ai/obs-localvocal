@@ -15,7 +15,7 @@ if(APPLE)
   target_link_libraries(ct2 INTERFACE "-framework Accelerate" ${ctranslate2_fetch_SOURCE_DIR}/lib/libctranslate2.a
                                       ${ctranslate2_fetch_SOURCE_DIR}/lib/libcpu_features.a)
   set_target_properties(ct2 PROPERTIES INTERFACE_INCLUDE_DIRECTORIES ${ctranslate2_fetch_SOURCE_DIR}/include)
-  target_compile_options(ct2 INTERFACE -Wno-shorten-64-to-32)
+  target_compile_options(ct2 INTERFACE -Wno-shorten-64-to-32 -Wno-comma)
 
 elseif(WIN32)
 
