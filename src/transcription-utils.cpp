@@ -90,17 +90,18 @@ std::string remove_leading_trailing_nonalpha(const std::string &str)
 {
 	std::string str_copy = str;
 	// remove trailing spaces, newlines, tabs or punctuation
-	str_copy.erase(std::find_if(str_copy.rbegin(), str_copy.rend(),
-				    [](unsigned char ch) {
-					    return !std::isspace(ch) || !std::ispunct(ch);
-				    })
-			       .base(),
-		       str_copy.end());
+	auto last_non_space =
+		std::find_if(str_copy.rbegin(), str_copy.rend(), [](unsigned char ch) {
+			return !std::isspace(ch) || !std::ispunct(ch);
+		}).base();
+	str_copy.erase(last_non_space, str_copy.end());
 	// remove leading spaces, newlines, tabs or punctuation
-	str_copy.erase(str_copy.begin(),
-		       std::find_if(str_copy.begin(), str_copy.end(), [](unsigned char ch) {
-			       return !std::isspace(ch) || !std::ispunct(ch);
-		       }));
+	auto first_non_space = std::find_if(str_copy.begin(), str_copy.end(),
+					    [](unsigned char ch) {
+						    return !std::isspace(ch) || !std::ispunct(ch);
+					    }) +
+			       1;
+	str_copy.erase(str_copy.begin(), first_non_space);
 	return str_copy;
 }
 

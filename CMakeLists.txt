@@ -6,6 +6,7 @@ project(${_name} VERSION ${_version})
 
 option(ENABLE_FRONTEND_API "Use obs-frontend-api for UI functionality" ON)
 option(ENABLE_QT "Use Qt functionality" ON)
+option(ENABLE_TESTS "Enable tests" OFF)
 
 include(compilerconfig)
 include(defaults)
@@ -90,11 +91,41 @@ target_sources(
           src/model-utils/model-downloader.cpp
           src/model-utils/model-downloader-ui.cpp
           src/model-utils/model-infos.cpp
+          src/model-utils/model-find-utils.cpp
           src/whisper-utils/whisper-processing.cpp
           src/whisper-utils/whisper-utils.cpp
+          src/whisper-utils/whisper-model-utils.cpp
           src/whisper-utils/silero-vad-onnx.cpp
           src/whisper-utils/token-buffer-thread.cpp
           src/translation/translation.cpp
+          src/translation/translation-utils.cpp
           src/utils.cpp)
 
 set_target_properties_plugin(${CMAKE_PROJECT_NAME} PROPERTIES OUTPUT_NAME ${_name})
+
+if(ENABLE_TESTS)
+  add_executable(${CMAKE_PROJECT_NAME}-tests)
+
+  include(cmake/FindLibAvObs.cmake)
+
+  target_sources(
+    ${CMAKE_PROJECT_NAME}-tests
+    PRIVATE src/tests/localvocal-offline-test.cpp
+            src/transcription-utils.cpp
+            src/model-utils/model-infos.cpp
+            src/model-utils/model-find-utils.cpp
+            src/whisper-utils/whisper-processing.cpp
+            src/whisper-utils/whisper-utils.cpp
+            src/whisper-utils/silero-vad-onnx.cpp
+            src/whisper-utils/token-buffer-thread.cpp
+            src/translation/translation.cpp
+            src/utils.cpp)
+
+  find_libav(${CMAKE_PROJECT_NAME}-tests)
+
+  target_link_libraries(${CMAKE_PROJECT_NAME}-tests PRIVATE ct2 sentencepiece Whispercpp Ort OBS::libobs)
+  target_include_directories(${CMAKE_PROJECT_NAME}-tests PRIVATE src)
+
+  # install the tests to the release/test directory
+  install(TARGETS ${CMAKE_PROJECT_NAME}-tests DESTINATION test)
+endif()

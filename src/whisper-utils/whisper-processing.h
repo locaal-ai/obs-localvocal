@@ -6,9 +6,9 @@
 // buffer size in msec
 #define DEFAULT_BUFFER_SIZE_MSEC 3000
 // overlap in msec
-#define DEFAULT_OVERLAP_SIZE_MSEC 150
+#define DEFAULT_OVERLAP_SIZE_MSEC 125
 #define MAX_OVERLAP_SIZE_MSEC 1000
-#define MIN_OVERLAP_SIZE_MSEC 150
+#define MIN_OVERLAP_SIZE_MSEC 125
 
 enum DetectionResult {
 	DETECTION_RESULT_UNKNOWN = 0,

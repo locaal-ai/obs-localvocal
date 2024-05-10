@@ -1,6 +1,6 @@
 #include "translation.h"
 #include "plugin-support.h"
-#include "model-utils/model-downloader.h"
+#include "model-utils/model-find-utils.h"
 #include "transcription-filter-data.h"
 
 #include <ctranslate2/translator.h>
@@ -11,11 +11,7 @@
 void build_and_enable_translation(struct transcription_filter_data *gf,
 				  const std::string &model_file_path)
 {
-	if (gf->whisper_ctx_mutex == nullptr) {
-		obs_log(LOG_ERROR, "Whisper context mutex is null");
-		return;
-	}
-	std::lock_guard<std::mutex> lock(*gf->whisper_ctx_mutex);
+	std::lock_guard<std::mutex> lock(gf->whisper_ctx_mutex);
 
 	gf->translation_ctx.local_model_folder_path = model_file_path;
 	if (build_translation_context(gf->translation_ctx) ==
@@ -28,38 +24,13 @@ void build_and_enable_translation(struct transcription_filter_data *gf,
 	}
 }
 
-void start_translation(struct transcription_filter_data *gf)
-{
-	obs_log(LOG_INFO, "Starting translation...");
-
-	const ModelInfo &translation_model_info = models_info["M2M-100 418M (495Mb)"];
-	std::string model_file_found = find_model_folder(translation_model_info);
-	if (model_file_found == "") {
-		obs_log(LOG_INFO, "Translation CT2 model does not exist. Downloading...");
-		download_model_with_ui_dialog(
-			translation_model_info,
-			[gf, model_file_found](int download_status, const std::string &path) {
-				if (download_status == 0) {
-					obs_log(LOG_INFO, "CT2 model download complete");
-					build_and_enable_translation(gf, path);
-				} else {
-					obs_log(LOG_ERROR, "Model download failed");
-					gf->translate = false;
-				}
-			});
-	} else {
-		// Model exists, just load it
-		build_and_enable_translation(gf, model_file_found);
-	}
-}
-
 int build_translation_context(struct translation_context &translation_ctx)
 {
 	std::string local_model_path = translation_ctx.local_model_folder_path;
 	obs_log(LOG_INFO, "Building translation context from '%s'...", local_model_path.c_str());
 	// find the SPM file in the model folder
-	std::string local_spm_path =
-		find_file_in_folder_by_name(local_model_path, "sentencepiece.bpe.model");
+	std::string local_spm_path = find_file_in_folder_by_regex_expression(
+		local_model_path, "(sentencepiece|spm).*?\\.model");
 
 	try {
 		obs_log(LOG_INFO, "Loading SPM from %s", local_spm_path.c_str());

@@ -8,8 +8,10 @@
 #include "model-utils/model-downloader.h"
 #include "whisper-utils/whisper-processing.h"
 #include "whisper-utils/whisper-language.h"
+#include "whisper-utils/whisper-model-utils.h"
 #include "whisper-utils/whisper-utils.h"
 #include "translation/language_codes.h"
+#include "translation/translation-utils.h"
 #include "translation/translation.h"
 #include "utils.h"
 
@@ -23,37 +25,6 @@
 #endif
 
 #include <QString>
-
-inline enum speaker_layout convert_speaker_layout(uint8_t channels)
-{
-	switch (channels) {
-	case 0:
-		return SPEAKERS_UNKNOWN;
-	case 1:
-		return SPEAKERS_MONO;
-	case 2:
-		return SPEAKERS_STEREO;
-	case 3:
-		return SPEAKERS_2POINT1;
-	case 4:
-		return SPEAKERS_4POINT0;
-	case 5:
-		return SPEAKERS_4POINT1;
-	case 6:
-		return SPEAKERS_5POINT1;
-	case 8:
-		return SPEAKERS_7POINT1;
-	default:
-		return SPEAKERS_UNKNOWN;
-	}
-}
-
-inline uint64_t now_ms()
-{
-	return std::chrono::duration_cast<std::chrono::milliseconds>(
-		       std::chrono::system_clock::now().time_since_epoch())
-		.count();
-}
 
 bool add_sources_to_list(void *list_property, obs_source_t *source)
 {
@@ -97,13 +68,8 @@ struct obs_audio_data *transcription_filter_filter_audio(void *data, struct obs_
 		return audio;
 	}
 
-	if (!gf->whisper_buf_mutex || !gf->whisper_ctx_mutex) {
-		obs_log(LOG_ERROR, "whisper mutexes are null");
-		return audio;
-	}
-
 	{
-		std::lock_guard<std::mutex> lock(*gf->whisper_buf_mutex); // scoped lock
+		std::lock_guard<std::mutex> lock(gf->whisper_buf_mutex); // scoped lock
 		// push back current audio data to input circlebuf
 		for (size_t c = 0; c < gf->channels; c++) {
 			circlebuf_push_back(&gf->input_buffers[c], audio->data[c],
@@ -138,7 +104,7 @@ void transcription_filter_destroy(void *data)
 	}
 
 	{
-		std::lock_guard<std::mutex> lockbuf(*gf->whisper_buf_mutex);
+		std::lock_guard<std::mutex> lockbuf(gf->whisper_buf_mutex);
 		bfree(gf->copy_buffers[0]);
 		gf->copy_buffers[0] = nullptr;
 		for (size_t i = 0; i < gf->channels; i++) {
@@ -147,11 +113,7 @@ void transcription_filter_destroy(void *data)
 	}
 	circlebuf_free(&gf->info_buffer);
 
-	delete gf->whisper_buf_mutex;
-	delete gf->whisper_ctx_mutex;
-	delete gf->wshiper_thread_cv;
-
-	delete gf;
+	bfree(gf);
 }
 
 void send_caption_to_source(const std::string &target_source_name, const std::string &str_copy,
@@ -185,9 +147,15 @@ void set_text_callback(struct transcription_filter_data *gf,
 	}
 	gf->last_sub_render_time = now;
 
-	// recondition the text
-	std::string str_copy = fix_utf8(result.text);
-	str_copy = remove_leading_trailing_nonalpha(str_copy);
+	std::string str_copy = result.text;
+
+	// recondition the text - only if the output is not English
+	if (gf->whisper_params.language != nullptr &&
+	    strcmp(gf->whisper_params.language, "en") != 0) {
+		str_copy = fix_utf8(str_copy);
+	} else {
+		str_copy = remove_leading_trailing_nonalpha(str_copy);
+	}
 
 	// if suppression is enabled, check if the text is in the suppression list
 	if (!gf->suppress_sentences.empty()) {
@@ -340,10 +308,17 @@ void transcription_filter_update(void *data, obs_data_t *s)
 	gf->translation_ctx.add_context = obs_data_get_bool(s, "translate_add_context");
 	gf->translation_output = obs_data_get_string(s, "translate_output");
 	gf->suppress_sentences = obs_data_get_string(s, "suppress_sentences");
+	gf->translation_model_index = obs_data_get_string(s, "translate_model");
 
 	if (new_translate != gf->translate) {
 		if (new_translate) {
-			start_translation(gf);
+			if (gf->translation_model_index != "whisper-based-translation") {
+				start_translation(gf);
+			} else {
+				// whisper-based translation
+				obs_log(gf->log_level, "Starting whisper-based translation...");
+				gf->translate = false;
+			}
 		} else {
 			gf->translate = false;
 		}
@@ -381,21 +356,21 @@ void transcription_filter_update(void *data, obs_data_t *s)
 		obs_weak_source_release(old_weak_text_source);
 	}
 
-	if (gf->whisper_ctx_mutex == nullptr) {
-		obs_log(LOG_ERROR, "whisper_ctx_mutex is null");
-		return;
-	}
-
 	obs_log(gf->log_level, "update whisper model");
 	update_whisper_model(gf, s);
 
 	obs_log(gf->log_level, "update whisper params");
-	std::lock_guard<std::mutex> lock(*gf->whisper_ctx_mutex);
+	std::lock_guard<std::mutex> lock(gf->whisper_ctx_mutex);
 
 	gf->whisper_params = whisper_full_default_params(
 		(whisper_sampling_strategy)obs_data_get_int(s, "whisper_sampling_method"));
 	gf->whisper_params.duration_ms = (int)obs_data_get_int(s, "buffer_size_msec");
-	gf->whisper_params.language = obs_data_get_string(s, "whisper_language_select");
+	if (!new_translate || gf->translation_model_index != "whisper-based-translation") {
+		gf->whisper_params.language = obs_data_get_string(s, "whisper_language_select");
+	} else {
+		// take the language from gf->target_lang
+		gf->whisper_params.language = language_codes_2_reverse[gf->target_lang].c_str();
+	}
 	gf->whisper_params.initial_prompt = obs_data_get_string(s, "initial_prompt");
 	gf->whisper_params.n_threads = (int)obs_data_get_int(s, "n_threads");
 	gf->whisper_params.n_max_text_ctx = (int)obs_data_get_int(s, "n_max_text_ctx");
@@ -425,7 +400,8 @@ void *transcription_filter_create(obs_data_t *settings, obs_source_t *filter)
 {
 	obs_log(LOG_INFO, "LocalVocal filter create");
 
-	struct transcription_filter_data *gf = new transcription_filter_data();
+	void *data = bmalloc(sizeof(struct transcription_filter_data));
+	struct transcription_filter_data *gf = new (data) transcription_filter_data();
 
 	// Get the number of channels for the input source
 	gf->channels = audio_output_get_channels(obs_get_audio());
@@ -479,10 +455,6 @@ void *transcription_filter_create(obs_data_t *settings, obs_source_t *filter)
 
 	gf->resampler_to_whisper = audio_resampler_create(&dst, &src);
 
-	obs_log(gf->log_level, "setup mutexes and condition variables");
-	gf->whisper_buf_mutex = new std::mutex();
-	gf->whisper_ctx_mutex = new std::mutex();
-	gf->wshiper_thread_cv = new std::condition_variable();
 	obs_log(gf->log_level, "clear text source data");
 	const char *subtitle_sources = obs_data_get_string(settings, "subtitle_sources");
 	if (subtitle_sources == nullptr || strcmp(subtitle_sources, "none") == 0 ||
@@ -675,6 +647,7 @@ void transcription_filter_defaults(obs_data_t *s)
 	obs_data_set_default_string(s, "translate_target_language", "__es__");
 	obs_data_set_default_string(s, "translate_source_language", "__en__");
 	obs_data_set_default_bool(s, "translate_add_context", true);
+	obs_data_set_default_string(s, "translate_model", "whisper-based-translation");
 	obs_data_set_default_string(s, "suppress_sentences", SUPPRESS_SENTENCES_DEFAULT);
 
 	// Whisper parameters
@@ -788,6 +761,21 @@ obs_properties_t *transcription_filter_properties(void *data)
 	obs_properties_t *translation_group = obs_properties_create();
 	obs_property_t *translation_group_prop = obs_properties_add_group(
 		ppts, "translate", MT_("translate"), OBS_GROUP_CHECKABLE, translation_group);
+
+	// add translatio model selection
+	obs_property_t *prop_translate_model = obs_properties_add_list(
+		translation_group, "translate_model", MT_("translate_model"), OBS_COMBO_TYPE_LIST,
+		OBS_COMBO_FORMAT_STRING);
+	// Populate the dropdown with the translation models
+	// add "Whisper-Based Translation" option
+	obs_property_list_add_string(prop_translate_model, MT_("Whisper-Based-Translation"),
+				     "whisper-based-translation");
+	for (const auto &model_info : models_info) {
+		if (model_info.second.type == MODEL_TYPE_TRANSLATION) {
+			obs_property_list_add_string(prop_translate_model, model_info.first.c_str(),
+						     model_info.first.c_str());
+		}
+	}
 	// add target language selection
 	obs_property_t *prop_tgt = obs_properties_add_list(
 		translation_group, "translate_target_language", MT_("target_language"),
@@ -822,8 +810,9 @@ obs_properties_t *transcription_filter_properties(void *data)
 		UNUSED_PARAMETER(property);
 		// Show/Hide the translation group
 		const bool translate_enabled = obs_data_get_bool(settings, "translate");
-		for (const auto &prop : {"translate_target_language", "translate_source_language",
-					 "translate_add_context", "translate_output"}) {
+		for (const auto &prop :
+		     {"translate_target_language", "translate_source_language",
+		      "translate_add_context", "translate_output", "translate_model"}) {
 			obs_property_set_visible(obs_properties_get(props, prop),
 						 translate_enabled);
 		}

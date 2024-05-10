@@ -11,12 +11,14 @@
 #include <algorithm>
 #include <cctype>
 #include <cfloat>
+#include <chrono>
+#include <cmath>
 
 #ifdef _WIN32
 #include <fstream>
 #include <Windows.h>
 #endif
-#include "model-utils/model-downloader.h"
+#include "model-utils/model-find-utils.h"
 
 #define VAD_THOLD 0.0001f
 #define FREQ_THOLD 100.0f
@@ -229,7 +231,7 @@ struct DetectionResultWithText run_whisper_inference(struct transcription_filter
 		int(pcm32f_size), float(pcm32f_size) / WHISPER_SAMPLE_RATE,
 		gf->whisper_params.n_threads);
 
-	std::lock_guard<std::mutex> lock(*gf->whisper_ctx_mutex);
+	std::lock_guard<std::mutex> lock(gf->whisper_ctx_mutex);
 	if (gf->whisper_context == nullptr) {
 		obs_log(LOG_WARNING, "whisper context is null");
 		return {DETECTION_RESULT_UNKNOWN, "", 0, 0, {}};
@@ -339,7 +341,7 @@ void process_audio_from_buffer(struct transcription_filter_data *gf)
 
 	{
 		// scoped lock the buffer mutex
-		std::lock_guard<std::mutex> lock(*gf->whisper_buf_mutex);
+		std::lock_guard<std::mutex> lock(gf->whisper_buf_mutex);
 
 		// We need (gf->frames - gf->last_num_frames) new frames for a full segment,
 		const size_t remaining_frames_to_full_segment = gf->frames - gf->last_num_frames;
@@ -419,7 +421,7 @@ void process_audio_from_buffer(struct transcription_filter_data *gf)
 	if (gf->vad_enabled) {
 		std::vector<float> vad_input(resampled_16khz[0],
 					     resampled_16khz[0] + resampled_16khz_frames);
-		gf->vad->process(vad_input);
+		gf->vad->process(vad_input, false);
 
 		std::vector<timestamp_t> stamps = gf->vad->get_speech_timestamps();
 		if (stamps.size() == 0) {
@@ -526,25 +528,12 @@ void whisper_loop(void *data)
 	struct transcription_filter_data *gf =
 		static_cast<struct transcription_filter_data *>(data);
 
-	{
-		std::lock_guard<std::mutex> lock(*gf->whisper_ctx_mutex);
-		if (gf->whisper_context == nullptr) {
-			obs_log(LOG_WARNING,
-				"Whisper context is null. Whisper thread cannot start");
-			return;
-		}
-	}
-
 	obs_log(LOG_INFO, "starting whisper thread");
 
 	// Thread main loop
 	while (true) {
 		{
-			if (gf->whisper_ctx_mutex == nullptr) {
-				obs_log(LOG_WARNING, "whisper_ctx_mutex is null, exiting thread");
-				break;
-			}
-			std::lock_guard<std::mutex> lock(*gf->whisper_ctx_mutex);
+			std::lock_guard<std::mutex> lock(gf->whisper_ctx_mutex);
 			if (gf->whisper_context == nullptr) {
 				obs_log(LOG_WARNING, "Whisper context is null, exiting thread");
 				break;
@@ -555,7 +544,7 @@ void whisper_loop(void *data)
 		while (true) {
 			size_t input_buf_size = 0;
 			{
-				std::lock_guard<std::mutex> lock(*gf->whisper_buf_mutex);
+				std::lock_guard<std::mutex> lock(gf->whisper_buf_mutex);
 				input_buf_size = gf->input_buffers[0].size;
 			}
 			const size_t step_size_frames = gf->step_size_msec * gf->sample_rate / 1000;
@@ -563,10 +552,9 @@ void whisper_loop(void *data)
 
 			if (input_buf_size >= segment_size) {
 				obs_log(gf->log_level,
-					"found %lu bytes, %lu frames in input buffer, need >= %lu, processing",
+					"found %lu bytes, %lu frames in input buffer, need >= %lu",
 					input_buf_size, (size_t)(input_buf_size / sizeof(float)),
 					segment_size);
-
 				// Process the audio. This will also remove the processed data from the input buffer.
 				// Mutex is locked inside process_audio_from_buffer.
 				process_audio_from_buffer(gf);
@@ -577,8 +565,8 @@ void whisper_loop(void *data)
 		// Sleep for 10 ms using the condition variable wshiper_thread_cv
 		// This will wake up the thread if there is new data in the input buffer
 		// or if the whisper context is null
-		std::unique_lock<std::mutex> lock(*gf->whisper_ctx_mutex);
-		gf->wshiper_thread_cv->wait_for(lock, std::chrono::milliseconds(10));
+		std::unique_lock<std::mutex> lock(gf->whisper_ctx_mutex);
+		gf->wshiper_thread_cv.wait_for(lock, std::chrono::milliseconds(10));
 	}
 
 	obs_log(LOG_INFO, "exiting whisper thread");

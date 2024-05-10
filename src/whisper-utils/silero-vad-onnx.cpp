@@ -90,12 +90,13 @@ void VadIterator::init_onnx_model(const SileroString &model_path)
 	session = std::make_shared<Ort::Session>(env, model_path.c_str(), session_options);
 };
 
-void VadIterator::reset_states()
+void VadIterator::reset_states(bool reset_hc)
 {
-	// Call reset before each audio start
-	std::memset(_h.data(), 0.0f, _h.size() * sizeof(float));
-	std::memset(_c.data(), 0.0f, _c.size() * sizeof(float));
-	triggered = false;
+	if (reset_hc) {
+		std::memset(_h.data(), 0.0f, _h.size() * sizeof(float));
+		std::memset(_c.data(), 0.0f, _c.size() * sizeof(float));
+		triggered = false;
+	}
 	temp_end = 0;
 	current_sample = 0;
 
@@ -105,7 +106,7 @@ void VadIterator::reset_states()
 	current_speech = timestamp_t();
 };
 
-void VadIterator::predict(const std::vector<float> &data)
+float VadIterator::predict_one(const std::vector<float> &data)
 {
 	// Infer
 	// Create ort tensors
@@ -137,6 +138,13 @@ void VadIterator::predict(const std::vector<float> &data)
 	std::memcpy(_h.data(), hn, size_hc * sizeof(float));
 	float *cn = ort_outputs[2].GetTensorMutableData<float>();
 	std::memcpy(_c.data(), cn, size_hc * sizeof(float));
+
+	return speech_prob;
+}
+
+void VadIterator::predict(const std::vector<float> &data)
+{
+	const float speech_prob = predict_one(data);
 
 	// Push forward sample index
 	current_sample += (unsigned int)window_size_samples;
@@ -254,9 +262,9 @@ void VadIterator::predict(const std::vector<float> &data)
 	}
 };
 
-void VadIterator::process(const std::vector<float> &input_wav)
+void VadIterator::process(const std::vector<float> &input_wav, bool reset_hc)
 {
-	reset_states();
+	reset_states(reset_hc);
 
 	audio_length_samples = (int)input_wav.size();
 
@@ -280,7 +288,7 @@ void VadIterator::process(const std::vector<float> &input_wav)
 
 void VadIterator::process(const std::vector<float> &input_wav, std::vector<float> &output_wav)
 {
-	process(input_wav);
+	process(input_wav, true);
 	collect_chunks(input_wav, output_wav);
 }
 
