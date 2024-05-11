@@ -53,10 +53,6 @@ void obs_log(int log_level, const char *format, ...)
 		printf("[UNKNOWN] ");
 		break;
 	}
-	// convert format to wstring
-	std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
-	std::wstring wformat = converter.from_bytes(format);
-
 	// print format with arguments with utf-8 support
 	va_list args;
 	va_start(args, format);
@@ -115,8 +111,8 @@ read_audio_file(const char *filename, std::function<void(int, int)> initializati
 	// if the sample format is not float, return
 	if (formatContext->streams[audioStreamIndex]->codecpar->format != AV_SAMPLE_FMT_FLTP) {
 		obs_log(LOG_ERROR,
-			"Sample format is not float (it is %s). Encode the audio file with float sample format."
-			" For example, use the command 'ffmpeg -i input.mp3 -c:a pcm_f32le output.wav' to "
+			"Sample format is not float (it is %s). Encode the audio file with float planar sample format."
+			" For example, use the command 'ffmpeg -i input.mp3 -f f32le -acodec pcm_f32le output.f32le'",
 			"convert the audio file to float format.",
 			av_get_sample_fmt_name(
 				(AVSampleFormat)formatContext->streams[audioStreamIndex]
@@ -191,7 +187,7 @@ create_context(int sample_rate, int channels, const std::string &whisper_model_p
 	gf->log_level = LOG_DEBUG;
 	gf->channels = channels;
 	gf->sample_rate = sample_rate;
-	gf->frames = (size_t)((float)gf->sample_rate / (1000.0f / 3000.0));
+	gf->frames = (size_t)((float)gf->sample_rate * 10.0f);
 	gf->last_num_frames = 0;
 	gf->step_size_msec = 3000;
 	gf->min_sub_duration = 3000;
@@ -208,6 +204,7 @@ create_context(int sample_rate, int channels, const std::string &whisper_model_p
 		circlebuf_init(&gf->input_buffers[i]);
 	}
 	circlebuf_init(&gf->info_buffer);
+	circlebuf_init(&gf->whisper_buffer);
 
 	// allocate copy buffers
 	gf->copy_buffers[0] =
@@ -215,6 +212,7 @@ create_context(int sample_rate, int channels, const std::string &whisper_model_p
 	for (size_t c = 1; c < gf->channels; c++) { // set the channel pointers
 		gf->copy_buffers[c] = gf->copy_buffers[0] + c * gf->frames;
 	}
+	obs_log(LOG_INFO, " allocated %llu bytes ", gf->channels * gf->frames * sizeof(float));
 
 	gf->overlap_ms = 150;
 	gf->overlap_frames = (size_t)((float)gf->sample_rate / (1000.0f / (float)gf->overlap_ms));
@@ -420,6 +418,7 @@ void release_context(transcription_filter_data *gf)
 		}
 	}
 	circlebuf_free(&gf->info_buffer);
+	circlebuf_free(&gf->whisper_buffer);
 
 	delete gf;
 }
@@ -560,6 +559,9 @@ int wmain(int argc, wchar_t *argv[])
 			}
 		}
 	}
+
+	obs_log(LOG_INFO, "Buffer filled with %d frames",
+		(int)gf->input_buffers[0].size / sizeof(float));
 
 	// wait for processing to finish
 	obs_log(LOG_INFO, "Waiting for processing to finish");

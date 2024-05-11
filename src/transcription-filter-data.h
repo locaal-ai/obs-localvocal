@@ -47,6 +47,7 @@ struct transcription_filter_data {
 	float *copy_buffers[MAX_PREPROC_CHANNELS];
 	struct circlebuf info_buffer;
 	struct circlebuf input_buffers[MAX_PREPROC_CHANNELS];
+	struct circlebuf whisper_buffer;
 
 	/* Resampler */
 	audio_resampler_t *resampler_to_whisper;

@@ -44,8 +44,7 @@ void start_whisper_thread_with_path(struct transcription_filter_data *gf,
 #endif
 	// roughly following https://github.com/SYSTRAN/faster-whisper/blob/master/faster_whisper/vad.py
 	// for silero vad parameters
-	gf->vad.reset(new VadIterator(silero_vad_model_path, WHISPER_SAMPLE_RATE, 64, 0.5f, 500,
-				      200, 250));
+	gf->vad.reset(new VadIterator(silero_vad_model_path, WHISPER_SAMPLE_RATE));
 
 	gf->whisper_context = init_whisper_context(whisper_model_path, gf);
 	if (gf->whisper_context == nullptr) {

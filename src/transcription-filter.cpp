@@ -406,8 +406,7 @@ void *transcription_filter_create(obs_data_t *settings, obs_source_t *filter)
 	// Get the number of channels for the input source
 	gf->channels = audio_output_get_channels(obs_get_audio());
 	gf->sample_rate = audio_output_get_sample_rate(obs_get_audio());
-	gf->frames = (size_t)((float)gf->sample_rate /
-			      (1000.0f / (float)obs_data_get_int(settings, "buffer_size_msec")));
+	gf->frames = (size_t)((float)gf->sample_rate / (1000.0f / MAX_MS_WORK_BUFFER));
 	gf->last_num_frames = 0;
 	bool step_by_step_processing = obs_data_get_bool(settings, "step_by_step_processing");
 	gf->step_size_msec = step_by_step_processing
@@ -428,6 +427,7 @@ void *transcription_filter_create(obs_data_t *settings, obs_source_t *filter)
 		circlebuf_init(&gf->input_buffers[i]);
 	}
 	circlebuf_init(&gf->info_buffer);
+	circlebuf_init(&gf->whisper_buffer);
 
 	// allocate copy buffers
 	gf->copy_buffers[0] =

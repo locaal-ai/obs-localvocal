@@ -112,7 +112,7 @@ The JSON config file can look e.g. like
     "silero_vad_model_file": ".../obs-localvocal/data/models/silero-vad/silero_vad.onnx",
     "ct2_model_folder": ".../obs-localvocal/models/m2m-100-418M",
     "fix_utf8": true,
-    "suppress_sentences": "끝까지 시청해주셔서 감사합니다/n구독과 좋아요 부탁드립니다!/nMBC 뉴스 안영백입니다./nMBC 뉴스 이덕영입니다/n구독과 좋아요 눌러주세요!/n구독과 좋아요 부탁드",
+    "suppress_sentences": "다음 영상에서 만나요!\nMBC 뉴스 김지경입니다\nMBC 뉴스 김성현입니다\n구독과 좋아요 눌러주세요!\n구독과 좋아요는 저에게 아주 큰\n다음 영상에서 만나요\n끝까지 시청해주셔서 감사합니다\n구독과 좋아요 부탁드립니다!\nMBC 뉴스 이준범입니다\nMBC 뉴스 문재인입니다\nMBC 뉴스 김지연입니다\nMBC 뉴스 안영백입니다.\nMBC 뉴스 이덕영입니다\nMBC 뉴스 김상현입니다\n구독과 좋아요 눌러주세요!\n구독과 좋아요 부탁드",
     "overlap_ms": 150,
     "log_level": "debug",
     "whisper_sampling_method": 0
