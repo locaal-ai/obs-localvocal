@@ -259,7 +259,7 @@ struct DetectionResultWithText run_whisper_inference(struct transcription_filter
 
 	// run the inference
 	int whisper_full_result = -1;
-	gf->whisper_params.duration_ms = pcm32f_size * 1000 / WHISPER_SAMPLE_RATE;
+	gf->whisper_params.duration_ms = (int)(pcm32f_size * 1000 / WHISPER_SAMPLE_RATE);
 	try {
 		whisper_full_result = whisper_full(gf->whisper_context, gf->whisper_params,
 						   pcm32f_data, (int)pcm32f_size);
@@ -693,7 +693,7 @@ void whisper_loop(void *data)
 		{
 			// scoped lock the buffer mutex
 			std::lock_guard<std::mutex> lock(gf->whisper_buf_mutex);
-			num_bytes_on_input = gf->input_buffers[0].size;
+			num_bytes_on_input = (uint32_t)gf->input_buffers[0].size;
 		}
 
 		// only run vad segmentation if there are at least 500 ms of audio in the buffer
