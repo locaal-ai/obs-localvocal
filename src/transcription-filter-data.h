@@ -61,6 +61,7 @@ struct transcription_filter_data {
 	std::unique_ptr<VadIterator> vad;
 
 	float filler_p_threshold;
+	float sentence_psum_accept_thresh;
 
 	bool do_silence;
 	bool vad_enabled;

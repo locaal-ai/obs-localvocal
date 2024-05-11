@@ -257,6 +257,7 @@ create_context(int sample_rate, int channels, const std::string &whisper_model_p
 	gf->translation_output = "";
 	gf->suppress_sentences = "";
 	gf->translate = false;
+	gf->sentence_psum_accept_thresh = 0.4;
 
 	gf->whisper_params = whisper_full_default_params(whisper_sampling_method);
 	gf->whisper_params.duration_ms = 3000;
@@ -273,7 +274,7 @@ create_context(int sample_rate, int channels, const std::string &whisper_model_p
 	gf->whisper_params.print_timestamps = false;
 	gf->whisper_params.token_timestamps = false;
 	gf->whisper_params.thold_pt = 0.01;
-	gf->whisper_params.thold_ptsum = 0.01;
+	gf->whisper_params.thold_ptsum = 0.4;
 	gf->whisper_params.max_len = 0;
 	gf->whisper_params.split_on_word = false;
 	gf->whisper_params.max_tokens = 32;
@@ -558,6 +559,20 @@ int wmain(int argc, wchar_t *argv[])
 				break;
 			}
 		}
+		// push a second of silence to the input circlebuf
+		frames = 2 * gf->sample_rate;
+		frames_size_bytes = frames * frame_size_bytes;
+		for (size_t c = 0; c < gf->channels; c++) {
+			circlebuf_push_back(&gf->input_buffers[c],
+					    std::vector<uint8_t>(frames_size_bytes).data(),
+					    frames_size_bytes);
+		}
+		// push audio packet info (timestamp/frame count) to info circlebuf
+		struct transcription_filter_audio_info info = {0};
+		info.frames = frames; // number of frames in this packet
+		// make a timestamp from the current frame count
+		info.timestamp = frames_count * 1000 / gf->sample_rate;
+		circlebuf_push_back(&gf->info_buffer, &info, sizeof(info));
 	}
 
 	obs_log(LOG_INFO, "Buffer filled with %d frames",

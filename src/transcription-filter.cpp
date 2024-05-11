@@ -362,6 +362,9 @@ void transcription_filter_update(void *data, obs_data_t *s)
 	obs_log(gf->log_level, "update whisper params");
 	std::lock_guard<std::mutex> lock(gf->whisper_ctx_mutex);
 
+	gf->sentence_psum_accept_thresh =
+		(float)obs_data_get_double(s, "sentence_psum_accept_thresh");
+
 	gf->whisper_params = whisper_full_default_params(
 		(whisper_sampling_strategy)obs_data_get_int(s, "whisper_sampling_method"));
 	gf->whisper_params.duration_ms = (int)obs_data_get_int(s, "buffer_size_msec");
@@ -649,6 +652,7 @@ void transcription_filter_defaults(obs_data_t *s)
 	obs_data_set_default_bool(s, "translate_add_context", true);
 	obs_data_set_default_string(s, "translate_model", "whisper-based-translation");
 	obs_data_set_default_string(s, "suppress_sentences", SUPPRESS_SENTENCES_DEFAULT);
+	obs_data_set_default_double(s, "sentence_psum_accept_thresh", 0.4);
 
 	// Whisper parameters
 	obs_data_set_default_int(s, "whisper_sampling_method", WHISPER_SAMPLING_BEAM_SEARCH);
@@ -869,6 +873,8 @@ obs_properties_t *transcription_filter_properties(void *data)
 				      DEFAULT_BUFFER_SIZE_MSEC, 50);
 	obs_properties_add_int_slider(ppts, "min_sub_duration", MT_("min_sub_duration"), 1000, 5000,
 				      50);
+	obs_properties_add_float_slider(ppts, "sentence_psum_accept_thresh",
+					MT_("sentence_psum_accept_thresh"), 0.0, 1.0, 0.05);
 
 	obs_property_set_modified_callback(step_by_step_processing, [](obs_properties_t *props,
 								       obs_property_t *property,

@@ -235,11 +235,12 @@ struct DetectionResultWithText run_whisper_inference(struct transcription_filter
 	if (pcm32f_size_ < WHISPER_SAMPLE_RATE) {
 		obs_log(gf->log_level,
 			"Speech segment is less than 1 second, padding with zeros to 1 second");
+		const size_t new_size = (size_t)(1.01f * (float)(WHISPER_SAMPLE_RATE));
 		// create a new buffer and copy the data to it
-		pcm32f_data = (float *)bzalloc(WHISPER_SAMPLE_RATE * sizeof(float));
-		memset(pcm32f_data, 0, WHISPER_SAMPLE_RATE * sizeof(float));
+		pcm32f_data = (float *)bzalloc(new_size * sizeof(float));
+		memset(pcm32f_data, 0, new_size * sizeof(float));
 		memcpy(pcm32f_data, pcm32f_data_, pcm32f_size_ * sizeof(float));
-		pcm32f_size = WHISPER_SAMPLE_RATE;
+		pcm32f_size = new_size;
 		should_free_buffer = true;
 	}
 
@@ -294,10 +295,10 @@ struct DetectionResultWithText run_whisper_inference(struct transcription_filter
 		std::vector<whisper_token_data> tokens;
 		bool end = false;
 		for (int j = 0; j < n_tokens; ++j) {
-			sentence_p += whisper_full_get_token_p(gf->whisper_context, n_segment, j);
 			// get token
 			whisper_token_data token =
 				whisper_full_get_token_data(gf->whisper_context, n_segment, j);
+			sentence_p += token.p;
 			const char *token_str = whisper_token_to_str(gf->whisper_context, token.id);
 			bool keep = !end;
 			// if the token starts with '[' and ends with ']', don't keep it
@@ -334,6 +335,10 @@ struct DetectionResultWithText run_whisper_inference(struct transcription_filter
 				std::string(token_str).c_str(), token.p, keep);
 		}
 		sentence_p /= (float)n_tokens;
+		if (sentence_p < gf->sentence_psum_accept_thresh) {
+			return {DETECTION_RESULT_SILENCE, "", 0, 0, {}};
+		}
+
 		obs_log(gf->log_level, "Decoded sentence: '%s'", text.c_str());
 
 		if (gf->log_words) {
