@@ -20,6 +20,7 @@
 #include <sstream>
 #include <iomanip>
 #include <bitset>
+#include <regex>
 #ifdef _WIN32
 #include <Windows.h>
 #endif
@@ -154,6 +155,7 @@ void set_text_callback(struct transcription_filter_data *gf,
 	    strcmp(gf->whisper_params.language, "en") != 0) {
 		str_copy = fix_utf8(str_copy);
 	} else {
+		// only remove leading and trailing non-alphanumeric characters if the output is English
 		str_copy = remove_leading_trailing_nonalpha(str_copy);
 	}
 
@@ -162,14 +164,20 @@ void set_text_callback(struct transcription_filter_data *gf,
 		// split the suppression list by newline into individual sentences
 		std::vector<std::string> suppress_sentences_list =
 			split(gf->suppress_sentences, '\n');
+		const std::string original_str_copy = str_copy;
 		// check if the text is in the suppression list
 		for (const std::string &suppress_sentence : suppress_sentences_list) {
-			if (str_copy == suppress_sentence) {
-				obs_log(gf->log_level, "Suppressed sentence: '%s'",
-					str_copy.c_str());
-				gf->last_text = str_copy;
-				return; // do not process the sentence
-			}
+			// if suppress_sentence exists within str_copy, remove it (replace with "")
+			str_copy = std::regex_replace(str_copy, std::regex(suppress_sentence), "");
+		}
+		// if the text was modified, log the original and modified text
+		if (original_str_copy != str_copy) {
+			obs_log(gf->log_level, "------ Suppressed text: '%s' -> '%s'",
+				original_str_copy.c_str(), str_copy.c_str());
+		}
+		if (remove_leading_trailing_nonalpha(str_copy).empty()) {
+			// if the text is empty after suppression, return
+			return;
 		}
 	}
 
@@ -676,7 +684,7 @@ void transcription_filter_defaults(obs_data_t *s)
 	obs_data_set_default_bool(s, "speed_up", false);
 	obs_data_set_default_bool(s, "suppress_blank", false);
 	obs_data_set_default_bool(s, "suppress_non_speech_tokens", true);
-	obs_data_set_default_double(s, "temperature", 0.5);
+	obs_data_set_default_double(s, "temperature", 0.1);
 	obs_data_set_default_double(s, "max_initial_ts", 1.0);
 	obs_data_set_default_double(s, "length_penalty", -1.0);
 }

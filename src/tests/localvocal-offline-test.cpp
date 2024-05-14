@@ -2,6 +2,13 @@
 #include <string>
 #include <codecvt>
 #include <vector>
+#include <fstream>
+#include <thread>
+#include <mutex>
+#include <chrono>
+#include <iomanip>
+#include <regex>
+#include <algorithm>
 
 #include "transcription-filter-data.h"
 #include "transcription-filter.h"
@@ -274,14 +281,14 @@ create_context(int sample_rate, int channels, const std::string &whisper_model_p
 	gf->whisper_params.print_timestamps = false;
 	gf->whisper_params.token_timestamps = false;
 	gf->whisper_params.thold_pt = 0.01;
-	gf->whisper_params.thold_ptsum = 0.4;
+	gf->whisper_params.thold_ptsum = 0.01;
 	gf->whisper_params.max_len = 0;
 	gf->whisper_params.split_on_word = false;
-	gf->whisper_params.max_tokens = 32;
+	gf->whisper_params.max_tokens = 0;
 	gf->whisper_params.speed_up = false;
 	gf->whisper_params.suppress_blank = true;
 	gf->whisper_params.suppress_non_speech_tokens = true;
-	gf->whisper_params.temperature = 0.5;
+	gf->whisper_params.temperature = 0.1;
 	gf->whisper_params.max_initial_ts = 1.0;
 	gf->whisper_params.length_penalty = -1;
 	gf->active = true;
@@ -310,15 +317,16 @@ void set_text_callback(struct transcription_filter_data *gf,
 			// split the suppression list by newline into individual sentences
 			std::vector<std::string> suppress_sentences_list =
 				split(gf->suppress_sentences, '\n');
+			const std::string original_str_copy = str_copy;
 			// check if the text is in the suppression list
 			for (const std::string &suppress_sentence : suppress_sentences_list) {
-				// check if str_copy starts with the suppress sentence
-				if (str_copy.find(suppress_sentence) == 0) {
-					obs_log(LOG_INFO, "Suppressed sentence: '%s'",
-						str_copy.c_str());
-					gf->last_text = str_copy;
-					return; // do not process the sentence
-				}
+				// if suppress_sentence exists within str_copy, remove it (replace with "")
+				str_copy = std::regex_replace(str_copy,
+							      std::regex(suppress_sentence), "");
+			}
+			if (original_str_copy != str_copy) {
+				obs_log(LOG_INFO, "Suppression: '%s' -> '%s'",
+					original_str_copy.c_str(), str_copy.c_str());
 			}
 		}
 
@@ -528,9 +536,9 @@ int wmain(int argc, wchar_t *argv[])
 
 	// fill up the whisper buffer
 	{
-		obs_log(LOG_INFO, "Filling up whisper buffer");
-		std::lock_guard<std::mutex> lock(gf->whisper_buf_mutex); // scoped lock
-		int frames = 4096;
+		obs_log(LOG_INFO, "Sending samples to whisper buffer");
+		// 25 ms worth of frames
+		int frames = gf->sample_rate * 25 / 1000;
 		const int frame_size_bytes = sizeof(float);
 		int frames_size_bytes = frames * frame_size_bytes;
 		int frames_count = 0;
@@ -541,23 +549,32 @@ int wmain(int argc, wchar_t *argv[])
 				frames = audio[0].size() / frame_size_bytes - frames_count;
 				frames_size_bytes = frames * frame_size_bytes;
 			}
-			// push back current audio data to input circlebuf
-			for (size_t c = 0; c < gf->channels; c++) {
-				circlebuf_push_back(&gf->input_buffers[c],
-						    audio[c].data() +
-							    frames_count * frame_size_bytes,
-						    frames_size_bytes);
+			{
+				std::lock_guard<std::mutex> lock(gf->whisper_buf_mutex);
+
+				// push back current audio data to input circlebuf
+				for (size_t c = 0; c < gf->channels; c++) {
+					circlebuf_push_back(&gf->input_buffers[c],
+							    audio[c].data() +
+								    frames_count * frame_size_bytes,
+							    frames_size_bytes);
+				}
+				// push audio packet info (timestamp/frame count) to info circlebuf
+				struct transcription_filter_audio_info info = {0};
+				info.frames = frames; // number of frames in this packet
+				// make a timestamp from the current clock time
+				info.timestamp =
+					std::chrono::duration_cast<std::chrono::nanoseconds>(
+						std::chrono::system_clock::now().time_since_epoch())
+						.count();
+				circlebuf_push_back(&gf->info_buffer, &info, sizeof(info));
 			}
-			// push audio packet info (timestamp/frame count) to info circlebuf
-			struct transcription_filter_audio_info info = {0};
-			info.frames = frames; // number of frames in this packet
-			// make a timestamp from the current frame count
-			info.timestamp = frames_count * 1000 / gf->sample_rate;
-			circlebuf_push_back(&gf->info_buffer, &info, sizeof(info));
 			frames_count += frames;
 			if (frames_count >= audio[0].size() / frame_size_bytes) {
 				break;
 			}
+			// sleep for 25 ms
+			std::this_thread::sleep_for(std::chrono::milliseconds(25));
 		}
 		// push a second of silence to the input circlebuf
 		frames = 2 * gf->sample_rate;
@@ -588,10 +605,8 @@ int wmain(int argc, wchar_t *argv[])
 			std::lock_guard<std::mutex> lock(gf->whisper_buf_mutex);
 			input_buf_size = gf->input_buffers[0].size;
 		}
-		const size_t step_size_frames = gf->step_size_msec * gf->sample_rate / 1000;
-		const size_t segment_size = step_size_frames * sizeof(float);
 
-		if (input_buf_size < segment_size) {
+		if (input_buf_size == 0) {
 			break;
 		}
 	}
