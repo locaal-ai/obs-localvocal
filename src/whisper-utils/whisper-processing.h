@@ -27,6 +27,8 @@ struct DetectionResultWithText {
 	std::vector<whisper_token_data> tokens;
 };
 
+enum VadState { VAD_STATE_WAS_ON = 0, VAD_STATE_WAS_OFF, VAD_STATE_IS_OFF };
+
 void whisper_loop(void *data);
 struct whisper_context *init_whisper_context(const std::string &model_path,
 					     struct transcription_filter_data *gf);

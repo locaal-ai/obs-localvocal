@@ -131,6 +131,13 @@ void send_caption_to_source(const std::string &target_source_name, const std::st
 	obs_source_release(target);
 }
 
+void audio_chunk_callback(struct transcription_filter_data *gf, const float *pcm32f_data,
+			  size_t frames, int vad_state, const DetectionResultWithText &result)
+{
+	// stub
+	;
+}
+
 void set_text_callback(struct transcription_filter_data *gf,
 		       const DetectionResultWithText &resultIn)
 {
@@ -446,6 +453,7 @@ void *transcription_filter_create(obs_data_t *settings, obs_source_t *filter)
 	for (size_t c = 1; c < gf->channels; c++) { // set the channel pointers
 		gf->copy_buffers[c] = gf->copy_buffers[0] + c * gf->frames;
 	}
+	memset(gf->copy_buffers[0], 0, gf->channels * gf->frames * sizeof(float));
 
 	gf->context = filter;
 

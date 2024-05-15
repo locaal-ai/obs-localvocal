@@ -111,6 +111,7 @@ if(ENABLE_TESTS)
   target_sources(
     ${CMAKE_PROJECT_NAME}-tests
     PRIVATE src/tests/localvocal-offline-test.cpp
+            src/tests/audio-file-utils.cpp
             src/transcription-utils.cpp
             src/model-utils/model-infos.cpp
             src/model-utils/model-find-utils.cpp
