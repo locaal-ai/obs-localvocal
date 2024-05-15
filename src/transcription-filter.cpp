@@ -134,8 +134,12 @@ void send_caption_to_source(const std::string &target_source_name, const std::st
 void audio_chunk_callback(struct transcription_filter_data *gf, const float *pcm32f_data,
 			  size_t frames, int vad_state, const DetectionResultWithText &result)
 {
+	UNUSED_PARAMETER(gf);
+	UNUSED_PARAMETER(pcm32f_data);
+	UNUSED_PARAMETER(frames);
+	UNUSED_PARAMETER(vad_state);
+	UNUSED_PARAMETER(result);
 	// stub
-	;
 }
 
 void set_text_callback(struct transcription_filter_data *gf,

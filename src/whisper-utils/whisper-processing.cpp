@@ -8,20 +8,16 @@
 #include "whisper-utils.h"
 #include "transcription-utils.h"
 
-#include <algorithm>
-#include <cctype>
-#include <cfloat>
-#include <chrono>
-#include <cmath>
-
 #ifdef _WIN32
 #include <fstream>
+#define NOMINMAX
 #include <Windows.h>
 #endif
+
 #include "model-utils/model-find-utils.h"
 
-#define VAD_THOLD 0.0001f
-#define FREQ_THOLD 100.0f
+#include <algorithm>
+#include <chrono>
 
 struct vad_state {
 	bool vad_on;
@@ -609,14 +605,14 @@ vad_state vad_based_segmentation(transcription_filter_data *gf, vad_state last_v
 				start_frame = stamps[i - 1].end;
 			} else {
 				// take at least 100ms of audio before the first speech segment, if available
-				start_frame = max(0, start_frame - WHISPER_SAMPLE_RATE / 10);
+				start_frame = std::max(0, start_frame - WHISPER_SAMPLE_RATE / 10);
 			}
 
 			int end_frame = stamps[i].end;
 			if (i == stamps.size() - 1 && stamps[i].end < (int)resampled_16khz_frames) {
 				// take at least 100ms of audio after the last speech segment, if available
-				end_frame = min(end_frame + WHISPER_SAMPLE_RATE / 10,
-						(int)resampled_16khz_frames);
+				end_frame = std::min(end_frame + WHISPER_SAMPLE_RATE / 10,
+						     (int)resampled_16khz_frames);
 			}
 
 			const int number_of_frames = end_frame - start_frame;
