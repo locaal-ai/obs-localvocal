@@ -325,14 +325,18 @@ void transcription_filter_update(void *data, obs_data_t *s)
 	gf->source_lang = obs_data_get_string(s, "translate_source_language");
 	gf->target_lang = obs_data_get_string(s, "translate_target_language");
 	gf->translation_ctx.add_context = obs_data_get_bool(s, "translate_add_context");
+	gf->translation_ctx.input_tokenization_style =
+		(InputTokenizationStyle)obs_data_get_int(s, "translate_input_tokenization_style");
 	gf->translation_output = obs_data_get_string(s, "translate_output");
 	gf->suppress_sentences = obs_data_get_string(s, "suppress_sentences");
-	gf->translation_model_index = obs_data_get_string(s, "translate_model");
+	std::string new_translate_model_index = obs_data_get_string(s, "translate_model");
 	gf->translation_model_path_external =
 		obs_data_get_string(s, "translation_model_path_external");
 
-	if (new_translate != gf->translate) {
+	if (new_translate != gf->translate ||
+	    new_translate_model_index != gf->translation_model_index) {
 		if (new_translate) {
+			gf->translation_model_index = new_translate_model_index;
 			if (gf->translation_model_index != "whisper-based-translation") {
 				start_translation(gf);
 			} else {
@@ -673,6 +677,8 @@ void transcription_filter_defaults(obs_data_t *s)
 	obs_data_set_default_string(s, "translate_source_language", "__en__");
 	obs_data_set_default_bool(s, "translate_add_context", true);
 	obs_data_set_default_string(s, "translate_model", "whisper-based-translation");
+	obs_data_set_default_string(s, "translation_model_path_external", "");
+	obs_data_set_default_int(s, "translate_input_tokenization_style", INPUT_TOKENIZAION_M2M100);
 	obs_data_set_default_string(s, "suppress_sentences", SUPPRESS_SENTENCES_DEFAULT);
 	obs_data_set_default_double(s, "sentence_psum_accept_thresh", 0.4);
 
@@ -859,9 +865,9 @@ obs_properties_t *transcription_filter_properties(void *data)
 		UNUSED_PARAMETER(property);
 		// Show/Hide the translation group
 		const bool translate_enabled = obs_data_get_bool(settings, "translate");
-		for (const auto &prop :
-		     {"translate_target_language", "translate_source_language",
-		      "translate_add_context", "translate_output", "translate_model"}) {
+		for (const auto &prop : {"translate_target_language", "translate_source_language",
+					 "translate_add_context", "translate_output",
+					 "translate_model", "token_style"}) {
 			obs_property_set_visible(obs_properties_get(props, prop),
 						 translate_enabled);
 		}
@@ -872,6 +878,13 @@ obs_properties_t *transcription_filter_properties(void *data)
 					 is_external && translate_enabled);
 		return true;
 	});
+	// add tokenization style options
+	obs_property_t *prop_token_style =
+		obs_properties_add_list(translation_group, "translate_input_tokenization_style",
+					MT_("translate_input_tokenization_style"),
+					OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_INT);
+	obs_property_list_add_int(prop_token_style, "M2M100 Tokens", INPUT_TOKENIZAION_M2M100);
+	obs_property_list_add_int(prop_token_style, "T5 Tokens", INPUT_TOKENIZAION_T5);
 
 	obs_property_t *advanced_settings_prop =
 		obs_properties_add_bool(ppts, "advanced_settings", MT_("advanced_settings"));

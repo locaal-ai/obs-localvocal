@@ -2,6 +2,7 @@
 #include "plugin-support.h"
 #include "model-utils/model-find-utils.h"
 #include "transcription-filter-data.h"
+#include "language_codes.h"
 
 #include <ctranslate2/translator.h>
 #include <sentencepiece_processor.h>
@@ -85,35 +86,53 @@ int translate(struct translation_context &translation_ctx, const std::string &te
 	      const std::string &source_lang, const std::string &target_lang, std::string &result)
 {
 	try {
-		// set input tokens
-		std::vector<std::string> input_tokens = {source_lang, "<s>"};
-		if (translation_ctx.add_context && translation_ctx.last_input_tokens.size() > 0) {
-			input_tokens.insert(input_tokens.end(),
-					    translation_ctx.last_input_tokens.begin(),
-					    translation_ctx.last_input_tokens.end());
+		std::vector<ctranslate2::TranslationResult> results;
+		std::vector<std::string> target_prefix;
+
+		if (translation_ctx.input_tokenization_style == INPUT_TOKENIZAION_M2M100) {
+			// set input tokens
+			std::vector<std::string> input_tokens = {source_lang, "<s>"};
+			if (translation_ctx.add_context &&
+			    translation_ctx.last_input_tokens.size() > 0) {
+				input_tokens.insert(input_tokens.end(),
+						    translation_ctx.last_input_tokens.begin(),
+						    translation_ctx.last_input_tokens.end());
+			}
+			std::vector<std::string> new_input_tokens = translation_ctx.tokenizer(text);
+			input_tokens.insert(input_tokens.end(), new_input_tokens.begin(),
+					    new_input_tokens.end());
+			input_tokens.push_back("</s>");
+
+			translation_ctx.last_input_tokens = new_input_tokens;
+
+			const std::vector<std::vector<std::string>> batch = {input_tokens};
+
+			// get target prefix
+			target_prefix = {target_lang};
+			if (translation_ctx.add_context &&
+			    translation_ctx.last_translation_tokens.size() > 0) {
+				target_prefix.insert(
+					target_prefix.end(),
+					translation_ctx.last_translation_tokens.begin(),
+					translation_ctx.last_translation_tokens.end());
+			}
+
+			const std::vector<std::vector<std::string>> target_prefix_batch = {
+				target_prefix};
+			results = translation_ctx.translator->translate_batch(
+				batch, target_prefix_batch, *translation_ctx.options);
+		} else {
+			// set input tokens
+			std::vector<std::string> input_tokens = {};
+			std::vector<std::string> new_input_tokens = translation_ctx.tokenizer(
+				"<2" + language_codes_2_reverse[target_lang] + "> " + text);
+			input_tokens.insert(input_tokens.end(), new_input_tokens.begin(),
+					    new_input_tokens.end());
+			const std::vector<std::vector<std::string>> batch = {input_tokens};
+
+			results = translation_ctx.translator->translate_batch(
+				batch, {}, *translation_ctx.options);
 		}
-		std::vector<std::string> new_input_tokens = translation_ctx.tokenizer(text);
-		input_tokens.insert(input_tokens.end(), new_input_tokens.begin(),
-				    new_input_tokens.end());
-		input_tokens.push_back("</s>");
-
-		translation_ctx.last_input_tokens = new_input_tokens;
-
-		const std::vector<std::vector<std::string>> batch = {input_tokens};
-
-		// get target prefix
-		std::vector<std::string> target_prefix = {target_lang};
-		if (translation_ctx.add_context &&
-		    translation_ctx.last_translation_tokens.size() > 0) {
-			target_prefix.insert(target_prefix.end(),
-					     translation_ctx.last_translation_tokens.begin(),
-					     translation_ctx.last_translation_tokens.end());
-		}
-
-		const std::vector<std::vector<std::string>> target_prefix_batch = {target_prefix};
-		const std::vector<ctranslate2::TranslationResult> results =
-			translation_ctx.translator->translate_batch(batch, target_prefix_batch,
-								    *translation_ctx.options);
 
 		const auto &tokens_result = results[0].output();
 		// take the tokens from the target_prefix length to the end
