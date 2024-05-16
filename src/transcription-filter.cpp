@@ -812,9 +812,9 @@ obs_properties_t *transcription_filter_properties(void *data)
 	obs_property_list_add_string(prop_translate_model, MT_("load_external_model"),
 				     "!!!external!!!");
 	// add callback to handle the external model file selection
-	obs_property_t *translation_model_path_external = obs_properties_add_path(
-		translation_group, "translation_model_path_external", MT_("external_model_folder"),
-		OBS_PATH_DIRECTORY, "CT2 Model folder", NULL);
+	obs_properties_add_path(translation_group, "translation_model_path_external",
+				MT_("external_model_folder"), OBS_PATH_DIRECTORY,
+				"CT2 Model folder", NULL);
 	// Hide the external model file selection input
 	obs_property_set_visible(obs_properties_get(ppts, "translation_model_path_external"),
 				 false);
