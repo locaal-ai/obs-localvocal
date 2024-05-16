@@ -47,6 +47,7 @@ struct transcription_filter_data {
 	float *copy_buffers[MAX_PREPROC_CHANNELS];
 	struct circlebuf info_buffer;
 	struct circlebuf input_buffers[MAX_PREPROC_CHANNELS];
+	struct circlebuf whisper_buffer;
 
 	/* Resampler */
 	audio_resampler_t *resampler_to_whisper;
@@ -60,6 +61,7 @@ struct transcription_filter_data {
 	std::unique_ptr<VadIterator> vad;
 
 	float filler_p_threshold;
+	float sentence_psum_accept_thresh;
 
 	bool do_silence;
 	bool vad_enabled;
@@ -80,6 +82,7 @@ struct transcription_filter_data {
 	bool enable_token_ts_dtw = false;
 	std::string suppress_sentences;
 	bool fix_utf8 = true;
+	bool enable_audio_chunks_callback = false;
 
 	// Last transcription result
 	std::string last_text;
@@ -102,6 +105,7 @@ struct transcription_filter_data {
 	// translation context
 	struct translation_context translation_ctx;
 	std::string translation_model_index;
+	std::string translation_model_path_external;
 
 	TokenBufferThread captions_monitor;
 
@@ -124,9 +128,15 @@ struct transcription_filter_data {
 // Audio packet info
 struct transcription_filter_audio_info {
 	uint32_t frames;
-	uint64_t timestamp;
+	uint64_t timestamp; // absolute (since epoch) timestamp in ns
 };
 
+// Callback sent when the transcription has a new result
 void set_text_callback(struct transcription_filter_data *gf, const DetectionResultWithText &str);
+
+// Callback sent when the VAD finds an audio chunk. Sample rate = WHISPER_SAMPLE_RATE, channels = 1
+// The audio chunk is in 32-bit float format
+void audio_chunk_callback(struct transcription_filter_data *gf, const float *pcm32f_data,
+			  size_t frames, int vad_state, const DetectionResultWithText &result);
 
 #endif /* TRANSCRIPTION_FILTER_DATA_H */

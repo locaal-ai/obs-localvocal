@@ -57,7 +57,7 @@ public:
 private:
 	// model config
 	int64_t window_size_samples; // Assign when init, support 256 512 768 for 8k; 512 1024 1536 for 16k.
-	int sample_rate;             //Assign when init support 16000 or 8000
+	int sample_rate;             // Assign when init support 16000 or 8000
 	int sr_per_ms;               // Assign when init, support 8 or 16
 	float threshold;
 	int min_silence_samples;               // sr_per_ms * #ms

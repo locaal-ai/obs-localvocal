@@ -97,6 +97,7 @@ target_sources(
           src/whisper-utils/whisper-model-utils.cpp
           src/whisper-utils/silero-vad-onnx.cpp
           src/whisper-utils/token-buffer-thread.cpp
+          src/translation/language_codes.cpp
           src/translation/translation.cpp
           src/translation/translation-utils.cpp
           src/utils.cpp)
@@ -111,6 +112,7 @@ if(ENABLE_TESTS)
   target_sources(
     ${CMAKE_PROJECT_NAME}-tests
     PRIVATE src/tests/localvocal-offline-test.cpp
+            src/tests/audio-file-utils.cpp
             src/transcription-utils.cpp
             src/model-utils/model-infos.cpp
             src/model-utils/model-find-utils.cpp
@@ -118,6 +120,7 @@ if(ENABLE_TESTS)
             src/whisper-utils/whisper-utils.cpp
             src/whisper-utils/silero-vad-onnx.cpp
             src/whisper-utils/token-buffer-thread.cpp
+            src/translation/language_codes.cpp
             src/translation/translation.cpp
             src/utils.cpp)
 

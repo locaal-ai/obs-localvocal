@@ -20,6 +20,7 @@
 #include <sstream>
 #include <iomanip>
 #include <bitset>
+#include <regex>
 #ifdef _WIN32
 #include <Windows.h>
 #endif
@@ -130,6 +131,17 @@ void send_caption_to_source(const std::string &target_source_name, const std::st
 	obs_source_release(target);
 }
 
+void audio_chunk_callback(struct transcription_filter_data *gf, const float *pcm32f_data,
+			  size_t frames, int vad_state, const DetectionResultWithText &result)
+{
+	UNUSED_PARAMETER(gf);
+	UNUSED_PARAMETER(pcm32f_data);
+	UNUSED_PARAMETER(frames);
+	UNUSED_PARAMETER(vad_state);
+	UNUSED_PARAMETER(result);
+	// stub
+}
+
 void set_text_callback(struct transcription_filter_data *gf,
 		       const DetectionResultWithText &resultIn)
 {
@@ -154,6 +166,7 @@ void set_text_callback(struct transcription_filter_data *gf,
 	    strcmp(gf->whisper_params.language, "en") != 0) {
 		str_copy = fix_utf8(str_copy);
 	} else {
+		// only remove leading and trailing non-alphanumeric characters if the output is English
 		str_copy = remove_leading_trailing_nonalpha(str_copy);
 	}
 
@@ -162,14 +175,20 @@ void set_text_callback(struct transcription_filter_data *gf,
 		// split the suppression list by newline into individual sentences
 		std::vector<std::string> suppress_sentences_list =
 			split(gf->suppress_sentences, '\n');
+		const std::string original_str_copy = str_copy;
 		// check if the text is in the suppression list
 		for (const std::string &suppress_sentence : suppress_sentences_list) {
-			if (str_copy == suppress_sentence) {
-				obs_log(gf->log_level, "Suppressed sentence: '%s'",
-					str_copy.c_str());
-				gf->last_text = str_copy;
-				return; // do not process the sentence
-			}
+			// if suppress_sentence exists within str_copy, remove it (replace with "")
+			str_copy = std::regex_replace(str_copy, std::regex(suppress_sentence), "");
+		}
+		// if the text was modified, log the original and modified text
+		if (original_str_copy != str_copy) {
+			obs_log(gf->log_level, "------ Suppressed text: '%s' -> '%s'",
+				original_str_copy.c_str(), str_copy.c_str());
+		}
+		if (remove_leading_trailing_nonalpha(str_copy).empty()) {
+			// if the text is empty after suppression, return
+			return;
 		}
 	}
 
@@ -306,12 +325,18 @@ void transcription_filter_update(void *data, obs_data_t *s)
 	gf->source_lang = obs_data_get_string(s, "translate_source_language");
 	gf->target_lang = obs_data_get_string(s, "translate_target_language");
 	gf->translation_ctx.add_context = obs_data_get_bool(s, "translate_add_context");
+	gf->translation_ctx.input_tokenization_style =
+		(InputTokenizationStyle)obs_data_get_int(s, "translate_input_tokenization_style");
 	gf->translation_output = obs_data_get_string(s, "translate_output");
 	gf->suppress_sentences = obs_data_get_string(s, "suppress_sentences");
-	gf->translation_model_index = obs_data_get_string(s, "translate_model");
+	std::string new_translate_model_index = obs_data_get_string(s, "translate_model");
+	gf->translation_model_path_external =
+		obs_data_get_string(s, "translation_model_path_external");
 
-	if (new_translate != gf->translate) {
+	if (new_translate != gf->translate ||
+	    new_translate_model_index != gf->translation_model_index) {
 		if (new_translate) {
+			gf->translation_model_index = new_translate_model_index;
 			if (gf->translation_model_index != "whisper-based-translation") {
 				start_translation(gf);
 			} else {
@@ -362,6 +387,9 @@ void transcription_filter_update(void *data, obs_data_t *s)
 	obs_log(gf->log_level, "update whisper params");
 	std::lock_guard<std::mutex> lock(gf->whisper_ctx_mutex);
 
+	gf->sentence_psum_accept_thresh =
+		(float)obs_data_get_double(s, "sentence_psum_accept_thresh");
+
 	gf->whisper_params = whisper_full_default_params(
 		(whisper_sampling_strategy)obs_data_get_int(s, "whisper_sampling_method"));
 	gf->whisper_params.duration_ms = (int)obs_data_get_int(s, "buffer_size_msec");
@@ -406,8 +434,7 @@ void *transcription_filter_create(obs_data_t *settings, obs_source_t *filter)
 	// Get the number of channels for the input source
 	gf->channels = audio_output_get_channels(obs_get_audio());
 	gf->sample_rate = audio_output_get_sample_rate(obs_get_audio());
-	gf->frames = (size_t)((float)gf->sample_rate /
-			      (1000.0f / (float)obs_data_get_int(settings, "buffer_size_msec")));
+	gf->frames = (size_t)((float)gf->sample_rate / (1000.0f / MAX_MS_WORK_BUFFER));
 	gf->last_num_frames = 0;
 	bool step_by_step_processing = obs_data_get_bool(settings, "step_by_step_processing");
 	gf->step_size_msec = step_by_step_processing
@@ -428,6 +455,7 @@ void *transcription_filter_create(obs_data_t *settings, obs_source_t *filter)
 		circlebuf_init(&gf->input_buffers[i]);
 	}
 	circlebuf_init(&gf->info_buffer);
+	circlebuf_init(&gf->whisper_buffer);
 
 	// allocate copy buffers
 	gf->copy_buffers[0] =
@@ -435,6 +463,7 @@ void *transcription_filter_create(obs_data_t *settings, obs_source_t *filter)
 	for (size_t c = 1; c < gf->channels; c++) { // set the channel pointers
 		gf->copy_buffers[c] = gf->copy_buffers[0] + c * gf->frames;
 	}
+	memset(gf->copy_buffers[0], 0, gf->channels * gf->frames * sizeof(float));
 
 	gf->context = filter;
 
@@ -648,7 +677,10 @@ void transcription_filter_defaults(obs_data_t *s)
 	obs_data_set_default_string(s, "translate_source_language", "__en__");
 	obs_data_set_default_bool(s, "translate_add_context", true);
 	obs_data_set_default_string(s, "translate_model", "whisper-based-translation");
+	obs_data_set_default_string(s, "translation_model_path_external", "");
+	obs_data_set_default_int(s, "translate_input_tokenization_style", INPUT_TOKENIZAION_M2M100);
 	obs_data_set_default_string(s, "suppress_sentences", SUPPRESS_SENTENCES_DEFAULT);
+	obs_data_set_default_double(s, "sentence_psum_accept_thresh", 0.4);
 
 	// Whisper parameters
 	obs_data_set_default_int(s, "whisper_sampling_method", WHISPER_SAMPLING_BEAM_SEARCH);
@@ -672,7 +704,7 @@ void transcription_filter_defaults(obs_data_t *s)
 	obs_data_set_default_bool(s, "speed_up", false);
 	obs_data_set_default_bool(s, "suppress_blank", false);
 	obs_data_set_default_bool(s, "suppress_non_speech_tokens", true);
-	obs_data_set_default_double(s, "temperature", 0.5);
+	obs_data_set_default_double(s, "temperature", 0.1);
 	obs_data_set_default_double(s, "max_initial_ts", 1.0);
 	obs_data_set_default_double(s, "length_penalty", -1.0);
 }
@@ -776,6 +808,29 @@ obs_properties_t *transcription_filter_properties(void *data)
 						     model_info.first.c_str());
 		}
 	}
+	// add external model option
+	obs_property_list_add_string(prop_translate_model, MT_("load_external_model"),
+				     "!!!external!!!");
+	// add callback to handle the external model file selection
+	obs_properties_add_path(translation_group, "translation_model_path_external",
+				MT_("external_model_folder"), OBS_PATH_DIRECTORY,
+				"CT2 Model folder", NULL);
+	// Hide the external model file selection input
+	obs_property_set_visible(obs_properties_get(ppts, "translation_model_path_external"),
+				 false);
+	// Add a callback to the model list to handle the external model file selection
+	obs_property_set_modified_callback(prop_translate_model, [](obs_properties_t *props,
+								    obs_property_t *property,
+								    obs_data_t *settings) {
+		UNUSED_PARAMETER(property);
+		// If the selected model is the external model, show the external model file selection
+		// input
+		const char *new_model_path = obs_data_get_string(settings, "translate_model");
+		const bool is_external = (strcmp(new_model_path, "!!!external!!!") == 0);
+		obs_property_set_visible(
+			obs_properties_get(props, "translation_model_path_external"), is_external);
+		return true;
+	});
 	// add target language selection
 	obs_property_t *prop_tgt = obs_properties_add_list(
 		translation_group, "translate_target_language", MT_("target_language"),
@@ -810,14 +865,26 @@ obs_properties_t *transcription_filter_properties(void *data)
 		UNUSED_PARAMETER(property);
 		// Show/Hide the translation group
 		const bool translate_enabled = obs_data_get_bool(settings, "translate");
-		for (const auto &prop :
-		     {"translate_target_language", "translate_source_language",
-		      "translate_add_context", "translate_output", "translate_model"}) {
+		for (const auto &prop : {"translate_target_language", "translate_source_language",
+					 "translate_add_context", "translate_output",
+					 "translate_model", "token_style"}) {
 			obs_property_set_visible(obs_properties_get(props, prop),
 						 translate_enabled);
 		}
+		const bool is_external = (strcmp(obs_data_get_string(settings, "translate_model"),
+						 "!!!external!!!") == 0);
+		obs_property_set_visible(obs_properties_get(props,
+							    "translation_model_path_external"),
+					 is_external && translate_enabled);
 		return true;
 	});
+	// add tokenization style options
+	obs_property_t *prop_token_style =
+		obs_properties_add_list(translation_group, "translate_input_tokenization_style",
+					MT_("translate_input_tokenization_style"),
+					OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_INT);
+	obs_property_list_add_int(prop_token_style, "M2M100 Tokens", INPUT_TOKENIZAION_M2M100);
+	obs_property_list_add_int(prop_token_style, "T5 Tokens", INPUT_TOKENIZAION_T5);
 
 	obs_property_t *advanced_settings_prop =
 		obs_properties_add_bool(ppts, "advanced_settings", MT_("advanced_settings"));
@@ -831,7 +898,7 @@ obs_properties_t *transcription_filter_properties(void *data)
 		     {"whisper_params_group", "log_words", "caption_to_stream", "buffer_size_msec",
 		      "overlap_size_msec", "step_by_step_processing", "min_sub_duration",
 		      "process_while_muted", "buffered_output", "vad_enabled", "log_level",
-		      "suppress_sentences"}) {
+		      "suppress_sentences", "sentence_psum_accept_thresh"}) {
 			obs_property_set_visible(obs_properties_get(props, prop_name.c_str()),
 						 show_hide);
 		}
@@ -869,6 +936,8 @@ obs_properties_t *transcription_filter_properties(void *data)
 				      DEFAULT_BUFFER_SIZE_MSEC, 50);
 	obs_properties_add_int_slider(ppts, "min_sub_duration", MT_("min_sub_duration"), 1000, 5000,
 				      50);
+	obs_properties_add_float_slider(ppts, "sentence_psum_accept_thresh",
+					MT_("sentence_psum_accept_thresh"), 0.0, 1.0, 0.05);
 
 	obs_property_set_modified_callback(step_by_step_processing, [](obs_properties_t *props,
 								       obs_property_t *property,

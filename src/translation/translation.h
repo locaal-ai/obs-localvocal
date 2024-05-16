@@ -6,6 +6,8 @@
 #include <vector>
 #include <functional>
 
+enum InputTokenizationStyle { INPUT_TOKENIZAION_M2M100 = 0, INPUT_TOKENIZAION_T5 };
+
 struct translation_context {
 	std::string local_model_folder_path;
 	std::unique_ptr<sentencepiece::SentencePieceProcessor> processor;
@@ -17,6 +19,7 @@ struct translation_context {
 	std::vector<std::string> last_translation_tokens;
 	// Use the last translation as context for the next translation
 	bool add_context;
+	InputTokenizationStyle input_tokenization_style;
 };
 
 int build_translation_context(struct translation_context &translation_ctx);

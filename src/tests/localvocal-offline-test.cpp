@@ -2,11 +2,21 @@
 #include <string>
 #include <codecvt>
 #include <vector>
+#include <fstream>
+#include <thread>
+#include <mutex>
+#include <chrono>
+#include <iomanip>
+#include <regex>
+#include <algorithm>
+
+#include <nlohmann/json.hpp>
 
 #include "transcription-filter-data.h"
 #include "transcription-filter.h"
 #include "transcription-utils.h"
 #include "whisper-utils/whisper-utils.h"
+#include "audio-file-utils.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -53,10 +63,6 @@ void obs_log(int log_level, const char *format, ...)
 		printf("[UNKNOWN] ");
 		break;
 	}
-	// convert format to wstring
-	std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
-	std::wstring wformat = converter.from_bytes(format);
-
 	// print format with arguments with utf-8 support
 	va_list args;
 	va_start(args, format);
@@ -65,121 +71,6 @@ void obs_log(int log_level, const char *format, ...)
 
 	printf("\n");
 }
-
-#if defined(_WIN32) || defined(__APPLE__)
-
-extern "C" {
-#include <libavformat/avformat.h>
-#include <libavcodec/avcodec.h>
-#include <libavutil/frame.h>
-#include <libavutil/mem.h>
-#include <libavutil/opt.h>
-#include <libswresample/swresample.h>
-}
-
-std::vector<std::vector<uint8_t>>
-read_audio_file(const char *filename, std::function<void(int, int)> initialization_callback)
-{
-	obs_log(LOG_INFO, "Reading audio file %s", filename);
-
-	AVFormatContext *formatContext = nullptr;
-	int ret = avformat_open_input(&formatContext, filename, nullptr, nullptr);
-	if (ret != 0) {
-		char errbuf[AV_ERROR_MAX_STRING_SIZE];
-		av_make_error_string(errbuf, AV_ERROR_MAX_STRING_SIZE, ret);
-		obs_log(LOG_ERROR, "Error opening file: %s", errbuf);
-		return {};
-	}
-
-	if (avformat_find_stream_info(formatContext, nullptr) < 0) {
-		obs_log(LOG_ERROR, "Error finding stream information");
-		return {};
-	}
-
-	int audioStreamIndex = -1;
-	for (unsigned int i = 0; i < formatContext->nb_streams; i++) {
-		if (formatContext->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_AUDIO) {
-			audioStreamIndex = i;
-			break;
-		}
-	}
-
-	if (audioStreamIndex == -1) {
-		obs_log(LOG_ERROR, "No audio stream found");
-		return {};
-	}
-
-	// print information about the file
-	av_dump_format(formatContext, 0, filename, 0);
-
-	// if the sample format is not float, return
-	if (formatContext->streams[audioStreamIndex]->codecpar->format != AV_SAMPLE_FMT_FLTP) {
-		obs_log(LOG_ERROR,
-			"Sample format is not float (it is %s). Encode the audio file with float sample format."
-			" For example, use the command 'ffmpeg -i input.mp3 -c:a pcm_f32le output.wav' to "
-			"convert the audio file to float format.",
-			av_get_sample_fmt_name(
-				(AVSampleFormat)formatContext->streams[audioStreamIndex]
-					->codecpar->format));
-		return {};
-	}
-
-	initialization_callback(formatContext->streams[audioStreamIndex]->codecpar->sample_rate,
-				formatContext->streams[audioStreamIndex]->codecpar->channels);
-
-	AVCodecParameters *codecParams = formatContext->streams[audioStreamIndex]->codecpar;
-	const AVCodec *codec = avcodec_find_decoder(codecParams->codec_id);
-	if (!codec) {
-		obs_log(LOG_ERROR, "Decoder not found");
-		return {};
-	}
-
-	AVCodecContext *codecContext = avcodec_alloc_context3(codec);
-	if (!codecContext) {
-		obs_log(LOG_ERROR, "Failed to allocate codec context");
-		return {};
-	}
-
-	if (avcodec_parameters_to_context(codecContext, codecParams) < 0) {
-		obs_log(LOG_ERROR, "Failed to copy codec parameters to codec context");
-		return {};
-	}
-
-	if (avcodec_open2(codecContext, codec, nullptr) < 0) {
-		obs_log(LOG_ERROR, "Failed to open codec");
-		return {};
-	}
-
-	AVFrame *frame = av_frame_alloc();
-	AVPacket packet;
-
-	std::vector<std::vector<uint8_t>> buffer(
-		formatContext->streams[audioStreamIndex]->codecpar->channels);
-
-	while (av_read_frame(formatContext, &packet) >= 0) {
-		if (packet.stream_index == audioStreamIndex) {
-			if (avcodec_send_packet(codecContext, &packet) == 0) {
-				while (avcodec_receive_frame(codecContext, frame) == 0) {
-					// push data to the buffer
-					for (int j = 0; j < codecContext->channels; j++) {
-						buffer[j].insert(buffer[j].end(), frame->data[j],
-								 frame->data[j] +
-									 frame->linesize[0]);
-					}
-				}
-			}
-		}
-		av_packet_unref(&packet);
-	}
-
-	av_frame_free(&frame);
-	avcodec_free_context(&codecContext);
-	avformat_close_input(&formatContext);
-
-	return buffer;
-}
-
-#endif
 
 transcription_filter_data *
 create_context(int sample_rate, int channels, const std::string &whisper_model_path,
@@ -191,7 +82,7 @@ create_context(int sample_rate, int channels, const std::string &whisper_model_p
 	gf->log_level = LOG_DEBUG;
 	gf->channels = channels;
 	gf->sample_rate = sample_rate;
-	gf->frames = (size_t)((float)gf->sample_rate / (1000.0f / 3000.0));
+	gf->frames = (size_t)((float)gf->sample_rate * 10.0f);
 	gf->last_num_frames = 0;
 	gf->step_size_msec = 3000;
 	gf->min_sub_duration = 3000;
@@ -208,6 +99,7 @@ create_context(int sample_rate, int channels, const std::string &whisper_model_p
 		circlebuf_init(&gf->input_buffers[i]);
 	}
 	circlebuf_init(&gf->info_buffer);
+	circlebuf_init(&gf->whisper_buffer);
 
 	// allocate copy buffers
 	gf->copy_buffers[0] =
@@ -215,6 +107,8 @@ create_context(int sample_rate, int channels, const std::string &whisper_model_p
 	for (size_t c = 1; c < gf->channels; c++) { // set the channel pointers
 		gf->copy_buffers[c] = gf->copy_buffers[0] + c * gf->frames;
 	}
+	memset(gf->copy_buffers[0], 0, gf->channels * gf->frames * sizeof(float));
+	obs_log(LOG_INFO, " allocated %llu bytes ", gf->channels * gf->frames * sizeof(float));
 
 	gf->overlap_ms = 150;
 	gf->overlap_frames = (size_t)((float)gf->sample_rate / (1000.0f / (float)gf->overlap_ms));
@@ -259,6 +153,7 @@ create_context(int sample_rate, int channels, const std::string &whisper_model_p
 	gf->translation_output = "";
 	gf->suppress_sentences = "";
 	gf->translate = false;
+	gf->sentence_psum_accept_thresh = 0.4;
 
 	gf->whisper_params = whisper_full_default_params(whisper_sampling_method);
 	gf->whisper_params.duration_ms = 3000;
@@ -267,7 +162,7 @@ create_context(int sample_rate, int channels, const std::string &whisper_model_p
 	gf->whisper_params.n_threads = 4;
 	gf->whisper_params.n_max_text_ctx = 16384;
 	gf->whisper_params.translate = false;
-	gf->whisper_params.no_context = false;
+	gf->whisper_params.no_context = true;
 	gf->whisper_params.single_segment = true;
 	gf->whisper_params.print_special = false;
 	gf->whisper_params.print_progress = false;
@@ -278,11 +173,11 @@ create_context(int sample_rate, int channels, const std::string &whisper_model_p
 	gf->whisper_params.thold_ptsum = 0.01;
 	gf->whisper_params.max_len = 0;
 	gf->whisper_params.split_on_word = false;
-	gf->whisper_params.max_tokens = 32;
+	gf->whisper_params.max_tokens = 0;
 	gf->whisper_params.speed_up = false;
 	gf->whisper_params.suppress_blank = true;
 	gf->whisper_params.suppress_non_speech_tokens = true;
-	gf->whisper_params.temperature = 0.5;
+	gf->whisper_params.temperature = 0.1;
 	gf->whisper_params.max_initial_ts = 1.0;
 	gf->whisper_params.length_penalty = -1;
 	gf->active = true;
@@ -292,6 +187,56 @@ create_context(int sample_rate, int channels, const std::string &whisper_model_p
 	obs_log(gf->log_level, "context created");
 
 	return gf;
+}
+
+void audio_chunk_callback(struct transcription_filter_data *gf, const float *pcm32f_data,
+			  size_t frames, int vad_state, const DetectionResultWithText &result)
+{
+	static uint32_t audio_chunk_count = 0;
+
+	// std::string vad_state_str = vad_state == VAD_STATE_WAS_ON ? "_vad_was_on" :
+	//     vad_state == VAD_STATE_WAS_OFF ? "_vad_was_off" :
+	//     "_vad_is_off";
+	// std::string numeral = std::to_string(audio_chunk_count++);
+	// if (numeral.size() < 2) {
+	//     numeral = "00" + numeral;
+	// } else if (numeral.size() < 3) {
+	//     numeral = "0" + numeral;
+	// }
+
+	// save the audio to a .wav file
+	// std::string filename = "audio_chunk_" + numeral + vad_state_str + ".wav";
+	// obs_log(gf->log_level, "Saving %lu frames to %s", frames, filename.c_str());
+	// write_audio_wav_file(filename.c_str(), pcm32f_data, frames);
+
+	// append a row to the array in the segments.json file
+	std::string segments_filename = "segments.json";
+	nlohmann::json segments_json;
+
+	// Read existing segments from file
+	std::ifstream segments_file(segments_filename);
+	if (segments_file.is_open()) {
+		segments_file >> segments_json;
+		segments_file.close();
+	}
+
+	// Create a new segment object
+	nlohmann::json segment;
+	segment["start_time"] = result.start_timestamp_ms / 1000.0;
+	segment["end_time"] = result.end_timestamp_ms / 1000.0;
+	segment["segment_label"] = result.text;
+
+	// Add the new segment to the segments array
+	segments_json.push_back(segment);
+
+	// Write the updated segments back to the file
+	std::ofstream segments_file_out(segments_filename);
+	if (segments_file_out.is_open()) {
+		segments_file_out << std::setw(4) << segments_json << std::endl;
+		segments_file_out.close();
+	} else {
+		obs_log(gf->log_level, "Failed to open %s", segments_filename.c_str());
+	}
 }
 
 void set_text_callback(struct transcription_filter_data *gf,
@@ -311,15 +256,16 @@ void set_text_callback(struct transcription_filter_data *gf,
 			// split the suppression list by newline into individual sentences
 			std::vector<std::string> suppress_sentences_list =
 				split(gf->suppress_sentences, '\n');
+			const std::string original_str_copy = str_copy;
 			// check if the text is in the suppression list
 			for (const std::string &suppress_sentence : suppress_sentences_list) {
-				// check if str_copy starts with the suppress sentence
-				if (str_copy.find(suppress_sentence) == 0) {
-					obs_log(LOG_INFO, "Suppressed sentence: '%s'",
-						str_copy.c_str());
-					gf->last_text = str_copy;
-					return; // do not process the sentence
-				}
+				// if suppress_sentence exists within str_copy, remove it (replace with "")
+				str_copy = std::regex_replace(str_copy,
+							      std::regex(suppress_sentence), "");
+			}
+			if (original_str_copy != str_copy) {
+				obs_log(LOG_INFO, "Suppression: '%s' -> '%s'",
+					original_str_copy.c_str(), str_copy.c_str());
 			}
 		}
 
@@ -345,61 +291,6 @@ void set_text_callback(struct transcription_filter_data *gf,
 		output_file << str_copy << std::endl;
 		output_file.close();
 	}
-
-	/*
-
-
-	if (gf->buffered_output) {
-		gf->captions_monitor.addWords(result.tokens);
-	}
-
-	if (gf->output_file_path != "" && gf->text_source_name.empty()) {
-		// Check if we should save the sentence
-		// should the file be truncated?
-		std::ios_base::openmode openmode = std::ios::out;
-		if (gf->truncate_output_file) {
-			openmode |= std::ios::trunc;
-		} else {
-			openmode |= std::ios::app;
-		}
-		if (!gf->save_srt) {
-			// Write raw sentence to file
-			std::ofstream output_file(gf->output_file_path, openmode);
-			output_file << str_copy << std::endl;
-			output_file.close();
-		} else {
-			obs_log(gf->log_level, "Saving sentence to file %s, sentence #%d",
-				gf->output_file_path.c_str(), gf->sentence_number);
-			// Append sentence to file in .srt format
-			std::ofstream output_file(gf->output_file_path, openmode);
-			output_file << gf->sentence_number << std::endl;
-			// use the start and end timestamps to calculate the start and end time in srt format
-			auto format_ts_for_srt = [&output_file](uint64_t ts) {
-				uint64_t time_s = ts / 1000;
-				uint64_t time_m = time_s / 60;
-				uint64_t time_h = time_m / 60;
-				uint64_t time_ms_rem = ts % 1000;
-				uint64_t time_s_rem = time_s % 60;
-				uint64_t time_m_rem = time_m % 60;
-				uint64_t time_h_rem = time_h % 60;
-				output_file << std::setfill('0') << std::setw(2) << time_h_rem
-					    << ":" << std::setfill('0') << std::setw(2)
-					    << time_m_rem << ":" << std::setfill('0')
-					    << std::setw(2) << time_s_rem << ","
-					    << std::setfill('0') << std::setw(3) << time_ms_rem;
-			};
-			format_ts_for_srt(result.start_timestamp_ms);
-			output_file << " --> ";
-			format_ts_for_srt(result.end_timestamp_ms);
-			output_file << std::endl;
-
-			output_file << str_copy << std::endl;
-			output_file << std::endl;
-			output_file.close();
-			gf->sentence_number++;
-		}
-	}
-    */
 };
 
 void release_context(transcription_filter_data *gf)
@@ -420,6 +311,7 @@ void release_context(transcription_filter_data *gf)
 		}
 	}
 	circlebuf_free(&gf->info_buffer);
+	circlebuf_free(&gf->whisper_buffer);
 
 	delete gf;
 }
@@ -488,7 +380,7 @@ int wmain(int argc, wchar_t *argv[])
 				gf->fix_utf8 = config["fix_utf8"];
 			}
 			if (config.contains("suppress_sentences")) {
-				obs_log(LOG_INFO, "Setting suppress_sentences to %ls",
+				obs_log(LOG_INFO, "Setting suppress_sentences to %s",
 					config["suppress_sentences"].get<std::string>().c_str());
 				gf->suppress_sentences =
 					config["suppress_sentences"].get<std::string>();
@@ -499,6 +391,12 @@ int wmain(int argc, wchar_t *argv[])
 				gf->overlap_ms = config["overlap_ms"];
 				gf->overlap_frames = (size_t)((float)gf->sample_rate /
 							      (1000.0f / (float)gf->overlap_ms));
+			}
+			if (config.contains("enable_audio_chunks_callback")) {
+				obs_log(LOG_INFO, "Setting enable_audio_chunks_callback to %s",
+					config["enable_audio_chunks_callback"] ? "true" : "false");
+				gf->enable_audio_chunks_callback =
+					config["enable_audio_chunks_callback"];
 			}
 			// set log level
 			if (logLevelStr == "debug") {
@@ -526,14 +424,24 @@ int wmain(int argc, wchar_t *argv[])
 	std::ofstream output_file(gf->output_file_path, std::ios::trunc);
 	output_file.close();
 
+	// delete the segments.json file if it exists
+	if (std::ifstream("segments.json")) {
+		std::remove("segments.json");
+	}
+
 	// fill up the whisper buffer
 	{
-		obs_log(LOG_INFO, "Filling up whisper buffer");
-		std::lock_guard<std::mutex> lock(gf->whisper_buf_mutex); // scoped lock
-		int frames = 4096;
+		gf->start_timestamp_ms = now_ms();
+
+		obs_log(LOG_INFO, "Sending samples to whisper buffer");
+		// 25 ms worth of frames
+		int frames = gf->sample_rate * 25 / 1000;
 		const int frame_size_bytes = sizeof(float);
 		int frames_size_bytes = frames * frame_size_bytes;
 		int frames_count = 0;
+		int64_t start_time = std::chrono::duration_cast<std::chrono::nanoseconds>(
+					     std::chrono::system_clock::now().time_since_epoch())
+					     .count();
 		while (true) {
 			// check if there are enough frames left in the audio buffer
 			if ((frames_count + frames) > (audio[0].size() / frame_size_bytes)) {
@@ -541,25 +449,50 @@ int wmain(int argc, wchar_t *argv[])
 				frames = audio[0].size() / frame_size_bytes - frames_count;
 				frames_size_bytes = frames * frame_size_bytes;
 			}
-			// push back current audio data to input circlebuf
-			for (size_t c = 0; c < gf->channels; c++) {
-				circlebuf_push_back(&gf->input_buffers[c],
-						    audio[c].data() +
-							    frames_count * frame_size_bytes,
-						    frames_size_bytes);
+			{
+				std::lock_guard<std::mutex> lock(gf->whisper_buf_mutex);
+
+				// push back current audio data to input circlebuf
+				for (size_t c = 0; c < gf->channels; c++) {
+					circlebuf_push_back(&gf->input_buffers[c],
+							    audio[c].data() +
+								    frames_count * frame_size_bytes,
+							    frames_size_bytes);
+				}
+				// push audio packet info (timestamp/frame count) to info circlebuf
+				struct transcription_filter_audio_info info = {0};
+				info.frames = frames; // number of frames in this packet
+				// make a timestamp from the current position in the audio buffer
+				info.timestamp = start_time + (int64_t)(((float)frames_count /
+									 (float)gf->sample_rate) *
+									1e9);
+				circlebuf_push_back(&gf->info_buffer, &info, sizeof(info));
 			}
-			// push audio packet info (timestamp/frame count) to info circlebuf
-			struct transcription_filter_audio_info info = {0};
-			info.frames = frames; // number of frames in this packet
-			// make a timestamp from the current frame count
-			info.timestamp = frames_count * 1000 / gf->sample_rate;
-			circlebuf_push_back(&gf->info_buffer, &info, sizeof(info));
 			frames_count += frames;
 			if (frames_count >= audio[0].size() / frame_size_bytes) {
 				break;
 			}
+			// sleep for 25 ms
+			std::this_thread::sleep_for(std::chrono::milliseconds(25));
 		}
+		// push a second of silence to the input circlebuf
+		frames = 2 * gf->sample_rate;
+		frames_size_bytes = frames * frame_size_bytes;
+		for (size_t c = 0; c < gf->channels; c++) {
+			circlebuf_push_back(&gf->input_buffers[c],
+					    std::vector<uint8_t>(frames_size_bytes).data(),
+					    frames_size_bytes);
+		}
+		// push audio packet info (timestamp/frame count) to info circlebuf
+		struct transcription_filter_audio_info info = {0};
+		info.frames = frames; // number of frames in this packet
+		// make a timestamp from the current frame count
+		info.timestamp = frames_count * 1000 / gf->sample_rate;
+		circlebuf_push_back(&gf->info_buffer, &info, sizeof(info));
 	}
+
+	obs_log(LOG_INFO, "Buffer filled with %d frames",
+		(int)gf->input_buffers[0].size / sizeof(float));
 
 	// wait for processing to finish
 	obs_log(LOG_INFO, "Waiting for processing to finish");
@@ -571,10 +504,9 @@ int wmain(int argc, wchar_t *argv[])
 			std::lock_guard<std::mutex> lock(gf->whisper_buf_mutex);
 			input_buf_size = gf->input_buffers[0].size;
 		}
-		const size_t step_size_frames = gf->step_size_msec * gf->sample_rate / 1000;
-		const size_t segment_size = step_size_frames * sizeof(float);
 
-		if (input_buf_size < segment_size) {
+		// if less than 500ms of audio left in the input buffer, break
+		if (input_buf_size < gf->sample_rate / 2 * sizeof(float)) {
 			break;
 		}
 	}

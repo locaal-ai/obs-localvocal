@@ -9,12 +9,14 @@
 #define DEFAULT_OVERLAP_SIZE_MSEC 125
 #define MAX_OVERLAP_SIZE_MSEC 1000
 #define MIN_OVERLAP_SIZE_MSEC 125
+#define MAX_MS_WORK_BUFFER 11000
 
 enum DetectionResult {
 	DETECTION_RESULT_UNKNOWN = 0,
 	DETECTION_RESULT_SILENCE = 1,
 	DETECTION_RESULT_SPEECH = 2,
 	DETECTION_RESULT_SUPPRESSED = 3,
+	DETECTION_RESULT_NO_INFERENCE = 4,
 };
 
 struct DetectionResultWithText {
@@ -24,6 +26,8 @@ struct DetectionResultWithText {
 	uint64_t end_timestamp_ms;
 	std::vector<whisper_token_data> tokens;
 };
+
+enum VadState { VAD_STATE_WAS_ON = 0, VAD_STATE_WAS_OFF, VAD_STATE_IS_OFF };
 
 void whisper_loop(void *data);
 struct whisper_context *init_whisper_context(const std::string &model_path,
