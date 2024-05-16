@@ -11,6 +11,18 @@ void start_translation(struct transcription_filter_data *gf)
 {
 	obs_log(LOG_INFO, "Starting translation...");
 
+	if (gf->translation_model_index == "!!!external!!!") {
+		obs_log(LOG_INFO, "External model selected.");
+		if (gf->translation_model_path_external.empty()) {
+			obs_log(LOG_ERROR, "External model path is empty.");
+			gf->translate = false;
+			return;
+		}
+		std::string model_file_found = gf->translation_model_path_external;
+		build_and_enable_translation(gf, model_file_found);
+		return;
+	}
+
 	const ModelInfo &translation_model_info = models_info[gf->translation_model_index];
 	std::string model_file_found = find_model_folder(translation_model_info);
 	if (model_file_found == "") {

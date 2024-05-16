@@ -30,7 +30,7 @@ int build_translation_context(struct translation_context &translation_ctx)
 	obs_log(LOG_INFO, "Building translation context from '%s'...", local_model_path.c_str());
 	// find the SPM file in the model folder
 	std::string local_spm_path = find_file_in_folder_by_regex_expression(
-		local_model_path, "(sentencepiece|spm).*?\\.model");
+		local_model_path, "(sentencepiece|spm|spiece).*?\\.model");
 
 	try {
 		obs_log(LOG_INFO, "Loading SPM from %s", local_spm_path.c_str());

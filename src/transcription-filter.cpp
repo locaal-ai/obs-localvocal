@@ -328,6 +328,8 @@ void transcription_filter_update(void *data, obs_data_t *s)
 	gf->translation_output = obs_data_get_string(s, "translate_output");
 	gf->suppress_sentences = obs_data_get_string(s, "suppress_sentences");
 	gf->translation_model_index = obs_data_get_string(s, "translate_model");
+	gf->translation_model_path_external =
+		obs_data_get_string(s, "translation_model_path_external");
 
 	if (new_translate != gf->translate) {
 		if (new_translate) {
@@ -800,6 +802,29 @@ obs_properties_t *transcription_filter_properties(void *data)
 						     model_info.first.c_str());
 		}
 	}
+	// add external model option
+	obs_property_list_add_string(prop_translate_model, MT_("load_external_model"),
+				     "!!!external!!!");
+	// add callback to handle the external model file selection
+	obs_property_t *translation_model_path_external = obs_properties_add_path(
+		translation_group, "translation_model_path_external", MT_("external_model_folder"),
+		OBS_PATH_DIRECTORY, "CT2 Model folder", NULL);
+	// Hide the external model file selection input
+	obs_property_set_visible(obs_properties_get(ppts, "translation_model_path_external"),
+				 false);
+	// Add a callback to the model list to handle the external model file selection
+	obs_property_set_modified_callback(prop_translate_model, [](obs_properties_t *props,
+								    obs_property_t *property,
+								    obs_data_t *settings) {
+		UNUSED_PARAMETER(property);
+		// If the selected model is the external model, show the external model file selection
+		// input
+		const char *new_model_path = obs_data_get_string(settings, "translate_model");
+		const bool is_external = (strcmp(new_model_path, "!!!external!!!") == 0);
+		obs_property_set_visible(
+			obs_properties_get(props, "translation_model_path_external"), is_external);
+		return true;
+	});
 	// add target language selection
 	obs_property_t *prop_tgt = obs_properties_add_list(
 		translation_group, "translate_target_language", MT_("target_language"),
@@ -840,6 +865,11 @@ obs_properties_t *transcription_filter_properties(void *data)
 			obs_property_set_visible(obs_properties_get(props, prop),
 						 translate_enabled);
 		}
+		const bool is_external = (strcmp(obs_data_get_string(settings, "translate_model"),
+						 "!!!external!!!") == 0);
+		obs_property_set_visible(obs_properties_get(props,
+							    "translation_model_path_external"),
+					 is_external && translate_enabled);
 		return true;
 	});
 
@@ -855,7 +885,7 @@ obs_properties_t *transcription_filter_properties(void *data)
 		     {"whisper_params_group", "log_words", "caption_to_stream", "buffer_size_msec",
 		      "overlap_size_msec", "step_by_step_processing", "min_sub_duration",
 		      "process_while_muted", "buffered_output", "vad_enabled", "log_level",
-		      "suppress_sentences"}) {
+		      "suppress_sentences", "sentence_psum_accept_thresh"}) {
 			obs_property_set_visible(obs_properties_get(props, prop_name.c_str()),
 						 show_hide);
 		}
