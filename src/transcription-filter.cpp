@@ -218,7 +218,7 @@ void set_text_callback(struct transcription_filter_data *gf,
 	gf->last_text = str_copy;
 
 	if (gf->buffered_output) {
-		gf->captions_monitor.addWords(result.tokens);
+		gf->captions_monitor.addTokens(result.tokens);
 	}
 
 	if (gf->caption_to_stream) {
@@ -556,15 +556,7 @@ void *transcription_filter_create(obs_data_t *settings, obs_source_t *filter)
 	gf->whisper_model_path = std::string(""); // The update function will set the model path
 	gf->whisper_context = nullptr;
 
-	gf->captions_monitor.initialize(
-		gf,
-		[gf](const std::string &text) {
-			obs_log(LOG_INFO, "Captions: %s", text.c_str());
-			if (gf->buffered_output) {
-				send_caption_to_source(gf->text_source_name, text, gf);
-			}
-		},
-		30, std::chrono::seconds(10));
+	gf->captions_monitor.initialize(gf);
 
 	obs_log(gf->log_level, "run update");
 	// get the settings updated on the filter data struct
