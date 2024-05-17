@@ -1,29 +1,16 @@
-#include "token-buffer-thread.h"
+#include "token-buffer.h"
 #include "./whisper-utils.h"
 
-TokenBufferThread::~TokenBufferThread()
+TokenBuffer::~TokenBuffer()
 {
-	{
-		std::lock_guard<std::mutex> lock(queueMutex);
-		stop = true;
-	}
-	condVar.notify_all();
-	workerThread.join();
 }
 
-void TokenBufferThread::initialize(struct transcription_filter_data *gf_,
-				   std::function<void(const std::string &)> callback_,
-				   size_t maxSize_, std::chrono::seconds maxTime_)
+void TokenBuffer::initialize(struct transcription_filter_data *gf_)
 {
 	this->gf = gf_;
-	this->callback = callback_;
-	this->maxSize = maxSize_;
-	this->maxTime = maxTime_;
-	this->initialized = true;
-	this->workerThread = std::thread(&TokenBufferThread::monitor, this);
 }
 
-void TokenBufferThread::log_token_vector(const std::vector<whisper_token_data> &tokens)
+void TokenBuffer::log_token_vector(const std::vector<whisper_token_data> &tokens)
 {
 	std::string output;
 	for (const auto &token : tokens) {
@@ -33,7 +20,7 @@ void TokenBufferThread::log_token_vector(const std::vector<whisper_token_data> &
 	obs_log(LOG_INFO, "TokenBufferThread::log_token_vector: '%s'", output.c_str());
 }
 
-void TokenBufferThread::addWords(const std::vector<whisper_token_data> &words)
+void TokenBuffer::addWords(const std::vector<whisper_token_data> &words)
 {
 	obs_log(LOG_INFO, "TokenBufferThread::addWords");
 	{
@@ -64,7 +51,7 @@ void TokenBufferThread::addWords(const std::vector<whisper_token_data> &words)
 	condVar.notify_all();
 }
 
-void TokenBufferThread::monitor()
+void TokenBuffer::monitor()
 {
 	obs_log(LOG_INFO, "TokenBufferThread::monitor");
 	auto startTime = std::chrono::steady_clock::now();

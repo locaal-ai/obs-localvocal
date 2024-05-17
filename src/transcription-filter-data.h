@@ -17,7 +17,7 @@
 #include "translation/translation.h"
 #include "whisper-utils/silero-vad-onnx.h"
 #include "whisper-utils/whisper-processing.h"
-#include "whisper-utils/token-buffer-thread.h"
+#include "whisper-utils/token-buffer.h"
 
 #define MAX_PREPROC_CHANNELS 10
 
@@ -107,7 +107,7 @@ struct transcription_filter_data {
 	std::string translation_model_index;
 	std::string translation_model_path_external;
 
-	TokenBufferThread captions_monitor;
+	TokenBuffer captions_monitor;
 
 	// ctor
 	transcription_filter_data() : whisper_buf_mutex(), whisper_ctx_mutex(), wshiper_thread_cv()
