@@ -96,9 +96,11 @@ $ ./.github/scripts/package-macos -c Release
 ```
 (Note that maybe the outputs will be in the `Release` folder and not the `install` folder like `pakage-macos` expects, so you will need to rename the folder from `build_x86_64/Release` to `build_x86_64/install`)
 
-### Linux (Ubuntu)
+### Linux
+  
+#### Ubuntu
 
-For successfully building on linux, first clone the repo, then from the repo directory:
+For successfully building on Ubuntu, first clone the repo, then from the repo directory:
 ```sh
 $ sudo apt install -y libssl-dev
 $ ./.github/scripts/build-linux
@@ -118,6 +120,42 @@ $ cp -R release/RelWithDebInfo/lib/x86_64-linux-gnu/obs-plugins/* ~/.config/obs-
 $ mkdir -p ~/.config/obs-studio/plugins/obs-localvocal/data
 $ cp -R release/RelWithDebInfo/share/obs/obs-plugins/obs-localvocal/* ~/.config/obs-studio/plugins/obs-localvocal/data/
 ```
+
+#### Other distros
+
+For other distros where you can't use the CI build script, you can build the plugin as follows
+
+1. Clone the repository and install these dependencies using your distribution's package manager:
+
+    * libssl (with development headers)
+
+2. Generate the CMake build scripts (adjust folders if necessary)
+
+    ```sh
+    cmake -B build-dir --preset linux-x86_64 -DUSE_SYSTEM_CURL=ON -DCMAKE_INSTALL_PREFIX=./output_dir
+    ```
+
+3. Build the plugin and copy the files to the output directory
+
+    ```sh
+    cmake --build build-dir --target install
+    ```
+
+4. Copy plugin to OBS plugins folder
+
+    ```sh
+    mkdir -p ~/.config/obs-studio/plugins/bin/64bit
+    cp -R ./output_dir/lib/obs-plugins/* ~/.config/obs-studio/plugins/bin/64bit/
+    ```
+
+    > N.B. Depending on your system, the plugin might be in `./output_dir/lib64/obs-plugins` instead.
+
+5. Copy plugin data to OBS plugins folder - Possibly only needed on first install
+
+    ```sh
+    mkdir -p ~/.config/obs-studio/plugins/data
+    cp -R ./output_dir/share/obs/obs-plugins/obs-localvocal/* ~/.config/obs-studio/plugins/data/
+    ```
 
 ### Windows
 
