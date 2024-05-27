@@ -161,57 +161,59 @@ void set_text_callback(struct transcription_filter_data *gf,
 
 	std::string str_copy = result.text;
 
-	// recondition the text - only if the output is not English
-	if (gf->whisper_params.language != nullptr &&
-	    strcmp(gf->whisper_params.language, "en") != 0) {
-		str_copy = fix_utf8(str_copy);
-	} else {
-		// only remove leading and trailing non-alphanumeric characters if the output is English
-		str_copy = remove_leading_trailing_nonalpha(str_copy);
-	}
-
-	// if suppression is enabled, check if the text is in the suppression list
-	if (!gf->suppress_sentences.empty()) {
-		// split the suppression list by newline into individual sentences
-		std::vector<std::string> suppress_sentences_list =
-			split(gf->suppress_sentences, '\n');
-		const std::string original_str_copy = str_copy;
-		// check if the text is in the suppression list
-		for (const std::string &suppress_sentence : suppress_sentences_list) {
-			// if suppress_sentence exists within str_copy, remove it (replace with "")
-			str_copy = std::regex_replace(str_copy, std::regex(suppress_sentence), "");
-		}
-		// if the text was modified, log the original and modified text
-		if (original_str_copy != str_copy) {
-			obs_log(gf->log_level, "------ Suppressed text: '%s' -> '%s'",
-				original_str_copy.c_str(), str_copy.c_str());
-		}
-		if (remove_leading_trailing_nonalpha(str_copy).empty()) {
-			// if the text is empty after suppression, return
-			return;
-		}
-	}
-
-	if (gf->translate && !str_copy.empty() && str_copy != gf->last_text &&
-	    result.result == DETECTION_RESULT_SPEECH) {
-		obs_log(gf->log_level, "Translating text. %s -> %s", gf->source_lang.c_str(),
-			gf->target_lang.c_str());
-		std::string translated_text;
-		if (translate(gf->translation_ctx, str_copy, gf->source_lang, gf->target_lang,
-			      translated_text) == OBS_POLYGLOT_TRANSLATION_SUCCESS) {
-			if (gf->log_words) {
-				obs_log(LOG_INFO, "Translation: '%s' -> '%s'", str_copy.c_str(),
-					translated_text.c_str());
-			}
-			if (gf->translation_output == "none") {
-				// overwrite the original text with the translated text
-				str_copy = translated_text;
-			} else {
-				// send the translation to the selected source
-				send_caption_to_source(gf->translation_output, translated_text, gf);
-			}
+	if (!result.text.empty()) {
+		// recondition the text - only if the output is not English
+		if (gf->whisper_params.language != nullptr &&
+			strcmp(gf->whisper_params.language, "en") != 0) {
+			str_copy = fix_utf8(str_copy);
 		} else {
-			obs_log(gf->log_level, "Failed to translate text");
+			// only remove leading and trailing non-alphanumeric characters if the output is English
+			str_copy = remove_leading_trailing_nonalpha(str_copy);
+		}
+
+		// if suppression is enabled, check if the text is in the suppression list
+		if (!gf->suppress_sentences.empty()) {
+			// split the suppression list by newline into individual sentences
+			std::vector<std::string> suppress_sentences_list =
+				split(gf->suppress_sentences, '\n');
+			const std::string original_str_copy = str_copy;
+			// check if the text is in the suppression list
+			for (const std::string &suppress_sentence : suppress_sentences_list) {
+				// if suppress_sentence exists within str_copy, remove it (replace with "")
+				str_copy = std::regex_replace(str_copy, std::regex(suppress_sentence), "");
+			}
+			// if the text was modified, log the original and modified text
+			if (original_str_copy != str_copy) {
+				obs_log(gf->log_level, "------ Suppressed text: '%s' -> '%s'",
+					original_str_copy.c_str(), str_copy.c_str());
+			}
+			if (remove_leading_trailing_nonalpha(str_copy).empty()) {
+				// if the text is empty after suppression, return
+				return;
+			}
+		}
+
+		if (gf->translate && str_copy != gf->last_text &&
+			result.result == DETECTION_RESULT_SPEECH) {
+			obs_log(gf->log_level, "Translating text. %s -> %s", gf->source_lang.c_str(),
+				gf->target_lang.c_str());
+			std::string translated_text;
+			if (translate(gf->translation_ctx, str_copy, gf->source_lang, gf->target_lang,
+					translated_text) == OBS_POLYGLOT_TRANSLATION_SUCCESS) {
+				if (gf->log_words) {
+					obs_log(LOG_INFO, "Translation: '%s' -> '%s'", str_copy.c_str(),
+						translated_text.c_str());
+				}
+				if (gf->translation_output == "none") {
+					// overwrite the original text with the translated text
+					str_copy = translated_text;
+				} else {
+					// send the translation to the selected source
+					send_caption_to_source(gf->translation_output, translated_text, gf);
+				}
+			} else {
+				obs_log(gf->log_level, "Failed to translate text");
+			}
 		}
 	}
 
