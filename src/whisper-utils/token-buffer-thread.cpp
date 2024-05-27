@@ -109,14 +109,10 @@ void TokenBufferThread::monitor()
 		// check if we need to flush the queue
 		auto elapsedTime = std::chrono::duration_cast<std::chrono::seconds>(
 			std::chrono::steady_clock::now() - startTime);
-		if (this->wordQueue.size() >= this->maxSize || elapsedTime >= this->maxTime) {
-			// flush the queue if it's full or we've reached the max time
-			size_t words_to_flush = std::min(this->wordQueue.size(), this->maxSize);
+		if ((this->wordQueue.size() >= this->maxSize) || (elapsedTime >= this->maxTime && this->wordQueue.size() > 3)) {
+			// flush the queue if it's full or if we've reached the max time
 			// make sure we leave at least 3 words in the queue
-			size_t words_remaining = this->wordQueue.size() - words_to_flush;
-			if (words_remaining < 3) {
-				words_to_flush -= 3 - words_remaining;
-			}
+			size_t words_to_flush = std::min(this->wordQueue.size() - 3, this->maxSize);
 			obs_log(LOG_INFO, "TokenBufferThread::monitor: flushing %d words",
 				words_to_flush);
 			for (size_t i = 0; i < words_to_flush; ++i) {
