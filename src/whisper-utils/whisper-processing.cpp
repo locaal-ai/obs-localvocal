@@ -218,43 +218,49 @@ struct DetectionResultWithText run_whisper_inference(struct transcription_filter
 				// get token
 				whisper_token_data token = whisper_full_get_token_data(
 					gf->whisper_context, n_segment, j);
-				const char *token_str =
-					whisper_token_to_str(gf->whisper_context, token.id);
-				bool keep = true;
-				// if the token starts with '[' and ends with ']', don't keep it
-				if (token_str[0] == '[' &&
-				    token_str[strlen(token_str) - 1] == ']') {
-					keep = false;
-				}
-				// if this is a special token, don't keep it
-				if (token.id >= 50256) {
-					keep = false;
-				}
-				// if (j == n_tokens - 2 && token.p < 0.5) {
-				// 	keep = false;
-				// }
-				// if (j == n_tokens - 3 && token.p < 0.4) {
-				// 	keep = false;
-				// }
-				// if the second to last token is .id == 13 ('.'), don't keep it
-				if (j == n_tokens - 2 && token.id == 13) {
-					keep = false;
-				}
-				// token ids https://huggingface.co/openai/whisper-large-v3/raw/main/tokenizer.json
-				// if (token.id > 50566 && token.id <= 51865) {
-				// 	obs_log(gf->log_level,
-				// 		"Large time token found (%d), this shouldn't happen",
-				// 		token.id);
-				// 	return {DETECTION_RESULT_UNKNOWN, "", 0, 0, {}};
-				// }
+				try {
+					const char *token_str =
+						whisper_token_to_str(gf->whisper_context, token.id);
+				
+					bool keep = true;
+					// if the token starts with '[' and ends with ']', don't keep it
+					if (token_str[0] == '[' &&
+						token_str[strlen(token_str) - 1] == ']') {
+						keep = false;
+					}
+					// if this is a special token, don't keep it
+					if (token.id >= 50256) {
+						keep = false;
+					}
+					// if (j == n_tokens - 2 && token.p < 0.5) {
+					// 	keep = false;
+					// }
+					// if (j == n_tokens - 3 && token.p < 0.4) {
+					// 	keep = false;
+					// }
+					// if the second to last token is .id == 13 ('.'), don't keep it
+					if (j == n_tokens - 2 && token.id == 13) {
+						keep = false;
+					}
+					// token ids https://huggingface.co/openai/whisper-large-v3/raw/main/tokenizer.json
+					// if (token.id > 50566 && token.id <= 51865) {
+					// 	obs_log(gf->log_level,
+					// 		"Large time token found (%d), this shouldn't happen",
+					// 		token.id);
+					// 	return {DETECTION_RESULT_UNKNOWN, "", 0, 0, {}};
+					// }
 
-				if (keep) {
-					sentence_p += token.p;
-					text += token_str;
-					tokens.push_back(token);
+					if (keep) {
+						sentence_p += token.p;
+						text += token_str;
+						tokens.push_back(token);
+					}
+					obs_log(gf->log_level, "S %d, Token %d: %d\t%s\tp: %.3f [keep: %d]",
+						n_segment, j, token.id, token_str, token.p, keep);
+				} catch (std::out_of_range) {
+					obs_log(LOG_WARNING, "word not found in whisper context for token ID %d", token.id);
+					continue;
 				}
-				obs_log(gf->log_level, "S %d, Token %d: %d\t%s\tp: %.3f [keep: %d]",
-					n_segment, j, token.id, token_str, token.p, keep);
 			}
 		}
 		sentence_p /= (float)tokens.size();

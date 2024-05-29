@@ -96,9 +96,13 @@ void TokenBufferThread::monitor()
 		// emit the caption from the tokens
 		std::string output;
 		for (const auto &token : emitted) {
-			const char *token_str =
-				whisper_token_to_str(this->gf->whisper_context, token.id);
-			output += token_str;
+			try {
+				const char *token_str =
+					whisper_token_to_str(this->gf->whisper_context, token.id);
+				output += token_str;
+			} catch (std::out_of_range) {
+				obs_log(LOG_WARNING, "TokenBufferThread::monitor: word not found in whisper context for token ID %d", token.id);
+			}
 		}
 		this->callback(output);
 		// push back the words that were emitted, in reverse order
