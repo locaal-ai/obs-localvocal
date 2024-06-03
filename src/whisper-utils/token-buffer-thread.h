@@ -12,11 +12,17 @@
 
 #include <obs.h>
 
-#include <whisper.h>
-
 #include "plugin-support.h"
 
+#ifdef _WIN32
+typedef std::wstring TokenBufferString;
+#else
+typedef std::string TokenBufferString;
+#endif
+
 struct transcription_filter_data;
+
+enum TokenBufferSegmentation { SEGMENTATION_WORD = 0, SEGMENTATION_TOKEN, SEGMENTATION_SENTENCE };
 
 class TokenBufferThread {
 public:
@@ -25,25 +31,29 @@ public:
 
 	~TokenBufferThread();
 	void initialize(struct transcription_filter_data *gf,
-			std::function<void(const std::string &)> callback_, size_t maxSize_,
-			std::chrono::seconds maxTime_);
+			std::function<void(const std::string &)> callback_, size_t numSentences_,
+			size_t numTokensPerSentence_, std::chrono::seconds maxTime_,
+			TokenBufferSegmentation segmentation_ = SEGMENTATION_TOKEN);
 
-	void addWords(const std::vector<whisper_token_data> &words);
+	void addSentence(const std::string &sentence);
 
 private:
 	void monitor();
-	void log_token_vector(const std::vector<whisper_token_data> &tokens);
+	void log_token_vector(const std::vector<std::string> &tokens);
 	struct transcription_filter_data *gf;
-	std::deque<whisper_token_data> wordQueue;
+	std::deque<TokenBufferString> inputQueue;
+	std::deque<TokenBufferString> presentationQueue;
 	std::thread workerThread;
 	std::mutex queueMutex;
 	std::condition_variable condVar;
 	std::function<void(std::string)> callback;
-	size_t maxSize;
 	std::chrono::seconds maxTime;
 	bool stop;
 	bool initialized = false;
 	bool newDataAvailable = false;
+	size_t numSentences;
+	size_t numPerSentence;
+	TokenBufferSegmentation segmentation;
 };
 
 #endif

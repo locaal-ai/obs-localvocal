@@ -5,6 +5,17 @@
 #include "token-buffer-thread.h"
 #include "whisper-utils.h"
 
+#include <obs-module.h>
+
+#ifdef _WIN32
+#include <Windows.h>
+#define SPACE L" "
+#define NEWLINE L"\n"
+#else
+#define SPACE " "
+#define NEWLINE "\n"
+#endif
+
 TokenBufferThread::~TokenBufferThread()
 {
 	{
@@ -17,50 +28,57 @@ TokenBufferThread::~TokenBufferThread()
 
 void TokenBufferThread::initialize(struct transcription_filter_data *gf_,
 				   std::function<void(const std::string &)> callback_,
-				   size_t maxSize_, std::chrono::seconds maxTime_)
+				   size_t numSentences_, size_t numPerSentence_,
+				   std::chrono::seconds maxTime_,
+				   TokenBufferSegmentation segmentation_)
 {
 	this->gf = gf_;
 	this->callback = callback_;
-	this->maxSize = maxSize_;
+	this->numSentences = numSentences_;
+	this->numPerSentence = numPerSentence_;
+	this->segmentation = segmentation_;
 	this->maxTime = maxTime_;
 	this->initialized = true;
 	this->workerThread = std::thread(&TokenBufferThread::monitor, this);
 }
 
-void TokenBufferThread::log_token_vector(const std::vector<whisper_token_data> &tokens)
+void TokenBufferThread::log_token_vector(const std::vector<std::string> &tokens)
 {
 	std::string output;
 	for (const auto &token : tokens) {
-		const char *token_str = whisper_token_to_str(gf->whisper_context, token.id);
-		output += token_str;
+		output += token;
 	}
 	obs_log(LOG_INFO, "TokenBufferThread::log_token_vector: '%s'", output.c_str());
 }
 
-void TokenBufferThread::addWords(const std::vector<whisper_token_data> &words)
+void TokenBufferThread::addSentence(const std::string &sentence)
 {
-	obs_log(LOG_INFO, "TokenBufferThread::addWords");
 	{
 		std::lock_guard<std::mutex> lock(queueMutex);
 
-		// convert current wordQueue to vector
-		std::vector<whisper_token_data> currentWords(wordQueue.begin(), wordQueue.end());
-
-		log_token_vector(currentWords);
-		log_token_vector(words);
-
-		// run reconstructSentence
-		std::vector<whisper_token_data> reconstructed =
-			reconstructSentence(currentWords, words);
-
-		log_token_vector(reconstructed);
-
-		// clear the wordQueue
-		wordQueue.clear();
+#ifdef _WIN32
+		// on windows convert from multibyte to wide char
+		int count = MultiByteToWideChar(CP_UTF8, 0, sentence.c_str(),
+						(int)sentence.length(), NULL, 0);
+		std::wstring sentence_ws(count, 0);
+		MultiByteToWideChar(CP_UTF8, 0, sentence.c_str(), (int)sentence.length(),
+				    &sentence_ws[0], count);
+		// split to characters
+		std::vector<std::wstring> characters;
+		for (const auto &c : sentence_ws) {
+			characters.push_back(std::wstring(1, c));
+		}
+#else
+		// split to characters
+		std::vector<std::string> characters;
+		for (const auto &c : sentence_ws) {
+			characters.push_back(std::string(1, c));
+		}
+#endif
 
 		// add the reconstructed sentence to the wordQueue
-		for (const auto &word : reconstructed) {
-			wordQueue.push_back(word);
+		for (const auto &character : characters) {
+			inputQueue.push_back(character);
 		}
 
 		newDataAvailable = true;
@@ -75,61 +93,97 @@ void TokenBufferThread::monitor()
 	while (this->initialized && !this->stop) {
 		std::unique_lock<std::mutex> lock(this->queueMutex);
 		// wait for new data or stop signal
-		this->condVar.wait(lock, [this] { return this->newDataAvailable || this->stop; });
+		this->condVar.wait_for(lock, std::chrono::milliseconds(100),
+				       [this] { return this->stop; });
 
 		if (this->stop) {
 			break;
-		}
-
-		if (this->wordQueue.empty()) {
-			continue;
 		}
 
 		if (this->gf->whisper_context == nullptr) {
 			continue;
 		}
 
-		// emit up to maxSize words from the wordQueue
-		std::vector<whisper_token_data> emitted;
-		while (!this->wordQueue.empty() && emitted.size() <= this->maxSize) {
-			emitted.push_back(this->wordQueue.front());
-			this->wordQueue.pop_front();
-		}
-		obs_log(LOG_INFO, "TokenBufferThread::monitor: emitting %d words", emitted.size());
-		log_token_vector(emitted);
-		// emit the caption from the tokens
-		std::string output;
-		for (const auto &token : emitted) {
-			const char *token_str =
-				whisper_token_to_str(this->gf->whisper_context, token.id);
-			output += token_str;
-		}
-		this->callback(output);
-		// push back the words that were emitted, in reverse order
-		for (auto it = emitted.rbegin(); it != emitted.rend(); ++it) {
-			this->wordQueue.push_front(*it);
+		// condition presentation queue
+		if (presentationQueue.size() == this->numSentences * this->numPerSentence) {
+			// pop a whole sentence from the presentation queue front
+			for (size_t i = 0; i < this->numPerSentence; i++) {
+				presentationQueue.pop_front();
+			}
 		}
 
-		// check if we need to flush the queue
-		auto elapsedTime = std::chrono::duration_cast<std::chrono::seconds>(
-			std::chrono::steady_clock::now() - startTime);
-		if (this->wordQueue.size() >= this->maxSize || elapsedTime >= this->maxTime) {
-			// flush the queue if it's full or we've reached the max time
-			size_t words_to_flush = std::min(this->wordQueue.size(), this->maxSize);
-			// make sure we leave at least 3 words in the queue
-			size_t words_remaining = this->wordQueue.size() - words_to_flush;
-			if (words_remaining < 3) {
-				words_to_flush -= 3 - words_remaining;
+		if (!inputQueue.empty()) {
+			// if there are token on the input queue
+			if (this->segmentation == SEGMENTATION_SENTENCE) {
+				// add all the tokens from the input queue to the presentation queue
+				for (const auto &token : inputQueue) {
+					presentationQueue.push_back(token);
+				}
+			} else {
+				// add one token to the presentation queue
+				presentationQueue.push_back(inputQueue.front());
+				inputQueue.pop_front();
 			}
-			obs_log(LOG_INFO, "TokenBufferThread::monitor: flushing %d words",
-				words_to_flush);
-			for (size_t i = 0; i < words_to_flush; ++i) {
-				wordQueue.pop_front();
-			}
-			startTime = std::chrono::steady_clock::now();
+		} else {
+			// if there are no tokens on the input queue
+			continue;
 		}
 
-		newDataAvailable = false;
+		if (presentationQueue.size() > 0) {
+			// build a caption from the presentation queue in sentences
+			// with a maximum of numPerSentence tokens/words per sentence
+			// and a newline between sentences
+			TokenBufferString caption;
+			if (this->segmentation == SEGMENTATION_WORD) {
+				// iterate through the presentation queue tokens and make words (based on spaces)
+				// then build a caption with a maximum of numPerSentence words per sentence
+				size_t wordsInSentence = 0;
+				TokenBufferString word;
+				for (const auto &token : presentationQueue) {
+					// keep adding tokens to the word until a space is found
+					word += token;
+					if (word.find(SPACE) != TokenBufferString::npos) {
+						// cut the word at the space and add it to the caption
+						caption += word.substr(0, word.find(SPACE));
+						wordsInSentence++;
+						// keep the rest of the word for the next iteration
+						word = word.substr(word.find(SPACE) + 1);
+
+						if (wordsInSentence == this->numPerSentence) {
+							caption += word;
+							caption += SPACE;
+							wordsInSentence = 0;
+							word.clear();
+						}
+					}
+				}
+			} else {
+				// iterate through the presentation queue tokens and build a caption
+				size_t tokensInSentence = 0;
+				for (const auto &token : presentationQueue) {
+					caption += token;
+					tokensInSentence++;
+					if (tokensInSentence == this->numPerSentence) {
+						caption += NEWLINE;
+						tokensInSentence = 0;
+					}
+				}
+			}
+
+#ifdef _WIN32
+			// convert caption to multibyte for obs
+			int count = WideCharToMultiByte(CP_UTF8, 0, caption.c_str(),
+							(int)caption.length(), NULL, 0, NULL, NULL);
+			std::string caption_out(count, 0);
+			WideCharToMultiByte(CP_UTF8, 0, caption.c_str(), (int)caption.length(),
+					    &caption_out[0], count, NULL, NULL);
+#else
+			std::string caption_out(caption.begin(), caption.end());
+#endif
+
+			// emit the caption
+			this->callback(caption_out);
+		}
 	}
 	obs_log(LOG_INFO, "TokenBufferThread::monitor: done");
 }

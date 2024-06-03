@@ -146,8 +146,13 @@ void set_text_callback(struct transcription_filter_data *gf,
 				// overwrite the original text with the translated text
 				str_copy = translated_text;
 			} else {
-				// send the translation to the selected source
-				send_caption_to_source(gf->translation_output, translated_text, gf);
+				if (gf->buffered_output) {
+					gf->captions_monitor.addSentence(translated_text);
+				} else {
+					// send the translation to the selected source
+					send_caption_to_source(gf->translation_output,
+							       translated_text, gf);
+				}
 			}
 		} else {
 			obs_log(gf->log_level, "Failed to translate text");
@@ -157,11 +162,7 @@ void set_text_callback(struct transcription_filter_data *gf,
 	gf->last_text = str_copy;
 
 	if (gf->buffered_output) {
-		std::vector<std::string> vec;
-		for (char c : str_copy) {
-			vec.emplace_back(1, c);
-		}
-		gf->captions_monitor.addWords(vec);
+		gf->captions_monitor.addSentence(str_copy);
 	}
 
 	if (gf->caption_to_stream) {
