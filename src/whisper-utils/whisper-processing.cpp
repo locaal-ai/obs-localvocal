@@ -283,18 +283,22 @@ void run_inference_and_callbacks(transcription_filter_data *gf, uint64_t start_o
 				 uint64_t end_offset_ms, int vad_state)
 {
 	// get the data from the entire whisper buffer
+	// add 50ms of silence to the beginning and end of the buffer
 	const size_t pcm32f_size = gf->whisper_buffer.size / sizeof(float);
+	const size_t pcm32f_size_with_silence = pcm32f_size + 2 * WHISPER_SAMPLE_RATE / 100;
 	// allocate a new buffer and copy the data to it
-	float *pcm32f_data = (float *)bzalloc(pcm32f_size * sizeof(float));
-	circlebuf_pop_back(&gf->whisper_buffer, pcm32f_data, pcm32f_size * sizeof(float));
+	float *pcm32f_data = (float *)bzalloc(pcm32f_size_with_silence * sizeof(float));
+	circlebuf_pop_back(&gf->whisper_buffer, pcm32f_data + WHISPER_SAMPLE_RATE / 100,
+			   pcm32f_size * sizeof(float));
 
-	struct DetectionResultWithText inference_result =
-		run_whisper_inference(gf, pcm32f_data, pcm32f_size, start_offset_ms, end_offset_ms);
+	struct DetectionResultWithText inference_result = run_whisper_inference(
+		gf, pcm32f_data, pcm32f_size_with_silence, start_offset_ms, end_offset_ms);
 	// output inference result to a text source
 	set_text_callback(gf, inference_result);
 
 	if (gf->enable_audio_chunks_callback) {
-		audio_chunk_callback(gf, pcm32f_data, pcm32f_size, vad_state, inference_result);
+		audio_chunk_callback(gf, pcm32f_data, pcm32f_size_with_silence, vad_state,
+				     inference_result);
 	}
 
 	// free the buffer

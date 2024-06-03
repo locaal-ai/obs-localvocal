@@ -15,4 +15,6 @@ void audio_chunk_callback(struct transcription_filter_data *gf, const float *pcm
 void set_text_callback(struct transcription_filter_data *gf,
 		       const DetectionResultWithText &resultIn);
 
+void recording_state_callback(enum obs_frontend_event event, void *data);
+
 #endif /* TRANSCRIPTION_FILTER_CALLBACKS_H */

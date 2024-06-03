@@ -80,6 +80,7 @@ struct transcription_filter_data {
 	bool fix_utf8 = true;
 	bool enable_audio_chunks_callback = false;
 	bool send_timed_metadata = false;
+	bool source_signals_set = false;
 
 	// Last transcription result
 	std::string last_text;

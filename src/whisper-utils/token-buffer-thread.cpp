@@ -23,7 +23,9 @@ TokenBufferThread::~TokenBufferThread()
 		stop = true;
 	}
 	condVar.notify_all();
-	workerThread.join();
+	if (workerThread.joinable()) {
+		workerThread.join();
+	}
 }
 
 void TokenBufferThread::initialize(struct transcription_filter_data *gf_,
@@ -38,8 +40,18 @@ void TokenBufferThread::initialize(struct transcription_filter_data *gf_,
 	this->numPerSentence = numPerSentence_;
 	this->segmentation = segmentation_;
 	this->maxTime = maxTime_;
-	this->initialized = true;
+	this->stop = false;
 	this->workerThread = std::thread(&TokenBufferThread::monitor, this);
+}
+
+void TokenBufferThread::stopThread()
+{
+	std::lock_guard<std::mutex> lock(queueMutex);
+	stop = true;
+	condVar.notify_all();
+	if (workerThread.joinable()) {
+		workerThread.join();
+	}
 }
 
 void TokenBufferThread::log_token_vector(const std::vector<std::string> &tokens)
@@ -81,21 +93,22 @@ void TokenBufferThread::addSentence(const std::string &sentence)
 	}
 }
 
+void TokenBufferThread::clear()
+{
+	obs_log(LOG_INFO, "TokenBufferThread::clear");
+	std::lock_guard<std::mutex> lock(queueMutex);
+	inputQueue.clear();
+	presentationQueue.clear();
+	this->callback("");
+}
+
 void TokenBufferThread::monitor()
 {
 	obs_log(LOG_INFO, "TokenBufferThread::monitor");
 
 	this->callback("");
 
-	while (this->initialized && !this->stop) {
-		if (this->stop) {
-			break;
-		}
-
-		if (this->gf->whisper_context == nullptr) {
-			continue;
-		}
-
+	while (!this->stop) {
 		// condition presentation queue
 		if (presentationQueue.size() == this->numSentences * this->numPerSentence) {
 			// pop a whole sentence from the presentation queue front

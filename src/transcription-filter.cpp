@@ -18,6 +18,7 @@
 #include "transcription-filter.h"
 #include "transcription-filter-callbacks.h"
 #include "transcription-filter-data.h"
+#include "transcription-filter-utils.h"
 #include "transcription-utils.h"
 #include "model-utils/model-downloader.h"
 #include "whisper-utils/whisper-processing.h"
@@ -28,7 +29,6 @@
 #include "translation/translation-utils.h"
 #include "translation/translation.h"
 #include "translation/translation-includes.h"
-#include "utils.h"
 
 bool add_sources_to_list(void *list_property, obs_source_t *source)
 {
@@ -44,6 +44,71 @@ bool add_sources_to_list(void *list_property, obs_source_t *source)
 	return true;
 }
 
+void set_source_signals(transcription_filter_data *gf, obs_source_t *parent_source)
+{
+	obs_log(LOG_INFO, "parent source name: %s", obs_source_get_name(parent_source));
+	signal_handler_t *sh = obs_source_get_signal_handler(parent_source);
+	signal_handler_connect(
+		sh, "media_play",
+		[](void *data_, calldata_t *cd) {
+			obs_log(LOG_INFO, "media_play");
+			transcription_filter_data *gf_ =
+				static_cast<struct transcription_filter_data *>(data_);
+			gf_->active = true;
+		},
+		gf);
+	signal_handler_connect(
+		sh, "media_started",
+		[](void *data_, calldata_t *cd) {
+			obs_log(LOG_INFO, "media_started");
+			transcription_filter_data *gf_ =
+				static_cast<struct transcription_filter_data *>(data_);
+			gf_->active = true;
+		},
+		gf);
+	signal_handler_connect(
+		sh, "media_pause",
+		[](void *data_, calldata_t *cd) {
+			obs_log(LOG_INFO, "media_pause");
+			transcription_filter_data *gf_ =
+				static_cast<struct transcription_filter_data *>(data_);
+			gf_->active = false;
+		},
+		gf);
+	signal_handler_connect(
+		sh, "media_restart",
+		[](void *data_, calldata_t *cd) {
+			obs_log(LOG_INFO, "media_restart");
+			transcription_filter_data *gf_ =
+				static_cast<struct transcription_filter_data *>(data_);
+			gf_->active = true;
+			gf_->captions_monitor.clear();
+			send_caption_to_source(gf_->text_source_name, "", gf_);
+		},
+		gf);
+	signal_handler_connect(
+		sh, "media_stopped",
+		[](void *data_, calldata_t *cd) {
+			obs_log(LOG_INFO, "media_stopped");
+			transcription_filter_data *gf_ =
+				static_cast<struct transcription_filter_data *>(data_);
+			gf_->active = false;
+			gf_->captions_monitor.clear();
+			send_caption_to_source(gf_->text_source_name, "", gf_);
+			// flush the buffer
+			{
+				std::lock_guard<std::mutex> lock(gf_->whisper_buf_mutex);
+				for (size_t c = 0; c < gf_->channels; c++) {
+					circlebuf_free(&gf_->input_buffers[c]);
+				}
+				circlebuf_free(&gf_->info_buffer);
+				circlebuf_free(&gf_->whisper_buffer);
+			}
+		},
+		gf);
+	gf->source_signals_set = true;
+}
+
 struct obs_audio_data *transcription_filter_filter_audio(void *data, struct obs_audio_data *audio)
 {
 	if (!audio) {
@@ -56,20 +121,33 @@ struct obs_audio_data *transcription_filter_filter_audio(void *data, struct obs_
 	struct transcription_filter_data *gf =
 		static_cast<struct transcription_filter_data *>(data);
 
-	if (!gf->active) {
-		return audio;
+	// Lazy initialization of source signals
+	if (!gf->source_signals_set) {
+		// obs_filter_get_parent only works in the filter function
+		obs_source_t *parent_source = obs_filter_get_parent(gf->context);
+		if (parent_source != nullptr) {
+			set_source_signals(gf, parent_source);
+		}
 	}
 
-	// Check if the parent source is muted
-	obs_source_t *parent_source = obs_filter_get_parent(gf->context);
-	if (gf->process_while_muted == false && obs_source_muted(parent_source)) {
-		// Source is muted, do not process audio
+	if (!gf->active) {
 		return audio;
 	}
 
 	if (gf->whisper_context == nullptr) {
 		// Whisper not initialized, just pass through
 		return audio;
+	}
+
+	// Check if process while muted is not enabled (e.g. the user wants to avoid processing audio
+	// when the source is muted)
+	if (!gf->process_while_muted) {
+		// Check if the parent source is muted
+		obs_source_t *parent_source = obs_filter_get_parent(gf->context);
+		if (parent_source != nullptr && obs_source_muted(parent_source)) {
+			// Source is muted, do not process audio
+			return audio;
+		}
 	}
 
 	{
@@ -122,12 +200,11 @@ void transcription_filter_destroy(void *data)
 
 void transcription_filter_update(void *data, obs_data_t *s)
 {
+	obs_log(LOG_INFO, "LocalVocal filter update");
 	struct transcription_filter_data *gf =
 		static_cast<struct transcription_filter_data *>(data);
 
 	gf->log_level = (int)obs_data_get_int(s, "log_level");
-	obs_log(gf->log_level, "filter update");
-
 	gf->vad_enabled = obs_data_get_bool(s, "vad_enabled");
 	gf->log_words = obs_data_get_bool(s, "log_words");
 	gf->caption_to_stream = obs_data_get_bool(s, "caption_to_stream");
@@ -142,7 +219,34 @@ void transcription_filter_update(void *data, obs_data_t *s)
 	gf->process_while_muted = obs_data_get_bool(s, "process_while_muted");
 	gf->min_sub_duration = (int)obs_data_get_int(s, "min_sub_duration");
 	gf->last_sub_render_time = 0;
-	gf->buffered_output = obs_data_get_bool(s, "buffered_output");
+	bool new_buffered_output = obs_data_get_bool(s, "buffered_output");
+
+	if (new_buffered_output) {
+		obs_log(LOG_INFO, "buffered_output enable");
+		if (!gf->buffered_output || !gf->captions_monitor.isEnabled()) {
+			obs_log(LOG_INFO, "buffered_output currently disabled, enabling");
+			gf->buffered_output = true;
+			gf->captions_monitor.initialize(
+				gf,
+				[gf](const std::string &text) {
+					if (gf->buffered_output) {
+						send_caption_to_source(gf->text_source_name, text,
+								       gf);
+					}
+				},
+				2, 30, std::chrono::seconds(10));
+		}
+	} else {
+		obs_log(LOG_INFO, "buffered_output disable");
+		if (gf->buffered_output) {
+			obs_log(LOG_INFO, "buffered_output currently enabled, disabling");
+			if (gf->captions_monitor.isEnabled()) {
+				gf->captions_monitor.clear();
+				gf->captions_monitor.stopThread();
+			}
+			gf->buffered_output = false;
+		}
+	}
 
 	bool new_translate = obs_data_get_bool(s, "translate");
 	gf->source_lang = obs_data_get_string(s, "translate_source_language");
@@ -195,7 +299,6 @@ void transcription_filter_update(void *data, obs_data_t *s)
 	obs_log(gf->log_level, "update text source");
 	// update the text source
 	const char *new_text_source_name = obs_data_get_string(s, "subtitle_sources");
-	obs_weak_source_t *old_weak_text_source = NULL;
 
 	if (new_text_source_name == nullptr || strcmp(new_text_source_name, "none") == 0 ||
 	    strcmp(new_text_source_name, "(null)") == 0 ||
@@ -212,16 +315,7 @@ void transcription_filter_update(void *data, obs_data_t *s)
 			}
 		}
 	} else {
-		// new selected text source is valid, check if it's different from the old one
-		if (gf->text_source_name != new_text_source_name) {
-			// new text source is different from the old one, release the old one
-			gf->text_source_name = new_text_source_name;
-		}
-	}
-
-	if (old_weak_text_source) {
-		obs_log(gf->log_level, "releasing old text source");
-		obs_weak_source_release(old_weak_text_source);
+		gf->text_source_name = new_text_source_name;
 	}
 
 	obs_log(gf->log_level, "update whisper model");
@@ -333,53 +427,7 @@ void *transcription_filter_create(obs_data_t *settings, obs_source_t *filter)
 			obs_source_release(source);
 		} else {
 			// create a new OBS text source called "LocalVocal Subtitles"
-			obs_source_t *scene_as_source = obs_frontend_get_current_scene();
-			obs_scene_t *scene = obs_scene_from_source(scene_as_source);
-#ifdef _WIN32
-			source = obs_source_create("text_gdiplus_v2", "LocalVocal Subtitles",
-						   nullptr, nullptr);
-#else
-			source = obs_source_create("text_ft2_source_v2", "LocalVocal Subtitles",
-						   nullptr, nullptr);
-#endif
-			if (source) {
-				// add source to the current scene
-				obs_scene_add(scene, source);
-				// set source settings
-				obs_data_t *source_settings = obs_source_get_settings(source);
-				obs_data_set_bool(source_settings, "word_wrap", true);
-				obs_data_set_int(source_settings, "custom_width", 1760);
-				obs_data_t *font_data = obs_data_create();
-				obs_data_set_string(font_data, "face", "Arial");
-				obs_data_set_string(font_data, "style", "Regular");
-				obs_data_set_int(font_data, "size", 72);
-				obs_data_set_int(font_data, "flags", 0);
-				obs_data_set_obj(source_settings, "font", font_data);
-				obs_data_release(font_data);
-				obs_source_update(source, source_settings);
-				obs_data_release(source_settings);
-
-				// set transform settings
-				obs_transform_info transform_info;
-				transform_info.pos.x = 962.0;
-				transform_info.pos.y = 959.0;
-				transform_info.bounds.x = 1769.0;
-				transform_info.bounds.y = 145.0;
-				transform_info.bounds_type =
-					obs_bounds_type::OBS_BOUNDS_SCALE_INNER;
-				transform_info.bounds_alignment = OBS_ALIGN_CENTER;
-				transform_info.alignment = OBS_ALIGN_CENTER;
-				transform_info.scale.x = 1.0;
-				transform_info.scale.y = 1.0;
-				transform_info.rot = 0.0;
-				obs_sceneitem_t *source_sceneitem =
-					obs_scene_sceneitem_from_source(scene, source);
-				obs_sceneitem_set_info(source_sceneitem, &transform_info);
-				obs_sceneitem_release(source_sceneitem);
-
-				obs_source_release(source);
-			}
-			obs_source_release(scene_as_source);
+			create_obs_text_source();
 		}
 		gf->text_source_name = "LocalVocal Subtitles";
 		obs_data_set_string(settings, "subtitle_sources", "LocalVocal Subtitles");
@@ -393,15 +441,6 @@ void *transcription_filter_create(obs_data_t *settings, obs_source_t *filter)
 	gf->whisper_model_path = std::string(""); // The update function will set the model path
 	gf->whisper_context = nullptr;
 
-	gf->captions_monitor.initialize(
-		gf,
-		[gf](const std::string &text) {
-			if (gf->buffered_output) {
-				send_caption_to_source(gf->text_source_name, text, gf);
-			}
-		},
-		2, 30, std::chrono::seconds(10));
-
 	obs_log(gf->log_level, "run update");
 	// get the settings updated on the filter data struct
 	transcription_filter_update(gf, settings);
@@ -410,45 +449,7 @@ void *transcription_filter_create(obs_data_t *settings, obs_source_t *filter)
 
 	// handle the event OBS_FRONTEND_EVENT_RECORDING_STARTING to reset the srt sentence number
 	// to match the subtitles with the recording
-	obs_frontend_add_event_callback(
-		[](enum obs_frontend_event event, void *private_data) {
-			if (event == OBS_FRONTEND_EVENT_RECORDING_STARTING) {
-				struct transcription_filter_data *gf_ =
-					static_cast<struct transcription_filter_data *>(
-						private_data);
-				if (gf_->save_srt && gf_->save_only_while_recording) {
-					obs_log(gf_->log_level,
-						"Recording started. Resetting srt file.");
-					// truncate file if it exists
-					std::ofstream output_file(gf_->output_file_path,
-								  std::ios::out | std::ios::trunc);
-					output_file.close();
-					gf_->sentence_number = 1;
-					gf_->start_timestamp_ms = now_ms();
-				}
-			} else if (event == OBS_FRONTEND_EVENT_RECORDING_STOPPED) {
-				struct transcription_filter_data *gf_ =
-					static_cast<struct transcription_filter_data *>(
-						private_data);
-				if (gf_->save_srt && gf_->save_only_while_recording &&
-				    gf_->rename_file_to_match_recording) {
-					obs_log(gf_->log_level,
-						"Recording stopped. Rename srt file.");
-					// rename file to match the recording file name with .srt extension
-					// use obs_frontend_get_last_recording to get the last recording file name
-					std::string recording_file_name =
-						obs_frontend_get_last_recording();
-					// remove the extension
-					recording_file_name = recording_file_name.substr(
-						0, recording_file_name.find_last_of("."));
-					std::string srt_file_name = recording_file_name + ".srt";
-					// rename the file
-					std::rename(gf_->output_file_path.c_str(),
-						    srt_file_name.c_str());
-				}
-			}
-		},
-		gf);
+	obs_frontend_add_event_callback(recording_state_callback, gf);
 
 	obs_log(gf->log_level, "filter created.");
 	return gf;
@@ -541,7 +542,7 @@ void transcription_filter_defaults(obs_data_t *s)
 	obs_data_set_default_double(s, "thold_ptsum", 0.01);
 	obs_data_set_default_int(s, "max_len", 0);
 	obs_data_set_default_bool(s, "split_on_word", true);
-	obs_data_set_default_int(s, "max_tokens", 32);
+	obs_data_set_default_int(s, "max_tokens", 0);
 	obs_data_set_default_bool(s, "speed_up", false);
 	obs_data_set_default_bool(s, "suppress_blank", false);
 	obs_data_set_default_bool(s, "suppress_non_speech_tokens", true);
@@ -776,19 +777,6 @@ obs_properties_t *transcription_filter_properties(void *data)
 
 	obs_property_t *buffered_output_prop =
 		obs_properties_add_bool(ppts, "buffered_output", MT_("buffered_output"));
-	// add on-change handler for buffered_output
-	obs_property_set_modified_callback(buffered_output_prop, [](obs_properties_t *props,
-								    obs_property_t *property,
-								    obs_data_t *settings) {
-		UNUSED_PARAMETER(property);
-		UNUSED_PARAMETER(props);
-		// if buffered output is enabled set the overlap to max else set it to default
-		obs_data_set_int(settings, "overlap_size_msec",
-				 obs_data_get_bool(settings, "buffered_output")
-					 ? MAX_OVERLAP_SIZE_MSEC
-					 : DEFAULT_OVERLAP_SIZE_MSEC);
-		return true;
-	});
 
 	obs_properties_add_bool(ppts, "log_words", MT_("log_words"));
 	obs_properties_add_bool(ppts, "caption_to_stream", MT_("caption_to_stream"));

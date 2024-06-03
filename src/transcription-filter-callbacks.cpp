@@ -20,16 +20,19 @@
 
 #define SEND_TIMED_METADATA_URL "http://localhost:8080/timed-metadata"
 
-void send_caption_to_source(const std::string &target_source_name, const std::string &str_copy,
+void send_caption_to_source(const std::string &target_source_name, const std::string &caption,
 			    struct transcription_filter_data *gf)
 {
+	if (target_source_name.empty()) {
+		return;
+	}
 	auto target = obs_get_source_by_name(target_source_name.c_str());
 	if (!target) {
 		obs_log(gf->log_level, "text_source target is null");
 		return;
 	}
 	auto text_settings = obs_source_get_settings(target);
-	obs_data_set_string(text_settings, "text", str_copy.c_str());
+	obs_data_set_string(text_settings, "text", caption.c_str());
 	obs_source_update(target, text_settings);
 	obs_source_release(target);
 }
@@ -228,3 +231,34 @@ void set_text_callback(struct transcription_filter_data *gf,
 		}
 	}
 };
+
+void recording_state_callback(enum obs_frontend_event event, void *data)
+{
+	struct transcription_filter_data *gf_ =
+		static_cast<struct transcription_filter_data *>(data);
+	if (event == OBS_FRONTEND_EVENT_RECORDING_STARTING) {
+		if (gf_->save_srt && gf_->save_only_while_recording) {
+			obs_log(gf_->log_level, "Recording started. Resetting srt file.");
+			// truncate file if it exists
+			std::ofstream output_file(gf_->output_file_path,
+						  std::ios::out | std::ios::trunc);
+			output_file.close();
+			gf_->sentence_number = 1;
+			gf_->start_timestamp_ms = now_ms();
+		}
+	} else if (event == OBS_FRONTEND_EVENT_RECORDING_STOPPED) {
+		if (gf_->save_srt && gf_->save_only_while_recording &&
+		    gf_->rename_file_to_match_recording) {
+			obs_log(gf_->log_level, "Recording stopped. Rename srt file.");
+			// rename file to match the recording file name with .srt extension
+			// use obs_frontend_get_last_recording to get the last recording file name
+			std::string recording_file_name = obs_frontend_get_last_recording();
+			// remove the extension
+			recording_file_name = recording_file_name.substr(
+				0, recording_file_name.find_last_of("."));
+			std::string srt_file_name = recording_file_name + ".srt";
+			// rename the file
+			std::rename(gf_->output_file_path.c_str(), srt_file_name.c_str());
+		}
+	}
+}

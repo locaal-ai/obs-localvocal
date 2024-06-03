@@ -36,6 +36,10 @@ public:
 			TokenBufferSegmentation segmentation_ = SEGMENTATION_TOKEN);
 
 	void addSentence(const std::string &sentence);
+	void clear();
+	void stopThread();
+
+	bool isEnabled() const { return !stop; }
 
 private:
 	void monitor();
@@ -48,8 +52,7 @@ private:
 	std::condition_variable condVar;
 	std::function<void(std::string)> callback;
 	std::chrono::seconds maxTime;
-	bool stop;
-	bool initialized = false;
+	bool stop = true;
 	bool newDataAvailable = false;
 	size_t numSentences;
 	size_t numPerSentence;

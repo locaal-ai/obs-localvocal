@@ -102,9 +102,5 @@ void update_whisper_model(struct transcription_filter_data *gf, obs_data_t *s)
 		gf->enable_token_ts_dtw = obs_data_get_bool(s, "dtw_token_timestamps");
 		shutdown_whisper_thread(gf);
 		start_whisper_thread_with_path(gf, gf->whisper_model_path, silero_vad_model_file);
-	} else {
-		// dtw_token_timestamps did not change
-		obs_log(gf->log_level, "dtw_token_timestamps did not change: %d == %d",
-			gf->enable_token_ts_dtw, new_dtw_timestamps);
 	}
 }
