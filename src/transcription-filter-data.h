@@ -15,6 +15,7 @@
 #include <string>
 
 #include "translation/translation.h"
+#include "translation/translation-includes.h"
 #include "whisper-utils/silero-vad-onnx.h"
 #include "whisper-utils/whisper-processing.h"
 #include "whisper-utils/token-buffer-thread.h"
@@ -83,6 +84,7 @@ struct transcription_filter_data {
 	std::string suppress_sentences;
 	bool fix_utf8 = true;
 	bool enable_audio_chunks_callback = false;
+	bool send_timed_metadata = false;
 
 	// Last transcription result
 	std::string last_text;

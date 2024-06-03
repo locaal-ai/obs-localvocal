@@ -87,6 +87,7 @@ target_sources(
   PRIVATE src/plugin-main.c
           src/transcription-filter.cpp
           src/transcription-filter.c
+          src/transcription-filter-callbacks.cpp
           src/transcription-utils.cpp
           src/model-utils/model-downloader.cpp
           src/model-utils/model-downloader-ui.cpp

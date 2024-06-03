@@ -1,9 +1,13 @@
-#include "whisper-utils.h"
-#include "plugin-support.h"
-#include "model-utils/model-downloader.h"
-#include "whisper-processing.h"
+#ifdef _WIN32
+#define NOMINMAX
+#endif
 
 #include <obs-module.h>
+
+#include "whisper-utils.h"
+#include "whisper-processing.h"
+#include "plugin-support.h"
+#include "model-utils/model-downloader.h"
 
 void update_whisper_model(struct transcription_filter_data *gf, obs_data_t *s)
 {
