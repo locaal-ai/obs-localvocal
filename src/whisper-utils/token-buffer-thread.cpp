@@ -87,16 +87,11 @@ void TokenBufferThread::addSentence(const std::string &sentence)
 
 	std::lock_guard<std::mutex> lock(inputQueueMutex);
 
-	// if the inputqueue and sentence don't have a space in them, add a space
-	if (!inputQueue.empty() && !sentence.empty() && inputQueue.back() != SPACE &&
-	    characters.front() != SPACE) {
-		inputQueue.push_back(SPACE);
-	}
-
 	// add the reconstructed sentence to the wordQueue
 	for (const auto &character : characters) {
 		inputQueue.push_back(character);
 	}
+	inputQueue.push_back(SPACE);
 }
 
 void TokenBufferThread::clear()
@@ -180,6 +175,11 @@ void TokenBufferThread::monitor()
 					// iterate through the presentation queue tokens and build a caption
 					size_t tokensInSentence = 0;
 					for (const auto &token : presentationQueue) {
+						// skip spaces in the beginning of a sentence (tokensInSentence == 0)
+						if (token == SPACE && tokensInSentence == 0) {
+							continue;
+						}
+
 						caption += token;
 						tokensInSentence++;
 						if (tokensInSentence == this->numPerSentence) {
@@ -207,8 +207,9 @@ void TokenBufferThread::monitor()
 			}
 		}
 
-		// sleep for 100 ms
-		std::this_thread::sleep_for(std::chrono::milliseconds(100));
+		// check the presentation queue size (pqs), if it's big - sleep less
+		std::this_thread::sleep_for(
+			std::chrono::milliseconds(presentationQueue.size() > 15 ? 66 : 100));
 	}
 
 	obs_log(LOG_INFO, "TokenBufferThread::monitor: done");

@@ -231,6 +231,8 @@ void transcription_filter_update(void *data, obs_data_t *s)
 	gf->min_sub_duration = (int)obs_data_get_int(s, "min_sub_duration");
 	gf->last_sub_render_time = 0;
 	bool new_buffered_output = obs_data_get_bool(s, "buffered_output");
+	int new_buffer_num_lines = obs_data_get_int(s, "buffer_num_lines");
+	int new_buffer_num_chars_per_line = obs_data_get_int(s, "buffer_num_chars_per_line");
 
 	if (new_buffered_output) {
 		obs_log(LOG_INFO, "buffered_output enable");
@@ -245,7 +247,16 @@ void transcription_filter_update(void *data, obs_data_t *s)
 								       gf);
 					}
 				},
-				2, 30, std::chrono::seconds(10));
+				new_buffer_num_lines, new_buffer_num_chars_per_line,
+				std::chrono::seconds(10));
+		} else {
+			if (new_buffer_num_lines != gf->buffered_output_num_lines ||
+			    new_buffer_num_chars_per_line != gf->buffered_output_num_chars) {
+				obs_log(LOG_INFO, "buffered_output parameters changed, updating");
+				gf->captions_monitor.setNumSentences(new_buffer_num_lines);
+				gf->captions_monitor.setNumPerSentence(
+					new_buffer_num_chars_per_line);
+			}
 		}
 	} else {
 		obs_log(LOG_INFO, "buffered_output disable");
@@ -502,6 +513,9 @@ void transcription_filter_defaults(obs_data_t *s)
 	obs_log(LOG_INFO, "filter defaults");
 
 	obs_data_set_default_bool(s, "buffered_output", false);
+	obs_data_set_default_int(s, "buffer_num_lines", 2);
+	obs_data_set_default_int(s, "buffer_num_chars_per_line", 30);
+
 	obs_data_set_default_bool(s, "vad_enabled", true);
 	obs_data_set_default_int(s, "log_level", LOG_DEBUG);
 	obs_data_set_default_bool(s, "log_words", false);
@@ -787,6 +801,29 @@ obs_properties_t *transcription_filter_properties(void *data)
 
 	obs_property_t *buffered_output_prop =
 		obs_properties_add_bool(ppts, "buffered_output", MT_("buffered_output"));
+
+	// add buffered output options group
+	obs_properties_t *buffered_output_group = obs_properties_create();
+	obs_properties_add_group(ppts, "buffered_output_group", MT_("buffered_output_parameters"),
+				 OBS_GROUP_NORMAL, buffered_output_group);
+	// add buffer lines parameter
+	obs_properties_add_int_slider(buffered_output_group, "buffer_num_lines",
+				      MT_("buffer_num_lines"), 1, 5, 1);
+	// add buffer number of characters per line parameter
+	obs_properties_add_int_slider(buffered_output_group, "buffer_num_chars_per_line",
+				      MT_("buffer_num_chars_per_line"), 1, 100, 1);
+
+	// on enable/disable buffered output, show/hide the group
+	obs_property_set_modified_callback(buffered_output_prop, [](obs_properties_t *props,
+								    obs_property_t *property,
+								    obs_data_t *settings) {
+		UNUSED_PARAMETER(property);
+		// If buffered output is enabled, show the buffered output group
+		const bool show_hide = obs_data_get_bool(settings, "buffered_output");
+		obs_property_set_visible(obs_properties_get(props, "buffered_output_group"),
+					 show_hide);
+		return true;
+	});
 
 	obs_properties_add_bool(ppts, "log_words", MT_("log_words"));
 	obs_properties_add_bool(ppts, "caption_to_stream", MT_("caption_to_stream"));

@@ -41,6 +41,9 @@ public:
 
 	bool isEnabled() const { return !stop; }
 
+	void setNumSentences(size_t numSentences_) { numSentences = numSentences_; }
+	void setNumPerSentence(size_t numPerSentence_) { numPerSentence = numPerSentence_; }
+
 private:
 	void monitor();
 	void log_token_vector(const std::vector<std::string> &tokens);

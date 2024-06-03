@@ -135,10 +135,6 @@ void set_text_callback(struct transcription_filter_data *gf,
 		}
 	}
 
-	if (gf->send_timed_metadata) {
-		send_timed_metadata(gf, result);
-	}
-
 	if (gf->output_file_path != "" && gf->text_source_name.empty()) {
 		// Check if we should save the sentence
 		if (gf->save_only_while_recording && !obs_frontend_recording_active()) {

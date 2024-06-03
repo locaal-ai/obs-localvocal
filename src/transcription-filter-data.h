@@ -74,7 +74,6 @@ struct transcription_filter_data {
 	std::string source_lang;
 	std::string target_lang;
 	std::string translation_output;
-	bool buffered_output = false;
 	bool enable_token_ts_dtw = false;
 	std::string suppress_sentences;
 	bool fix_utf8 = true;
@@ -104,7 +103,10 @@ struct transcription_filter_data {
 	std::string translation_model_index;
 	std::string translation_model_path_external;
 
+	bool buffered_output = false;
 	TokenBufferThread captions_monitor;
+	int buffered_output_num_lines = 2;
+	int buffered_output_num_chars = 30;
 
 	// ctor
 	transcription_filter_data() : whisper_buf_mutex(), whisper_ctx_mutex(), wshiper_thread_cv()
