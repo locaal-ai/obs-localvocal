@@ -157,7 +157,11 @@ void set_text_callback(struct transcription_filter_data *gf,
 	gf->last_text = str_copy;
 
 	if (gf->buffered_output) {
-		gf->captions_monitor.addWords(result.tokens);
+		std::vector<std::string> vec;
+		for (char c : str_copy) {
+			vec.emplace_back(1, c);
+		}
+		gf->captions_monitor.addWords(vec);
 	}
 
 	if (gf->caption_to_stream) {

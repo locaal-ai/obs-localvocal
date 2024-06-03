@@ -172,6 +172,24 @@ void transcription_filter_update(void *data, obs_data_t *s)
 		}
 	}
 
+	// translation options
+	if (gf->translate) {
+		if (gf->translation_ctx.options) {
+			gf->translation_ctx.options->sampling_temperature =
+				(float)obs_data_get_double(s, "translation_sampling_temperature");
+			gf->translation_ctx.options->repetition_penalty =
+				(float)obs_data_get_double(s, "translation_repetition_penalty");
+			gf->translation_ctx.options->beam_size =
+				(int)obs_data_get_int(s, "translation_beam_size");
+			gf->translation_ctx.options->max_decoding_length =
+				(int)obs_data_get_int(s, "translation_max_decoding_length");
+			gf->translation_ctx.options->no_repeat_ngram_size =
+				(int)obs_data_get_int(s, "translation_no_repeat_ngram_size");
+			gf->translation_ctx.options->max_input_length =
+				(int)obs_data_get_int(s, "translation_max_input_length");
+		}
+	}
+
 	obs_log(gf->log_level, "update text source");
 	// update the text source
 	const char *new_text_source_name = obs_data_get_string(s, "subtitle_sources");
@@ -376,12 +394,11 @@ void *transcription_filter_create(obs_data_t *settings, obs_source_t *filter)
 	gf->captions_monitor.initialize(
 		gf,
 		[gf](const std::string &text) {
-			obs_log(LOG_INFO, "Captions: %s", text.c_str());
 			if (gf->buffered_output) {
 				send_caption_to_source(gf->text_source_name, text, gf);
 			}
 		},
-		30, std::chrono::seconds(10));
+		2, 30, std::chrono::seconds(10));
 
 	obs_log(gf->log_level, "run update");
 	// get the settings updated on the filter data struct
@@ -495,6 +512,14 @@ void transcription_filter_defaults(obs_data_t *s)
 	obs_data_set_default_int(s, "translate_input_tokenization_style", INPUT_TOKENIZAION_M2M100);
 	obs_data_set_default_string(s, "suppress_sentences", SUPPRESS_SENTENCES_DEFAULT);
 	obs_data_set_default_double(s, "sentence_psum_accept_thresh", 0.4);
+
+	// translation options
+	obs_data_set_default_double(s, "translation_sampling_temperature", 0.1);
+	obs_data_set_default_double(s, "translation_repetition_penalty", 2.0);
+	obs_data_set_default_int(s, "translation_beam_size", 1);
+	obs_data_set_default_int(s, "translation_max_decoding_length", 65);
+	obs_data_set_default_int(s, "translation_no_repeat_ngram_size", 1);
+	obs_data_set_default_int(s, "translation_max_input_length", 65);
 
 	// Whisper parameters
 	obs_data_set_default_int(s, "whisper_sampling_method", WHISPER_SAMPLING_BEAM_SEARCH);
@@ -689,9 +714,13 @@ obs_properties_t *transcription_filter_properties(void *data)
 		UNUSED_PARAMETER(property);
 		// Show/Hide the translation group
 		const bool translate_enabled = obs_data_get_bool(settings, "translate");
-		for (const auto &prop : {"translate_target_language", "translate_source_language",
-					 "translate_add_context", "translate_output",
-					 "translate_model", "translate_input_tokenization_style"}) {
+		for (const auto &prop :
+		     {"translate_target_language", "translate_source_language",
+		      "translate_add_context", "translate_output", "translate_model",
+		      "translate_input_tokenization_style", "translation_sampling_temperature",
+		      "translation_repetition_penalty", "translation_beam_size",
+		      "translation_max_decoding_length", "translation_no_repeat_ngram_size",
+		      "translation_max_input_length"}) {
 			obs_property_set_visible(obs_properties_get(props, prop),
 						 translate_enabled);
 		}
@@ -709,6 +738,20 @@ obs_properties_t *transcription_filter_properties(void *data)
 					OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_INT);
 	obs_property_list_add_int(prop_token_style, "M2M100 Tokens", INPUT_TOKENIZAION_M2M100);
 	obs_property_list_add_int(prop_token_style, "T5 Tokens", INPUT_TOKENIZAION_T5);
+
+	// add translation options: beam_size, max_decoding_length, repetition_penalty, no_repeat_ngram_size, max_input_length, sampling_temperature
+	obs_properties_add_float_slider(translation_group, "translation_sampling_temperature",
+					MT_("translation_sampling_temperature"), 0.0, 1.0, 0.05);
+	obs_properties_add_float_slider(translation_group, "translation_repetition_penalty",
+					MT_("translation_repetition_penalty"), 1.0, 5.0, 0.25);
+	obs_properties_add_int_slider(translation_group, "translation_beam_size",
+				      MT_("translation_beam_size"), 1, 10, 1);
+	obs_properties_add_int_slider(translation_group, "translation_max_decoding_length",
+				      MT_("translation_max_decoding_length"), 1, 100, 5);
+	obs_properties_add_int_slider(translation_group, "translation_max_input_length",
+				      MT_("translation_max_input_length"), 1, 100, 5);
+	obs_properties_add_int_slider(translation_group, "translation_no_repeat_ngram_size",
+				      MT_("translation_no_repeat_ngram_size"), 1, 10, 1);
 
 	obs_property_t *advanced_settings_prop =
 		obs_properties_add_bool(ppts, "advanced_settings", MT_("advanced_settings"));
