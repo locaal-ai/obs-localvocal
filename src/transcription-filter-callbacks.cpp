@@ -146,13 +146,8 @@ void set_text_callback(struct transcription_filter_data *gf,
 				// overwrite the original text with the translated text
 				str_copy = translated_text;
 			} else {
-				if (gf->buffered_output) {
-					gf->captions_monitor.addSentence(translated_text);
-				} else {
-					// send the translation to the selected source
-					send_caption_to_source(gf->translation_output,
-							       translated_text, gf);
-				}
+				// send the translation to the selected source
+				send_caption_to_source(gf->translation_output, translated_text, gf);
 			}
 		} else {
 			obs_log(gf->log_level, "Failed to translate text");

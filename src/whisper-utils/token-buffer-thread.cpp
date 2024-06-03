@@ -53,49 +53,41 @@ void TokenBufferThread::log_token_vector(const std::vector<std::string> &tokens)
 
 void TokenBufferThread::addSentence(const std::string &sentence)
 {
-	{
-		std::lock_guard<std::mutex> lock(queueMutex);
-
 #ifdef _WIN32
-		// on windows convert from multibyte to wide char
-		int count = MultiByteToWideChar(CP_UTF8, 0, sentence.c_str(),
-						(int)sentence.length(), NULL, 0);
-		std::wstring sentence_ws(count, 0);
-		MultiByteToWideChar(CP_UTF8, 0, sentence.c_str(), (int)sentence.length(),
-				    &sentence_ws[0], count);
-		// split to characters
-		std::vector<std::wstring> characters;
-		for (const auto &c : sentence_ws) {
-			characters.push_back(std::wstring(1, c));
-		}
+	// on windows convert from multibyte to wide char
+	int count =
+		MultiByteToWideChar(CP_UTF8, 0, sentence.c_str(), (int)sentence.length(), NULL, 0);
+	std::wstring sentence_ws(count, 0);
+	MultiByteToWideChar(CP_UTF8, 0, sentence.c_str(), (int)sentence.length(), &sentence_ws[0],
+			    count);
+	// split to characters
+	std::vector<std::wstring> characters;
+	for (const auto &c : sentence_ws) {
+		characters.push_back(std::wstring(1, c));
+	}
 #else
-		// split to characters
-		std::vector<std::string> characters;
-		for (const auto &c : sentence_ws) {
-			characters.push_back(std::string(1, c));
-		}
+	// split to characters
+	std::vector<std::string> characters;
+	for (const auto &c : sentence_ws) {
+		characters.push_back(std::string(1, c));
+	}
 #endif
 
-		// add the reconstructed sentence to the wordQueue
-		for (const auto &character : characters) {
-			inputQueue.push_back(character);
-		}
+	std::lock_guard<std::mutex> lock(queueMutex);
 
-		newDataAvailable = true;
+	// add the reconstructed sentence to the wordQueue
+	for (const auto &character : characters) {
+		inputQueue.push_back(character);
 	}
-	condVar.notify_all();
 }
 
 void TokenBufferThread::monitor()
 {
 	obs_log(LOG_INFO, "TokenBufferThread::monitor");
-	auto startTime = std::chrono::steady_clock::now();
-	while (this->initialized && !this->stop) {
-		std::unique_lock<std::mutex> lock(this->queueMutex);
-		// wait for new data or stop signal
-		this->condVar.wait_for(lock, std::chrono::milliseconds(100),
-				       [this] { return this->stop; });
 
+	this->callback("");
+
+	while (this->initialized && !this->stop) {
 		if (this->stop) {
 			break;
 		}
@@ -112,21 +104,22 @@ void TokenBufferThread::monitor()
 			}
 		}
 
-		if (!inputQueue.empty()) {
-			// if there are token on the input queue
-			if (this->segmentation == SEGMENTATION_SENTENCE) {
-				// add all the tokens from the input queue to the presentation queue
-				for (const auto &token : inputQueue) {
-					presentationQueue.push_back(token);
+		{
+			std::unique_lock<std::mutex> lock(this->queueMutex);
+
+			if (!inputQueue.empty()) {
+				// if there are token on the input queue
+				if (this->segmentation == SEGMENTATION_SENTENCE) {
+					// add all the tokens from the input queue to the presentation queue
+					for (const auto &token : inputQueue) {
+						presentationQueue.push_back(token);
+					}
+				} else {
+					// add one token to the presentation queue
+					presentationQueue.push_back(inputQueue.front());
+					inputQueue.pop_front();
 				}
-			} else {
-				// add one token to the presentation queue
-				presentationQueue.push_back(inputQueue.front());
-				inputQueue.pop_front();
 			}
-		} else {
-			// if there are no tokens on the input queue
-			continue;
 		}
 
 		if (presentationQueue.size() > 0) {
@@ -184,6 +177,9 @@ void TokenBufferThread::monitor()
 			// emit the caption
 			this->callback(caption_out);
 		}
+
+		// sleep for 100 ms
+		std::this_thread::sleep_for(std::chrono::milliseconds(100));
 	}
 	obs_log(LOG_INFO, "TokenBufferThread::monitor: done");
 }
