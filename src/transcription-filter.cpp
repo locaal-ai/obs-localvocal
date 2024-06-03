@@ -44,74 +44,78 @@ bool add_sources_to_list(void *list_property, obs_source_t *source)
 	return true;
 }
 
+void reset_caption_state(transcription_filter_data *gf_)
+{
+	if (gf_->captions_monitor.isEnabled()) {
+		gf_->captions_monitor.clear();
+	}
+	send_caption_to_source(gf_->text_source_name, "", gf_);
+	// flush the buffer
+	{
+		std::lock_guard<std::mutex> lock(gf_->whisper_buf_mutex);
+		for (size_t c = 0; c < gf_->channels; c++) {
+			if (gf_->input_buffers[c].data != nullptr) {
+				circlebuf_free(&gf_->input_buffers[c]);
+			}
+		}
+		if (gf_->info_buffer.data != nullptr) {
+			circlebuf_free(&gf_->info_buffer);
+		}
+		if (gf_->whisper_buffer.data != nullptr) {
+			circlebuf_free(&gf_->whisper_buffer);
+		}
+	}
+}
+
 void set_source_signals(transcription_filter_data *gf, obs_source_t *parent_source)
 {
-	obs_log(LOG_INFO, "parent source name: %s", obs_source_get_name(parent_source));
 	signal_handler_t *sh = obs_source_get_signal_handler(parent_source);
 	signal_handler_connect(
 		sh, "media_play",
 		[](void *data_, calldata_t *cd) {
-			obs_log(LOG_INFO, "media_play");
 			transcription_filter_data *gf_ =
 				static_cast<struct transcription_filter_data *>(data_);
+			obs_log(gf_->log_level, "media_play");
 			gf_->active = true;
 		},
 		gf);
 	signal_handler_connect(
 		sh, "media_started",
 		[](void *data_, calldata_t *cd) {
-			obs_log(LOG_INFO, "media_started");
 			transcription_filter_data *gf_ =
 				static_cast<struct transcription_filter_data *>(data_);
+			obs_log(gf_->log_level, "media_started");
 			gf_->active = true;
+			reset_caption_state(gf_);
 		},
 		gf);
 	signal_handler_connect(
 		sh, "media_pause",
 		[](void *data_, calldata_t *cd) {
-			obs_log(LOG_INFO, "media_pause");
 			transcription_filter_data *gf_ =
 				static_cast<struct transcription_filter_data *>(data_);
+			obs_log(gf_->log_level, "media_pause");
 			gf_->active = false;
 		},
 		gf);
 	signal_handler_connect(
 		sh, "media_restart",
 		[](void *data_, calldata_t *cd) {
-			obs_log(LOG_INFO, "media_restart");
 			transcription_filter_data *gf_ =
 				static_cast<struct transcription_filter_data *>(data_);
+			obs_log(gf_->log_level, "media_restart");
 			gf_->active = true;
-			gf_->captions_monitor.clear();
-			send_caption_to_source(gf_->text_source_name, "", gf_);
+			reset_caption_state(gf_);
 		},
 		gf);
 	signal_handler_connect(
 		sh, "media_stopped",
 		[](void *data_, calldata_t *cd) {
-			obs_log(LOG_INFO, "media_stopped");
 			transcription_filter_data *gf_ =
 				static_cast<struct transcription_filter_data *>(data_);
+			obs_log(gf_->log_level, "media_stopped");
 			gf_->active = false;
-			if (gf_->captions_monitor.isEnabled()) {
-				gf_->captions_monitor.clear();
-			}
-			send_caption_to_source(gf_->text_source_name, "", gf_);
-			// flush the buffer
-			{
-				std::lock_guard<std::mutex> lock(gf_->whisper_buf_mutex);
-				for (size_t c = 0; c < gf_->channels; c++) {
-					if (gf_->input_buffers[c].data != nullptr) {
-						circlebuf_free(&gf_->input_buffers[c]);
-					}
-				}
-				if (gf_->info_buffer.data != nullptr) {
-					circlebuf_free(&gf_->info_buffer);
-				}
-				if (gf_->whisper_buffer.data != nullptr) {
-					circlebuf_free(&gf_->whisper_buffer);
-				}
-			}
+			reset_caption_state(gf_);
 		},
 		gf);
 	gf->source_signals_set = true;

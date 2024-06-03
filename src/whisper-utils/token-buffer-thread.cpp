@@ -95,7 +95,6 @@ void TokenBufferThread::addSentence(const std::string &sentence)
 
 void TokenBufferThread::clear()
 {
-	obs_log(LOG_INFO, "TokenBufferThread::clear");
 	{
 		std::lock_guard<std::mutex> lock(inputQueueMutex);
 		inputQueue.clear();
