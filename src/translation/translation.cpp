@@ -73,8 +73,9 @@ int build_translation_context(struct translation_context &translation_ctx)
 		translation_ctx.options->max_decoding_length = 40;
 		translation_ctx.options->use_vmap = true;
 		translation_ctx.options->return_scores = false;
-		translation_ctx.options->repetition_penalty = 1.1f;
-		translation_ctx.options->no_repeat_ngram_size = 2;
+		translation_ctx.options->repetition_penalty = 2.0f;
+		translation_ctx.options->no_repeat_ngram_size = 1;
+		translation_ctx.options->max_input_length = 64;
 	} catch (std::exception &e) {
 		obs_log(LOG_ERROR, "Failed to load CT2 model: %s", e.what());
 		return OBS_POLYGLOT_TRANSLATION_INIT_FAIL;

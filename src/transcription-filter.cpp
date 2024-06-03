@@ -130,13 +130,8 @@ void transcription_filter_update(void *data, obs_data_t *s)
 
 	gf->vad_enabled = obs_data_get_bool(s, "vad_enabled");
 	gf->log_words = obs_data_get_bool(s, "log_words");
-	gf->frames = (size_t)((float)gf->sample_rate /
-			      (1000.0f / (float)obs_data_get_int(s, "buffer_size_msec")));
 	gf->caption_to_stream = obs_data_get_bool(s, "caption_to_stream");
 	gf->send_timed_metadata = obs_data_get_bool(s, "send_timed_metadata");
-	bool step_by_step_processing = obs_data_get_bool(s, "step_by_step_processing");
-	gf->step_size_msec = step_by_step_processing ? (int)obs_data_get_int(s, "step_size_msec")
-						     : obs_data_get_int(s, "buffer_size_msec");
 	gf->save_srt = obs_data_get_bool(s, "subtitle_save_srt");
 	gf->truncate_output_file = obs_data_get_bool(s, "truncate_output_file");
 	gf->save_only_while_recording = obs_data_get_bool(s, "only_while_recording");
@@ -147,14 +142,7 @@ void transcription_filter_update(void *data, obs_data_t *s)
 	gf->process_while_muted = obs_data_get_bool(s, "process_while_muted");
 	gf->min_sub_duration = (int)obs_data_get_int(s, "min_sub_duration");
 	gf->last_sub_render_time = 0;
-	bool new_buffered_output = obs_data_get_bool(s, "buffered_output");
-	if (new_buffered_output != gf->buffered_output) {
-		gf->buffered_output = new_buffered_output;
-		gf->overlap_ms = gf->buffered_output ? MAX_OVERLAP_SIZE_MSEC
-						     : DEFAULT_OVERLAP_SIZE_MSEC;
-		gf->overlap_frames =
-			(size_t)((float)gf->sample_rate / (1000.0f / (float)gf->overlap_ms));
-	}
+	gf->buffered_output = obs_data_get_bool(s, "buffered_output");
 
 	bool new_translate = obs_data_get_bool(s, "translate");
 	gf->source_lang = obs_data_get_string(s, "translate_source_language");
@@ -271,10 +259,6 @@ void *transcription_filter_create(obs_data_t *settings, obs_source_t *filter)
 	gf->sample_rate = audio_output_get_sample_rate(obs_get_audio());
 	gf->frames = (size_t)((float)gf->sample_rate / (1000.0f / MAX_MS_WORK_BUFFER));
 	gf->last_num_frames = 0;
-	bool step_by_step_processing = obs_data_get_bool(settings, "step_by_step_processing");
-	gf->step_size_msec = step_by_step_processing
-				     ? (int)obs_data_get_int(settings, "step_size_msec")
-				     : obs_data_get_int(settings, "buffer_size_msec");
 	gf->min_sub_duration = (int)obs_data_get_int(settings, "min_sub_duration");
 	gf->last_sub_render_time = 0;
 	gf->log_level = (int)obs_data_get_int(settings, "log_level");
@@ -302,8 +286,6 @@ void *transcription_filter_create(obs_data_t *settings, obs_source_t *filter)
 
 	gf->context = filter;
 
-	gf->overlap_ms = (int)obs_data_get_int(settings, "overlap_size_msec");
-	gf->overlap_frames = (size_t)((float)gf->sample_rate / (1000.0f / (float)gf->overlap_ms));
 	obs_log(gf->log_level, "channels %d, frames %d, sample_rate %d", (int)gf->channels,
 		(int)gf->frames, gf->sample_rate);
 
@@ -497,15 +479,11 @@ void transcription_filter_defaults(obs_data_t *s)
 	obs_data_set_default_string(s, "whisper_model_path", "Whisper Tiny English (74Mb)");
 	obs_data_set_default_string(s, "whisper_language_select", "en");
 	obs_data_set_default_string(s, "subtitle_sources", "none");
-	obs_data_set_default_bool(s, "step_by_step_processing", false);
 	obs_data_set_default_bool(s, "process_while_muted", false);
 	obs_data_set_default_bool(s, "subtitle_save_srt", false);
 	obs_data_set_default_bool(s, "truncate_output_file", false);
 	obs_data_set_default_bool(s, "only_while_recording", false);
 	obs_data_set_default_bool(s, "rename_file_to_match_recording", true);
-	obs_data_set_default_int(s, "buffer_size_msec", DEFAULT_BUFFER_SIZE_MSEC);
-	obs_data_set_default_int(s, "overlap_size_msec", DEFAULT_OVERLAP_SIZE_MSEC);
-	obs_data_set_default_int(s, "step_size_msec", 1000);
 	obs_data_set_default_int(s, "min_sub_duration", 3000);
 	obs_data_set_default_bool(s, "advanced_settings", false);
 	obs_data_set_default_bool(s, "translate", false);
@@ -771,30 +749,10 @@ obs_properties_t *transcription_filter_properties(void *data)
 	obs_properties_add_bool(ppts, "caption_to_stream", MT_("caption_to_stream"));
 	obs_properties_add_bool(ppts, "send_timed_metadata", MT_("send_timed_metadata"));
 
-	obs_properties_add_int_slider(ppts, "buffer_size_msec", MT_("buffer_size_msec"), 1000,
-				      DEFAULT_BUFFER_SIZE_MSEC, 250);
-	obs_properties_add_int_slider(ppts, "overlap_size_msec", MT_("overlap_size_msec"),
-				      MIN_OVERLAP_SIZE_MSEC, MAX_OVERLAP_SIZE_MSEC,
-				      (MAX_OVERLAP_SIZE_MSEC - MIN_OVERLAP_SIZE_MSEC) / 5);
-
-	obs_property_t *step_by_step_processing = obs_properties_add_bool(
-		ppts, "step_by_step_processing", MT_("step_by_step_processing"));
-	obs_properties_add_int_slider(ppts, "step_size_msec", MT_("step_size_msec"), 1000,
-				      DEFAULT_BUFFER_SIZE_MSEC, 50);
 	obs_properties_add_int_slider(ppts, "min_sub_duration", MT_("min_sub_duration"), 1000, 5000,
 				      50);
 	obs_properties_add_float_slider(ppts, "sentence_psum_accept_thresh",
 					MT_("sentence_psum_accept_thresh"), 0.0, 1.0, 0.05);
-
-	obs_property_set_modified_callback(step_by_step_processing, [](obs_properties_t *props,
-								       obs_property_t *property,
-								       obs_data_t *settings) {
-		UNUSED_PARAMETER(property);
-		// Show/Hide the step size input
-		obs_property_set_visible(obs_properties_get(props, "step_size_msec"),
-					 obs_data_get_bool(settings, "step_by_step_processing"));
-		return true;
-	});
 
 	obs_properties_add_bool(ppts, "process_while_muted", MT_("process_while_muted"));
 

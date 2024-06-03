@@ -84,7 +84,6 @@ create_context(int sample_rate, int channels, const std::string &whisper_model_p
 	gf->sample_rate = sample_rate;
 	gf->frames = (size_t)((float)gf->sample_rate * 10.0f);
 	gf->last_num_frames = 0;
-	gf->step_size_msec = 3000;
 	gf->min_sub_duration = 3000;
 	gf->last_sub_render_time = 0;
 	gf->save_srt = false;
@@ -110,8 +109,6 @@ create_context(int sample_rate, int channels, const std::string &whisper_model_p
 	memset(gf->copy_buffers[0], 0, gf->channels * gf->frames * sizeof(float));
 	obs_log(LOG_INFO, " allocated %llu bytes ", gf->channels * gf->frames * sizeof(float));
 
-	gf->overlap_ms = 150;
-	gf->overlap_frames = (size_t)((float)gf->sample_rate / (1000.0f / (float)gf->overlap_ms));
 	obs_log(gf->log_level, "channels %d, frames %d, sample_rate %d", (int)gf->channels,
 		(int)gf->frames, gf->sample_rate);
 
@@ -384,13 +381,6 @@ int wmain(int argc, wchar_t *argv[])
 					config["suppress_sentences"].get<std::string>().c_str());
 				gf->suppress_sentences =
 					config["suppress_sentences"].get<std::string>();
-			}
-			if (config.contains("overlap_ms")) {
-				obs_log(LOG_INFO, "Setting overlap_ms to %d",
-					config["overlap_ms"].get<int>());
-				gf->overlap_ms = config["overlap_ms"];
-				gf->overlap_frames = (size_t)((float)gf->sample_rate /
-							      (1000.0f / (float)gf->overlap_ms));
 			}
 			if (config.contains("enable_audio_chunks_callback")) {
 				obs_log(LOG_INFO, "Setting enable_audio_chunks_callback to %s",

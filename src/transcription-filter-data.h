@@ -28,13 +28,8 @@ struct transcription_filter_data {
 	uint32_t sample_rate;  // input sample rate
 	// How many input frames (in input sample rate) are needed for the next whisper frame
 	size_t frames;
-	// How many ms/frames are needed to overlap with the next whisper frame
-	size_t overlap_frames;
-	size_t overlap_ms;
 	// How many frames were processed in the last whisper frame (this is dynamic)
 	size_t last_num_frames;
-	// Milliseconds per processing step (e.g. rest of the whisper buffer may be filled with silence)
-	size_t step_size_msec;
 	// Start begining timestamp in ms since epoch
 	uint64_t start_timestamp_ms;
 	// Sentence counter for srt
