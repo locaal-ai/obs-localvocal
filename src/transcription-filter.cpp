@@ -524,7 +524,7 @@ void transcription_filter_defaults(obs_data_t *s)
 	obs_data_set_default_int(s, "n_threads", 4);
 	obs_data_set_default_int(s, "n_max_text_ctx", 16384);
 	obs_data_set_default_bool(s, "whisper_translate", false);
-	obs_data_set_default_bool(s, "no_context", false);
+	obs_data_set_default_bool(s, "no_context", true);
 	obs_data_set_default_bool(s, "single_segment", true);
 	obs_data_set_default_bool(s, "print_special", false);
 	obs_data_set_default_bool(s, "print_progress", false);
