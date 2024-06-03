@@ -18,6 +18,7 @@
 
 #include <algorithm>
 #include <chrono>
+#include <regex>
 
 struct vad_state {
 	bool vad_on;
@@ -272,6 +273,13 @@ struct DetectionResultWithText run_whisper_inference(struct transcription_filter
 		}
 
 		if (text.empty() || text == "." || text == " " || text == "\n") {
+			return {DETECTION_RESULT_SILENCE, "", t0, t1, {}};
+		}
+
+		// Check regex for "MBC .*" to detect false prediction
+		std::regex mbc_regex("MBC.*");
+		if (std::regex_match(text, mbc_regex)) {
+			obs_log(gf->log_level, "False prediction detected: %s", text.c_str());
 			return {DETECTION_RESULT_SILENCE, "", t0, t1, {}};
 		}
 
