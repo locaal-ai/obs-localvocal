@@ -663,8 +663,18 @@ obs_properties_t *transcription_filter_properties(void *data)
 		// input
 		const char *new_model_path = obs_data_get_string(settings, "translate_model");
 		const bool is_external = (strcmp(new_model_path, "!!!external!!!") == 0);
+		const bool is_whisper = (strcmp(new_model_path, "whisper-based-translation") == 0);
 		obs_property_set_visible(
 			obs_properties_get(props, "translation_model_path_external"), is_external);
+		obs_property_set_visible(obs_properties_get(props, "translate_source_language"),
+					 !is_whisper);
+		obs_property_set_visible(obs_properties_get(props, "translate_add_context"),
+					 !is_whisper);
+		obs_property_set_visible(obs_properties_get(props,
+							    "translate_input_tokenization_style"),
+					 !is_whisper);
+		obs_property_set_visible(obs_properties_get(props, "translate_output"),
+					 !is_whisper);
 		return true;
 	});
 	// add target language selection
