@@ -19,7 +19,7 @@
 TokenBufferThread::~TokenBufferThread()
 {
 	{
-		std::lock_guard<std::mutex> lock(queueMutex);
+		std::lock_guard<std::mutex> lock(inputQueueMutex);
 		stop = true;
 	}
 	condVar.notify_all();
@@ -46,7 +46,7 @@ void TokenBufferThread::initialize(struct transcription_filter_data *gf_,
 
 void TokenBufferThread::stopThread()
 {
-	std::lock_guard<std::mutex> lock(queueMutex);
+	std::lock_guard<std::mutex> lock(inputQueueMutex);
 	stop = true;
 	condVar.notify_all();
 	if (workerThread.joinable()) {
@@ -85,7 +85,7 @@ void TokenBufferThread::addSentence(const std::string &sentence)
 	}
 #endif
 
-	std::lock_guard<std::mutex> lock(queueMutex);
+	std::lock_guard<std::mutex> lock(inputQueueMutex);
 
 	// add the reconstructed sentence to the wordQueue
 	for (const auto &character : characters) {
@@ -96,9 +96,14 @@ void TokenBufferThread::addSentence(const std::string &sentence)
 void TokenBufferThread::clear()
 {
 	obs_log(LOG_INFO, "TokenBufferThread::clear");
-	std::lock_guard<std::mutex> lock(queueMutex);
-	inputQueue.clear();
-	presentationQueue.clear();
+	{
+		std::lock_guard<std::mutex> lock(inputQueueMutex);
+		inputQueue.clear();
+	}
+	{
+		std::lock_guard<std::mutex> lock(presentationQueueMutex);
+		presentationQueue.clear();
+	}
 	this->callback("");
 }
 
@@ -109,90 +114,97 @@ void TokenBufferThread::monitor()
 	this->callback("");
 
 	while (!this->stop) {
-		// condition presentation queue
-		if (presentationQueue.size() == this->numSentences * this->numPerSentence) {
-			// pop a whole sentence from the presentation queue front
-			for (size_t i = 0; i < this->numPerSentence; i++) {
-				presentationQueue.pop_front();
-			}
-		}
-
 		{
-			std::unique_lock<std::mutex> lock(this->queueMutex);
-
-			if (!inputQueue.empty()) {
-				// if there are token on the input queue
-				if (this->segmentation == SEGMENTATION_SENTENCE) {
-					// add all the tokens from the input queue to the presentation queue
-					for (const auto &token : inputQueue) {
-						presentationQueue.push_back(token);
-					}
-				} else {
-					// add one token to the presentation queue
-					presentationQueue.push_back(inputQueue.front());
-					inputQueue.pop_front();
+			std::unique_lock<std::mutex> lockPresentation(this->presentationQueueMutex);
+			// condition presentation queue
+			if (presentationQueue.size() == this->numSentences * this->numPerSentence) {
+				// pop a whole sentence from the presentation queue front
+				for (size_t i = 0; i < this->numPerSentence; i++) {
+					presentationQueue.pop_front();
 				}
 			}
-		}
 
-		if (presentationQueue.size() > 0) {
-			// build a caption from the presentation queue in sentences
-			// with a maximum of numPerSentence tokens/words per sentence
-			// and a newline between sentences
-			TokenBufferString caption;
-			if (this->segmentation == SEGMENTATION_WORD) {
-				// iterate through the presentation queue tokens and make words (based on spaces)
-				// then build a caption with a maximum of numPerSentence words per sentence
-				size_t wordsInSentence = 0;
-				TokenBufferString word;
-				for (const auto &token : presentationQueue) {
-					// keep adding tokens to the word until a space is found
-					word += token;
-					if (word.find(SPACE) != TokenBufferString::npos) {
-						// cut the word at the space and add it to the caption
-						caption += word.substr(0, word.find(SPACE));
-						wordsInSentence++;
-						// keep the rest of the word for the next iteration
-						word = word.substr(word.find(SPACE) + 1);
+			{
+				std::unique_lock<std::mutex> lock(this->inputQueueMutex);
 
-						if (wordsInSentence == this->numPerSentence) {
-							caption += word;
-							caption += SPACE;
-							wordsInSentence = 0;
-							word.clear();
+				if (!inputQueue.empty()) {
+					// if there are token on the input queue
+					if (this->segmentation == SEGMENTATION_SENTENCE) {
+						// add all the tokens from the input queue to the presentation queue
+						for (const auto &token : inputQueue) {
+							presentationQueue.push_back(token);
+						}
+					} else {
+						// add one token to the presentation queue
+						presentationQueue.push_back(inputQueue.front());
+						inputQueue.pop_front();
+					}
+				}
+			}
+
+			if (presentationQueue.size() > 0) {
+				// build a caption from the presentation queue in sentences
+				// with a maximum of numPerSentence tokens/words per sentence
+				// and a newline between sentences
+				TokenBufferString caption;
+				if (this->segmentation == SEGMENTATION_WORD) {
+					// iterate through the presentation queue tokens and make words (based on spaces)
+					// then build a caption with a maximum of numPerSentence words per sentence
+					size_t wordsInSentence = 0;
+					TokenBufferString word;
+					for (const auto &token : presentationQueue) {
+						// keep adding tokens to the word until a space is found
+						word += token;
+						if (word.find(SPACE) != TokenBufferString::npos) {
+							// cut the word at the space and add it to the caption
+							caption += word.substr(0, word.find(SPACE));
+							wordsInSentence++;
+							// keep the rest of the word for the next iteration
+							word = word.substr(word.find(SPACE) + 1);
+
+							if (wordsInSentence ==
+							    this->numPerSentence) {
+								caption += word;
+								caption += SPACE;
+								wordsInSentence = 0;
+								word.clear();
+							}
+						}
+					}
+				} else {
+					// iterate through the presentation queue tokens and build a caption
+					size_t tokensInSentence = 0;
+					for (const auto &token : presentationQueue) {
+						caption += token;
+						tokensInSentence++;
+						if (tokensInSentence == this->numPerSentence) {
+							caption += NEWLINE;
+							tokensInSentence = 0;
 						}
 					}
 				}
-			} else {
-				// iterate through the presentation queue tokens and build a caption
-				size_t tokensInSentence = 0;
-				for (const auto &token : presentationQueue) {
-					caption += token;
-					tokensInSentence++;
-					if (tokensInSentence == this->numPerSentence) {
-						caption += NEWLINE;
-						tokensInSentence = 0;
-					}
-				}
-			}
 
 #ifdef _WIN32
-			// convert caption to multibyte for obs
-			int count = WideCharToMultiByte(CP_UTF8, 0, caption.c_str(),
-							(int)caption.length(), NULL, 0, NULL, NULL);
-			std::string caption_out(count, 0);
-			WideCharToMultiByte(CP_UTF8, 0, caption.c_str(), (int)caption.length(),
-					    &caption_out[0], count, NULL, NULL);
+				// convert caption to multibyte for obs
+				int count = WideCharToMultiByte(CP_UTF8, 0, caption.c_str(),
+								(int)caption.length(), NULL, 0,
+								NULL, NULL);
+				std::string caption_out(count, 0);
+				WideCharToMultiByte(CP_UTF8, 0, caption.c_str(),
+						    (int)caption.length(), &caption_out[0], count,
+						    NULL, NULL);
 #else
-			std::string caption_out(caption.begin(), caption.end());
+				std::string caption_out(caption.begin(), caption.end());
 #endif
 
-			// emit the caption
-			this->callback(caption_out);
+				// emit the caption
+				this->callback(caption_out);
+			}
 		}
 
 		// sleep for 100 ms
 		std::this_thread::sleep_for(std::chrono::milliseconds(100));
 	}
+
 	obs_log(LOG_INFO, "TokenBufferThread::monitor: done");
 }

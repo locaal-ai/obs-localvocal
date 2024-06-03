@@ -280,7 +280,7 @@ void set_text_callback(struct transcription_filter_data *gf,
 						str_copy.c_str(), translated_text.c_str());
 				}
 				// overwrite the original text with the translated text
-				str_copy = str_copy + " -> " + translated_text;
+				str_copy = str_copy + " | " + translated_text;
 			} else {
 				obs_log(gf->log_level, "Failed to translate text");
 			}

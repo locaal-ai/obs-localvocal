@@ -48,7 +48,8 @@ private:
 	std::deque<TokenBufferString> inputQueue;
 	std::deque<TokenBufferString> presentationQueue;
 	std::thread workerThread;
-	std::mutex queueMutex;
+	std::mutex inputQueueMutex;
+	std::mutex presentationQueueMutex;
 	std::condition_variable condVar;
 	std::function<void(std::string)> callback;
 	std::chrono::seconds maxTime;

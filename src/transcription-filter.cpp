@@ -93,16 +93,24 @@ void set_source_signals(transcription_filter_data *gf, obs_source_t *parent_sour
 			transcription_filter_data *gf_ =
 				static_cast<struct transcription_filter_data *>(data_);
 			gf_->active = false;
-			gf_->captions_monitor.clear();
+			if (gf_->captions_monitor.isEnabled()) {
+				gf_->captions_monitor.clear();
+			}
 			send_caption_to_source(gf_->text_source_name, "", gf_);
 			// flush the buffer
 			{
 				std::lock_guard<std::mutex> lock(gf_->whisper_buf_mutex);
 				for (size_t c = 0; c < gf_->channels; c++) {
-					circlebuf_free(&gf_->input_buffers[c]);
+					if (gf_->input_buffers[c].data != nullptr) {
+						circlebuf_free(&gf_->input_buffers[c]);
+					}
 				}
-				circlebuf_free(&gf_->info_buffer);
-				circlebuf_free(&gf_->whisper_buffer);
+				if (gf_->info_buffer.data != nullptr) {
+					circlebuf_free(&gf_->info_buffer);
+				}
+				if (gf_->whisper_buffer.data != nullptr) {
+					circlebuf_free(&gf_->whisper_buffer);
+				}
 			}
 		},
 		gf);
