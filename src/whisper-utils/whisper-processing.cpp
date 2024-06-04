@@ -161,8 +161,6 @@ struct DetectionResultWithText run_whisper_inference(struct transcription_filter
 	bool should_free_buffer = false;
 	float *pcm32f_data = (float *)pcm32f_data_;
 	size_t pcm32f_size = pcm32f_num_samples;
-	const uint64_t original_duration_ms =
-		(uint64_t)(pcm32f_num_samples * 1000 / WHISPER_SAMPLE_RATE);
 
 	if (pcm32f_num_samples < WHISPER_SAMPLE_RATE) {
 		obs_log(gf->log_level,
