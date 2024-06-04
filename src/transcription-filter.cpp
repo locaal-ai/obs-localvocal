@@ -73,7 +73,6 @@ void set_source_signals(transcription_filter_data *gf, obs_source_t *parent_sour
 	signal_handler_connect(
 		sh, "media_play",
 		[](void *data_, calldata_t *cd) {
-			UNUSED_PARAMETER(cd);
 			transcription_filter_data *gf_ =
 				static_cast<struct transcription_filter_data *>(data_);
 			obs_log(gf_->log_level, "media_play");
@@ -83,7 +82,6 @@ void set_source_signals(transcription_filter_data *gf, obs_source_t *parent_sour
 	signal_handler_connect(
 		sh, "media_started",
 		[](void *data_, calldata_t *cd) {
-			UNUSED_PARAMETER(cd);
 			transcription_filter_data *gf_ =
 				static_cast<struct transcription_filter_data *>(data_);
 			obs_log(gf_->log_level, "media_started");
@@ -94,7 +92,6 @@ void set_source_signals(transcription_filter_data *gf, obs_source_t *parent_sour
 	signal_handler_connect(
 		sh, "media_pause",
 		[](void *data_, calldata_t *cd) {
-			UNUSED_PARAMETER(cd);
 			transcription_filter_data *gf_ =
 				static_cast<struct transcription_filter_data *>(data_);
 			obs_log(gf_->log_level, "media_pause");
@@ -104,7 +101,6 @@ void set_source_signals(transcription_filter_data *gf, obs_source_t *parent_sour
 	signal_handler_connect(
 		sh, "media_restart",
 		[](void *data_, calldata_t *cd) {
-			UNUSED_PARAMETER(cd);
 			transcription_filter_data *gf_ =
 				static_cast<struct transcription_filter_data *>(data_);
 			obs_log(gf_->log_level, "media_restart");
@@ -115,7 +111,6 @@ void set_source_signals(transcription_filter_data *gf, obs_source_t *parent_sour
 	signal_handler_connect(
 		sh, "media_stopped",
 		[](void *data_, calldata_t *cd) {
-			UNUSED_PARAMETER(cd);
 			transcription_filter_data *gf_ =
 				static_cast<struct transcription_filter_data *>(data_);
 			obs_log(gf_->log_level, "media_stopped");
@@ -236,8 +231,8 @@ void transcription_filter_update(void *data, obs_data_t *s)
 	gf->min_sub_duration = (int)obs_data_get_int(s, "min_sub_duration");
 	gf->last_sub_render_time = 0;
 	bool new_buffered_output = obs_data_get_bool(s, "buffered_output");
-	int new_buffer_num_lines = (int)obs_data_get_int(s, "buffer_num_lines");
-	int new_buffer_num_chars_per_line = (int)obs_data_get_int(s, "buffer_num_chars_per_line");
+	int new_buffer_num_lines = obs_data_get_int(s, "buffer_num_lines");
+	int new_buffer_num_chars_per_line = obs_data_get_int(s, "buffer_num_chars_per_line");
 
 	if (new_buffered_output) {
 		obs_log(LOG_INFO, "buffered_output enable");
@@ -261,8 +256,6 @@ void transcription_filter_update(void *data, obs_data_t *s)
 				gf->captions_monitor.setNumSentences(new_buffer_num_lines);
 				gf->captions_monitor.setNumPerSentence(
 					new_buffer_num_chars_per_line);
-				gf->buffered_output_num_lines = new_buffer_num_lines;
-				gf->buffered_output_num_chars = new_buffer_num_chars_per_line;
 			}
 		}
 	} else {
