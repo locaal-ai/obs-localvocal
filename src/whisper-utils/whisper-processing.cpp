@@ -238,7 +238,7 @@ struct DetectionResultWithText run_whisper_inference(struct transcription_filter
 				}
 				// token ids https://huggingface.co/openai/whisper-large-v3/raw/main/tokenizer.json
 				if (token.id > 50365 && token.id <= 51865) {
-					const float time = ((float)token.id - 50365.0f) * 0.02;
+					const float time = ((float)token.id - 50365.0f) * 0.02f;
 					const float duration_s = (float)duration_ms / 1000.0f;
 					const float ratio = std::max(time, duration_s) /
 							    std::min(time, duration_s);
