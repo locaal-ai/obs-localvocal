@@ -161,15 +161,18 @@ struct DetectionResultWithText run_whisper_inference(struct transcription_filter
 	bool should_free_buffer = false;
 	float *pcm32f_data = (float *)pcm32f_data_;
 	size_t pcm32f_size = pcm32f_num_samples;
+	const uint64_t original_duration_ms =
+		(uint64_t)(pcm32f_num_samples * 1000 / WHISPER_SAMPLE_RATE);
 
 	if (pcm32f_num_samples < WHISPER_SAMPLE_RATE) {
 		obs_log(gf->log_level,
 			"Speech segment is less than 1 second, padding with zeros to 1 second");
 		const size_t new_size = (size_t)(1.01f * (float)(WHISPER_SAMPLE_RATE));
-		// create a new buffer and copy the data to it
+		// create a new buffer and copy the data to it in the middle
 		pcm32f_data = (float *)bzalloc(new_size * sizeof(float));
 		memset(pcm32f_data, 0, new_size * sizeof(float));
-		memcpy(pcm32f_data, pcm32f_data_, pcm32f_num_samples * sizeof(float));
+		memcpy(pcm32f_data + (new_size - pcm32f_num_samples) / 2, pcm32f_data_,
+		       pcm32f_num_samples * sizeof(float));
 		pcm32f_size = new_size;
 		should_free_buffer = true;
 	}
@@ -231,23 +234,27 @@ struct DetectionResultWithText run_whisper_inference(struct transcription_filter
 				if (token.id >= 50256) {
 					keep = false;
 				}
-				// if (j == n_tokens - 2 && token.p < 0.5) {
-				// 	keep = false;
-				// }
-				// if (j == n_tokens - 3 && token.p < 0.4) {
-				// 	keep = false;
-				// }
 				// if the second to last token is .id == 13 ('.'), don't keep it
 				if (j == n_tokens - 2 && token.id == 13) {
 					keep = false;
 				}
 				// token ids https://huggingface.co/openai/whisper-large-v3/raw/main/tokenizer.json
-				// if (token.id > 50566 && token.id <= 51865) {
-				// 	obs_log(gf->log_level,
-				// 		"Large time token found (%d), this shouldn't happen",
-				// 		token.id);
-				// 	return {DETECTION_RESULT_UNKNOWN, "", 0, 0, {}};
-				// }
+				if (token.id > 50365 && token.id <= 51865) {
+					const float time = ((float)token.id - 50365.0f) * 0.02;
+					const float duration_s = (float)duration_ms / 1000.0f;
+					const float ratio = std::max(time, duration_s) /
+							    std::min(time, duration_s);
+					obs_log(gf->log_level,
+						"Time token found %d -> %.3f. Duration: %.3f. Ratio: %.3f.",
+						token.id, time, duration_s, ratio);
+					if (ratio > 3.0f) {
+						// ratio is too high, skip this detection
+						obs_log(gf->log_level,
+							"Time token ratio too high, skipping");
+						return {DETECTION_RESULT_SILENCE, "", t0, t1, {}};
+					}
+					keep = false;
+				}
 
 				if (keep) {
 					sentence_p += token.p;
@@ -273,13 +280,6 @@ struct DetectionResultWithText run_whisper_inference(struct transcription_filter
 		}
 
 		if (text.empty() || text == "." || text == " " || text == "\n") {
-			return {DETECTION_RESULT_SILENCE, "", t0, t1, {}};
-		}
-
-		// Check regex for "MBC .*" to detect false prediction
-		std::regex mbc_regex("MBC.*");
-		if (std::regex_match(text, mbc_regex)) {
-			obs_log(gf->log_level, "False prediction detected: %s", text.c_str());
 			return {DETECTION_RESULT_SILENCE, "", t0, t1, {}};
 		}
 

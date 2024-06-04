@@ -207,9 +207,9 @@ void TokenBufferThread::monitor()
 			}
 		}
 
-		// check the presentation queue size (pqs), if it's big - sleep less
+		// check the input queue size (iqs), if it's big - sleep less
 		std::this_thread::sleep_for(
-			std::chrono::milliseconds(presentationQueue.size() > 15 ? 66 : 100));
+			std::chrono::milliseconds(inputQueue.size() > 15 ? 66 : 100));
 	}
 
 	obs_log(LOG_INFO, "TokenBufferThread::monitor: done");
