@@ -80,7 +80,7 @@ void TokenBufferThread::addSentence(const std::string &sentence)
 #else
 	// split to characters
 	std::vector<std::string> characters;
-	for (const auto &c : sentence_ws) {
+	for (const auto &c : sentence) {
 		characters.push_back(std::string(1, c));
 	}
 #endif
