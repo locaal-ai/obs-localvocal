@@ -27,7 +27,7 @@ enum TokenBufferSegmentation { SEGMENTATION_WORD = 0, SEGMENTATION_TOKEN, SEGMEN
 class TokenBufferThread {
 public:
 	// default constructor
-	TokenBufferThread() = default;
+	TokenBufferThread() noexcept;
 
 	~TokenBufferThread();
 	void initialize(struct transcription_filter_data *gf,
@@ -51,8 +51,8 @@ private:
 	std::deque<TokenBufferString> inputQueue;
 	std::deque<TokenBufferString> presentationQueue;
 	std::thread workerThread;
-	std::mutex inputQueueMutex;
-	std::mutex presentationQueueMutex;
+	std::unique_ptr<std::mutex> inputQueueMutex;
+	std::unique_ptr<std::mutex> presentationQueueMutex;
 	std::condition_variable condVar;
 	std::function<void(std::string)> callback;
 	std::chrono::seconds maxTime;

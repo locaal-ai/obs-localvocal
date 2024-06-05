@@ -53,6 +53,7 @@ public:
 	void collect_chunks(const std::vector<float> &input_wav, std::vector<float> &output_wav);
 	const std::vector<timestamp_t> get_speech_timestamps() const;
 	void drop_chunks(const std::vector<float> &input_wav, std::vector<float> &output_wav);
+	void set_threshold(float threshold) { this->threshold = threshold; }
 
 private:
 	// model config

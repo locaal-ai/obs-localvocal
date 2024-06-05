@@ -316,20 +316,9 @@ vad_state vad_based_segmentation(transcription_filter_data *gf, vad_state last_v
 	uint32_t num_frames_from_infos = 0;
 	uint64_t start_timestamp = 0;
 	uint64_t end_timestamp = 0;
-	size_t overlap_size = 0; //gf->sample_rate / 10;
+	size_t overlap_size = 0;
 
 	for (size_t c = 0; c < gf->channels; c++) {
-		// if (!current_vad_on && gf->last_num_frames > overlap_size) {
-		//     if (c == 0) {
-		//         // print only once
-		//         obs_log(gf->log_level, "VAD overlap: %lu frames", overlap_size);
-		//     }
-		//     // move 100ms from the end of copy_buffers to the beginning
-		//     memmove(gf->copy_buffers[c], gf->copy_buffers[c] + gf->last_num_frames - overlap_size,
-		//             overlap_size * sizeof(float));
-		// } else {
-		//     overlap_size = 0;
-		// }
 		// zero the rest of copy_buffers
 		memset(gf->copy_buffers[c] + overlap_size, 0,
 		       (gf->frames - overlap_size) * sizeof(float));

@@ -388,6 +388,11 @@ void transcription_filter_update(void *data, obs_data_t *s)
 	gf->whisper_params.temperature = (float)obs_data_get_double(s, "temperature");
 	gf->whisper_params.max_initial_ts = (float)obs_data_get_double(s, "max_initial_ts");
 	gf->whisper_params.length_penalty = (float)obs_data_get_double(s, "length_penalty");
+
+	if (gf->vad_enabled && gf->vad) {
+		const float vad_threshold = (float)obs_data_get_double(s, "vad_threshold");
+		gf->vad->set_threshold(vad_threshold);
+	}
 }
 
 void *transcription_filter_create(obs_data_t *settings, obs_source_t *filter)
@@ -524,6 +529,7 @@ void transcription_filter_defaults(obs_data_t *s)
 	obs_data_set_default_int(s, "buffer_num_chars_per_line", 30);
 
 	obs_data_set_default_bool(s, "vad_enabled", true);
+	obs_data_set_default_double(s, "vad_threshold", 0.5);
 	obs_data_set_default_int(s, "log_level", LOG_DEBUG);
 	obs_data_set_default_bool(s, "log_words", false);
 	obs_data_set_default_bool(s, "caption_to_stream", false);
@@ -799,7 +805,7 @@ obs_properties_t *transcription_filter_properties(void *data)
 		     {"whisper_params_group", "log_words", "caption_to_stream", "buffer_size_msec",
 		      "overlap_size_msec", "step_by_step_processing", "min_sub_duration",
 		      "process_while_muted", "buffered_output", "vad_enabled", "log_level",
-		      "suppress_sentences", "sentence_psum_accept_thresh", "send_timed_metadata"}) {
+		      "suppress_sentences", "sentence_psum_accept_thresh"}) {
 			obs_property_set_visible(obs_properties_get(props, prop_name.c_str()),
 						 show_hide);
 		}
@@ -834,7 +840,6 @@ obs_properties_t *transcription_filter_properties(void *data)
 
 	obs_properties_add_bool(ppts, "log_words", MT_("log_words"));
 	obs_properties_add_bool(ppts, "caption_to_stream", MT_("caption_to_stream"));
-	obs_properties_add_bool(ppts, "send_timed_metadata", MT_("send_timed_metadata"));
 
 	obs_properties_add_int_slider(ppts, "min_sub_duration", MT_("min_sub_duration"), 1000, 5000,
 				      50);
@@ -844,6 +849,9 @@ obs_properties_t *transcription_filter_properties(void *data)
 	obs_properties_add_bool(ppts, "process_while_muted", MT_("process_while_muted"));
 
 	obs_properties_add_bool(ppts, "vad_enabled", MT_("vad_enabled"));
+	// add vad threshold slider
+	obs_properties_add_float_slider(ppts, "vad_threshold", MT_("vad_threshold"), 0.0, 1.0,
+					0.05);
 
 	obs_property_t *list = obs_properties_add_list(ppts, "log_level", MT_("log_level"),
 						       OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_INT);
