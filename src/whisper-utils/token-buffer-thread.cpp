@@ -123,7 +123,7 @@ void TokenBufferThread::monitor()
 		std::string caption_out;
 
 		{
-			std::lock_guard<std::mutex> lock(presentationQueueMutex);
+			std::lock_guard<std::mutex> lockPresentation(presentationQueueMutex);
 			if (stop) {
 				break;
 			}
