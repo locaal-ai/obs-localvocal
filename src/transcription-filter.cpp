@@ -44,86 +44,26 @@ bool add_sources_to_list(void *list_property, obs_source_t *source)
 	return true;
 }
 
-void reset_caption_state(transcription_filter_data *gf_)
-{
-	if (gf_->captions_monitor.isEnabled()) {
-		gf_->captions_monitor.clear();
-	}
-	send_caption_to_source(gf_->text_source_name, "", gf_);
-	// flush the buffer
-	{
-		std::lock_guard<std::mutex> lock(gf_->whisper_buf_mutex);
-		for (size_t c = 0; c < gf_->channels; c++) {
-			if (gf_->input_buffers[c].data != nullptr) {
-				circlebuf_free(&gf_->input_buffers[c]);
-			}
-		}
-		if (gf_->info_buffer.data != nullptr) {
-			circlebuf_free(&gf_->info_buffer);
-		}
-		if (gf_->whisper_buffer.data != nullptr) {
-			circlebuf_free(&gf_->whisper_buffer);
-		}
-	}
-}
-
 void set_source_signals(transcription_filter_data *gf, obs_source_t *parent_source)
 {
 	signal_handler_t *sh = obs_source_get_signal_handler(parent_source);
-	signal_handler_connect(
-		sh, "media_play",
-		[](void *data_, calldata_t *cd) {
-			UNUSED_PARAMETER(cd);
-			transcription_filter_data *gf_ =
-				static_cast<struct transcription_filter_data *>(data_);
-			obs_log(gf_->log_level, "media_play");
-			gf_->active = true;
-		},
-		gf);
-	signal_handler_connect(
-		sh, "media_started",
-		[](void *data_, calldata_t *cd) {
-			UNUSED_PARAMETER(cd);
-			transcription_filter_data *gf_ =
-				static_cast<struct transcription_filter_data *>(data_);
-			obs_log(gf_->log_level, "media_started");
-			gf_->active = true;
-			reset_caption_state(gf_);
-		},
-		gf);
-	signal_handler_connect(
-		sh, "media_pause",
-		[](void *data_, calldata_t *cd) {
-			UNUSED_PARAMETER(cd);
-			transcription_filter_data *gf_ =
-				static_cast<struct transcription_filter_data *>(data_);
-			obs_log(gf_->log_level, "media_pause");
-			gf_->active = false;
-		},
-		gf);
-	signal_handler_connect(
-		sh, "media_restart",
-		[](void *data_, calldata_t *cd) {
-			UNUSED_PARAMETER(cd);
-			transcription_filter_data *gf_ =
-				static_cast<struct transcription_filter_data *>(data_);
-			obs_log(gf_->log_level, "media_restart");
-			gf_->active = true;
-			reset_caption_state(gf_);
-		},
-		gf);
-	signal_handler_connect(
-		sh, "media_stopped",
-		[](void *data_, calldata_t *cd) {
-			UNUSED_PARAMETER(cd);
-			transcription_filter_data *gf_ =
-				static_cast<struct transcription_filter_data *>(data_);
-			obs_log(gf_->log_level, "media_stopped");
-			gf_->active = false;
-			reset_caption_state(gf_);
-		},
-		gf);
+	signal_handler_connect(sh, "media_play", media_play_callback, gf);
+	signal_handler_connect(sh, "media_started", media_started_callback, gf);
+	signal_handler_connect(sh, "media_pause", media_pause_callback, gf);
+	signal_handler_connect(sh, "media_restart", media_restart_callback, gf);
+	signal_handler_connect(sh, "media_stopped", media_stopped_callback, gf);
 	gf->source_signals_set = true;
+}
+
+void disconnect_source_signals(transcription_filter_data *gf, obs_source_t *parent_source)
+{
+	signal_handler_t *sh = obs_source_get_signal_handler(parent_source);
+	signal_handler_disconnect(sh, "media_play", media_play_callback, gf);
+	signal_handler_disconnect(sh, "media_started", media_started_callback, gf);
+	signal_handler_disconnect(sh, "media_pause", media_pause_callback, gf);
+	signal_handler_disconnect(sh, "media_restart", media_restart_callback, gf);
+	signal_handler_disconnect(sh, "media_stopped", media_stopped_callback, gf);
+	gf->source_signals_set = false;
 }
 
 struct obs_audio_data *transcription_filter_filter_audio(void *data, struct obs_audio_data *audio)
@@ -190,6 +130,16 @@ const char *transcription_filter_name(void *unused)
 	return MT_("transcription_filterAudioFilter");
 }
 
+void transcription_filter_remove(void *data, obs_source_t *source)
+{
+	struct transcription_filter_data *gf =
+		static_cast<struct transcription_filter_data *>(data);
+
+	obs_log(gf->log_level, "filter remove");
+
+	disconnect_source_signals(gf, source);
+}
+
 void transcription_filter_destroy(void *data)
 {
 	struct transcription_filter_data *gf =
@@ -211,6 +161,10 @@ void transcription_filter_destroy(void *data)
 		}
 	}
 	circlebuf_free(&gf->info_buffer);
+
+	if (gf->captions_monitor.isEnabled()) {
+		gf->captions_monitor.stopThread();
+	}
 
 	bfree(gf);
 }

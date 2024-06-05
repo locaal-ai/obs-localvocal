@@ -222,3 +222,66 @@ void recording_state_callback(enum obs_frontend_event event, void *data)
 		}
 	}
 }
+
+void reset_caption_state(transcription_filter_data *gf_)
+{
+	if (gf_->captions_monitor.isEnabled()) {
+		gf_->captions_monitor.clear();
+	}
+	send_caption_to_source(gf_->text_source_name, "", gf_);
+	// flush the buffer
+	{
+		std::lock_guard<std::mutex> lock(gf_->whisper_buf_mutex);
+		for (size_t c = 0; c < gf_->channels; c++) {
+			if (gf_->input_buffers[c].data != nullptr) {
+				circlebuf_free(&gf_->input_buffers[c]);
+			}
+		}
+		if (gf_->info_buffer.data != nullptr) {
+			circlebuf_free(&gf_->info_buffer);
+		}
+		if (gf_->whisper_buffer.data != nullptr) {
+			circlebuf_free(&gf_->whisper_buffer);
+		}
+	}
+}
+
+void media_play_callback(void *data_, calldata_t *cd)
+{
+	UNUSED_PARAMETER(cd);
+	transcription_filter_data *gf_ = static_cast<struct transcription_filter_data *>(data_);
+	obs_log(gf_->log_level, "media_play");
+	gf_->active = true;
+}
+
+void media_started_callback(void *data_, calldata_t *cd)
+{
+	UNUSED_PARAMETER(cd);
+	transcription_filter_data *gf_ = static_cast<struct transcription_filter_data *>(data_);
+	obs_log(gf_->log_level, "media_started");
+	gf_->active = true;
+	reset_caption_state(gf_);
+}
+void media_pause_callback(void *data_, calldata_t *cd)
+{
+	UNUSED_PARAMETER(cd);
+	transcription_filter_data *gf_ = static_cast<struct transcription_filter_data *>(data_);
+	obs_log(gf_->log_level, "media_pause");
+	gf_->active = false;
+}
+void media_restart_callback(void *data_, calldata_t *cd)
+{
+	UNUSED_PARAMETER(cd);
+	transcription_filter_data *gf_ = static_cast<struct transcription_filter_data *>(data_);
+	obs_log(gf_->log_level, "media_restart");
+	gf_->active = true;
+	reset_caption_state(gf_);
+}
+void media_stopped_callback(void *data_, calldata_t *cd)
+{
+	UNUSED_PARAMETER(cd);
+	transcription_filter_data *gf_ = static_cast<struct transcription_filter_data *>(data_);
+	obs_log(gf_->log_level, "media_stopped");
+	gf_->active = false;
+	reset_caption_state(gf_);
+}

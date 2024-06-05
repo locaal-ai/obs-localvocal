@@ -21,7 +21,9 @@ TokenBufferThread::TokenBufferThread() noexcept
 	  numSentences(1),
 	  numPerSentence(1),
 	  maxTime(0),
-	  stop(true)
+	  stop(true),
+	  presentationQueueMutex(),
+	  inputQueueMutex()
 {
 }
 
@@ -43,19 +45,16 @@ void TokenBufferThread::initialize(struct transcription_filter_data *gf_,
 	this->segmentation = segmentation_;
 	this->maxTime = maxTime_;
 	this->stop = false;
-	this->presentationQueueMutex = std::make_unique<std::mutex>();
-	this->inputQueueMutex = std::make_unique<std::mutex>();
 	this->workerThread = std::thread(&TokenBufferThread::monitor, this);
 }
 
 void TokenBufferThread::stopThread()
 {
 	{
-		std::lock_guard<std::mutex> lock(*inputQueueMutex);
-		std::lock_guard<std::mutex> lockPresentation(*presentationQueueMutex);
+		std::lock_guard<std::mutex> lock(presentationQueueMutex);
 		stop = true;
 	}
-	condVar.notify_all();
+	cv.notify_all();
 	if (workerThread.joinable()) {
 		workerThread.join();
 	}
@@ -92,7 +91,7 @@ void TokenBufferThread::addSentence(const std::string &sentence)
 	}
 #endif
 
-	std::lock_guard<std::mutex> lock(*inputQueueMutex);
+	std::lock_guard<std::mutex> lock(inputQueueMutex);
 
 	// add the reconstructed sentence to the wordQueue
 	for (const auto &character : characters) {
@@ -104,11 +103,11 @@ void TokenBufferThread::addSentence(const std::string &sentence)
 void TokenBufferThread::clear()
 {
 	{
-		std::lock_guard<std::mutex> lock(*inputQueueMutex);
+		std::lock_guard<std::mutex> lock(inputQueueMutex);
 		inputQueue.clear();
 	}
 	{
-		std::lock_guard<std::mutex> lock(*presentationQueueMutex);
+		std::lock_guard<std::mutex> lock(presentationQueueMutex);
 		presentationQueue.clear();
 	}
 	this->callback("");
@@ -120,15 +119,15 @@ void TokenBufferThread::monitor()
 
 	this->callback("");
 
-	while (!this->stop) {
+	while (true) {
 		std::string caption_out;
 
-		if (presentationQueueMutex == nullptr) {
-			break;
-		}
-
 		{
-			std::lock_guard<std::mutex> lockPresentation(*presentationQueueMutex);
+			std::lock_guard<std::mutex> lock(presentationQueueMutex);
+			if (stop) {
+				break;
+			}
+
 			// condition presentation queue
 			if (presentationQueue.size() == this->numSentences * this->numPerSentence) {
 				// pop a whole sentence from the presentation queue front
@@ -138,11 +137,7 @@ void TokenBufferThread::monitor()
 			}
 
 			{
-				if (inputQueueMutex == nullptr) {
-					break;
-				}
-
-				std::lock_guard<std::mutex> lock(*inputQueueMutex);
+				std::lock_guard<std::mutex> lock(inputQueueMutex);
 
 				if (!inputQueue.empty()) {
 					// if there are token on the input queue
@@ -219,6 +214,10 @@ void TokenBufferThread::monitor()
 				caption_out = std::string(caption.begin(), caption.end());
 #endif
 			}
+		}
+
+		if (this->stop) {
+			break;
 		}
 
 		if (caption_out.empty()) {

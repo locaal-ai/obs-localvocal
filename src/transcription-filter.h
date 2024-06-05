@@ -15,6 +15,7 @@ struct obs_audio_data *transcription_filter_filter_audio(void *data, struct obs_
 void transcription_filter_deactivate(void *data);
 void transcription_filter_defaults(obs_data_t *s);
 obs_properties_t *transcription_filter_properties(void *data);
+void transcription_filter_remove(void *data, obs_source_t *source);
 
 const char *const PLUGIN_INFO_TEMPLATE =
 	"<a href=\"https://github.com/occ-ai/obs-localvocal/\">LocalVocal</a> (%1) by "

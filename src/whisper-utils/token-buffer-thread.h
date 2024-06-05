@@ -51,12 +51,12 @@ private:
 	std::deque<TokenBufferString> inputQueue;
 	std::deque<TokenBufferString> presentationQueue;
 	std::thread workerThread;
-	std::unique_ptr<std::mutex> inputQueueMutex;
-	std::unique_ptr<std::mutex> presentationQueueMutex;
-	std::condition_variable condVar;
+	std::mutex inputQueueMutex;
+	std::mutex presentationQueueMutex;
 	std::function<void(std::string)> callback;
+	std::condition_variable cv;
 	std::chrono::seconds maxTime;
-	bool stop = true;
+	std::atomic<bool> stop;
 	bool newDataAvailable = false;
 	size_t numSentences;
 	size_t numPerSentence;
