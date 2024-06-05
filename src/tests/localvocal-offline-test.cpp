@@ -13,6 +13,7 @@
 #include <nlohmann/json.hpp>
 
 #include "transcription-filter-data.h"
+#include "transcription-filter-utils.h"
 #include "transcription-filter.h"
 #include "transcription-utils.h"
 #include "whisper-utils/whisper-utils.h"
@@ -84,7 +85,6 @@ create_context(int sample_rate, int channels, const std::string &whisper_model_p
 	gf->sample_rate = sample_rate;
 	gf->frames = (size_t)((float)gf->sample_rate * 10.0f);
 	gf->last_num_frames = 0;
-	gf->step_size_msec = 3000;
 	gf->min_sub_duration = 3000;
 	gf->last_sub_render_time = 0;
 	gf->save_srt = false;
@@ -110,8 +110,6 @@ create_context(int sample_rate, int channels, const std::string &whisper_model_p
 	memset(gf->copy_buffers[0], 0, gf->channels * gf->frames * sizeof(float));
 	obs_log(LOG_INFO, " allocated %llu bytes ", gf->channels * gf->frames * sizeof(float));
 
-	gf->overlap_ms = 150;
-	gf->overlap_frames = (size_t)((float)gf->sample_rate / (1000.0f / (float)gf->overlap_ms));
 	obs_log(gf->log_level, "channels %d, frames %d, sample_rate %d", (int)gf->channels,
 		(int)gf->frames, gf->sample_rate);
 
@@ -158,11 +156,12 @@ create_context(int sample_rate, int channels, const std::string &whisper_model_p
 	gf->whisper_params = whisper_full_default_params(whisper_sampling_method);
 	gf->whisper_params.duration_ms = 3000;
 	gf->whisper_params.language = "en";
+	gf->whisper_params.detect_language = false;
 	gf->whisper_params.initial_prompt = "";
 	gf->whisper_params.n_threads = 4;
 	gf->whisper_params.n_max_text_ctx = 16384;
 	gf->whisper_params.translate = false;
-	gf->whisper_params.no_context = true;
+	gf->whisper_params.no_context = false;
 	gf->whisper_params.single_segment = true;
 	gf->whisper_params.print_special = false;
 	gf->whisper_params.print_progress = false;
@@ -177,7 +176,7 @@ create_context(int sample_rate, int channels, const std::string &whisper_model_p
 	gf->whisper_params.speed_up = false;
 	gf->whisper_params.suppress_blank = true;
 	gf->whisper_params.suppress_non_speech_tokens = true;
-	gf->whisper_params.temperature = 0.1;
+	gf->whisper_params.temperature = 0.0;
 	gf->whisper_params.max_initial_ts = 1.0;
 	gf->whisper_params.length_penalty = -1;
 	gf->active = true;
@@ -204,7 +203,7 @@ void audio_chunk_callback(struct transcription_filter_data *gf, const float *pcm
 	//     numeral = "0" + numeral;
 	// }
 
-	// save the audio to a .wav file
+	// // save the audio to a .wav file
 	// std::string filename = "audio_chunk_" + numeral + vad_state_str + ".wav";
 	// obs_log(gf->log_level, "Saving %lu frames to %s", frames, filename.c_str());
 	// write_audio_wav_file(filename.c_str(), pcm32f_data, frames);
@@ -281,7 +280,7 @@ void set_text_callback(struct transcription_filter_data *gf,
 						str_copy.c_str(), translated_text.c_str());
 				}
 				// overwrite the original text with the translated text
-				str_copy = str_copy + " -> " + translated_text;
+				str_copy = str_copy + " | " + translated_text;
 			} else {
 				obs_log(gf->log_level, "Failed to translate text");
 			}
@@ -385,18 +384,21 @@ int wmain(int argc, wchar_t *argv[])
 				gf->suppress_sentences =
 					config["suppress_sentences"].get<std::string>();
 			}
-			if (config.contains("overlap_ms")) {
-				obs_log(LOG_INFO, "Setting overlap_ms to %d",
-					config["overlap_ms"].get<int>());
-				gf->overlap_ms = config["overlap_ms"];
-				gf->overlap_frames = (size_t)((float)gf->sample_rate /
-							      (1000.0f / (float)gf->overlap_ms));
-			}
 			if (config.contains("enable_audio_chunks_callback")) {
 				obs_log(LOG_INFO, "Setting enable_audio_chunks_callback to %s",
 					config["enable_audio_chunks_callback"] ? "true" : "false");
 				gf->enable_audio_chunks_callback =
 					config["enable_audio_chunks_callback"];
+			}
+			if (config.contains("temperature")) {
+				obs_log(LOG_INFO, "Setting temperture to %f",
+					config["temperature"].get<float>());
+				gf->whisper_params.temperature = config["temperature"].get<float>();
+			}
+			if (config.contains("no_context")) {
+				obs_log(LOG_INFO, "Setting no_context to %s",
+					config["no_context"] ? "true" : "false");
+				gf->whisper_params.no_context = config["no_context"];
 			}
 			// set log level
 			if (logLevelStr == "debug") {

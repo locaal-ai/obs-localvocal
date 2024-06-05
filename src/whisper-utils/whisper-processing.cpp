@@ -18,6 +18,7 @@
 
 #include <algorithm>
 #include <chrono>
+#include <regex>
 
 struct vad_state {
 	bool vad_on;
@@ -165,10 +166,11 @@ struct DetectionResultWithText run_whisper_inference(struct transcription_filter
 		obs_log(gf->log_level,
 			"Speech segment is less than 1 second, padding with zeros to 1 second");
 		const size_t new_size = (size_t)(1.01f * (float)(WHISPER_SAMPLE_RATE));
-		// create a new buffer and copy the data to it
+		// create a new buffer and copy the data to it in the middle
 		pcm32f_data = (float *)bzalloc(new_size * sizeof(float));
 		memset(pcm32f_data, 0, new_size * sizeof(float));
-		memcpy(pcm32f_data, pcm32f_data_, pcm32f_num_samples * sizeof(float));
+		memcpy(pcm32f_data + (new_size - pcm32f_num_samples) / 2, pcm32f_data_,
+		       pcm32f_num_samples * sizeof(float));
 		pcm32f_size = new_size;
 		should_free_buffer = true;
 	}
@@ -230,23 +232,27 @@ struct DetectionResultWithText run_whisper_inference(struct transcription_filter
 				if (token.id >= 50256) {
 					keep = false;
 				}
-				// if (j == n_tokens - 2 && token.p < 0.5) {
-				// 	keep = false;
-				// }
-				// if (j == n_tokens - 3 && token.p < 0.4) {
-				// 	keep = false;
-				// }
 				// if the second to last token is .id == 13 ('.'), don't keep it
 				if (j == n_tokens - 2 && token.id == 13) {
 					keep = false;
 				}
 				// token ids https://huggingface.co/openai/whisper-large-v3/raw/main/tokenizer.json
-				// if (token.id > 50566 && token.id <= 51865) {
-				// 	obs_log(gf->log_level,
-				// 		"Large time token found (%d), this shouldn't happen",
-				// 		token.id);
-				// 	return {DETECTION_RESULT_UNKNOWN, "", 0, 0, {}};
-				// }
+				if (token.id > 50365 && token.id <= 51865) {
+					const float time = ((float)token.id - 50365.0f) * 0.02f;
+					const float duration_s = (float)duration_ms / 1000.0f;
+					const float ratio = std::max(time, duration_s) /
+							    std::min(time, duration_s);
+					obs_log(gf->log_level,
+						"Time token found %d -> %.3f. Duration: %.3f. Ratio: %.3f.",
+						token.id, time, duration_s, ratio);
+					if (ratio > 3.0f) {
+						// ratio is too high, skip this detection
+						obs_log(gf->log_level,
+							"Time token ratio too high, skipping");
+						return {DETECTION_RESULT_SILENCE, "", t0, t1, {}};
+					}
+					keep = false;
+				}
 
 				if (keep) {
 					sentence_p += token.p;
@@ -279,207 +285,26 @@ struct DetectionResultWithText run_whisper_inference(struct transcription_filter
 	}
 }
 
-void process_audio_from_buffer(struct transcription_filter_data *gf)
-{
-	uint32_t num_new_frames_from_infos = 0;
-	uint64_t start_timestamp = 0;
-	bool save_overlap_region = true;
-
-	{
-		// scoped lock the buffer mutex
-		std::lock_guard<std::mutex> lock(gf->whisper_buf_mutex);
-
-		// We need (gf->frames - gf->last_num_frames) new frames for a full segment,
-		const size_t remaining_frames_to_full_segment = gf->frames - gf->last_num_frames;
-
-		obs_log(gf->log_level,
-			"processing audio from buffer, %lu existing frames, %lu frames needed to full segment (%d frames)",
-			gf->last_num_frames, remaining_frames_to_full_segment, gf->frames);
-
-		// pop infos from the info buffer and mark the beginning timestamp from the first
-		// info as the beginning timestamp of the segment
-		struct transcription_filter_audio_info info_from_buf = {0};
-		const size_t size_of_audio_info = sizeof(struct transcription_filter_audio_info);
-		while (gf->info_buffer.size >= size_of_audio_info) {
-			circlebuf_pop_front(&gf->info_buffer, &info_from_buf, size_of_audio_info);
-			num_new_frames_from_infos += info_from_buf.frames;
-			if (start_timestamp == 0) {
-				start_timestamp = info_from_buf.timestamp;
-			}
-			// Check if we're within the needed segment length
-			if (num_new_frames_from_infos > remaining_frames_to_full_segment) {
-				// too big, push the last info into the buffer's front where it was
-				num_new_frames_from_infos -= info_from_buf.frames;
-				circlebuf_push_front(&gf->info_buffer, &info_from_buf,
-						     size_of_audio_info);
-				break;
-			}
-		}
-
-		obs_log(gf->log_level,
-			"with %lu remaining to full segment, popped %d frames from info buffer, pushed at %lu (overlap)",
-			remaining_frames_to_full_segment, num_new_frames_from_infos,
-			gf->last_num_frames);
-
-		/* Pop from input circlebuf */
-		for (size_t c = 0; c < gf->channels; c++) {
-			// Push the new data to the end of the existing buffer copy_buffers[c]
-			circlebuf_pop_front(&gf->input_buffers[c],
-					    gf->copy_buffers[c] + gf->last_num_frames,
-					    num_new_frames_from_infos * sizeof(float));
-		}
-	}
-
-	if (gf->last_num_frames > 0) {
-		obs_log(gf->log_level, "full segment, %lu frames overlap, %lu frames to process",
-			gf->last_num_frames, gf->last_num_frames + num_new_frames_from_infos);
-		gf->last_num_frames += num_new_frames_from_infos;
-	} else {
-		gf->last_num_frames = num_new_frames_from_infos;
-		obs_log(gf->log_level, "first segment, no overlap exists, %lu frames to process",
-			gf->last_num_frames);
-	}
-
-	obs_log(gf->log_level, "processing %lu frames (%d ms), start timestamp %llu",
-		gf->last_num_frames,
-		(int)((float)gf->last_num_frames * 1000.0f / (float)gf->sample_rate),
-		start_timestamp);
-
-	// time the audio processing
-	auto start = std::chrono::high_resolution_clock::now();
-
-	// resample to 16kHz
-	float *resampled_16khz[MAX_PREPROC_CHANNELS];
-	uint32_t resampled_16khz_frames;
-	uint64_t ts_offset;
-	audio_resampler_resample(gf->resampler_to_whisper, (uint8_t **)resampled_16khz,
-				 &resampled_16khz_frames, &ts_offset,
-				 (const uint8_t **)gf->copy_buffers, (uint32_t)gf->last_num_frames);
-
-	obs_log(gf->log_level, "%d channels, %d frames, %f ms", (int)gf->channels,
-		(int)resampled_16khz_frames,
-		(float)resampled_16khz_frames / WHISPER_SAMPLE_RATE * 1000.0f);
-
-	bool skipped_inference = false;
-	uint32_t speech_start_frame = 0;
-	uint32_t speech_end_frame = resampled_16khz_frames;
-
-	if (gf->vad_enabled) {
-		std::vector<float> vad_input(resampled_16khz[0],
-					     resampled_16khz[0] + resampled_16khz_frames);
-		gf->vad->process(vad_input, false);
-
-		std::vector<timestamp_t> stamps = gf->vad->get_speech_timestamps();
-		if (stamps.size() == 0) {
-			obs_log(gf->log_level, "VAD detected no speech in %d frames",
-				resampled_16khz_frames);
-			skipped_inference = true;
-			// prevent copying the buffer to the beginning (overlap)
-			save_overlap_region = false;
-		} else {
-			// if the vad finds that start within the first 10% of the buffer, set the start to 0
-			speech_start_frame = (stamps[0].start < (int)(resampled_16khz_frames / 10))
-						     ? 0
-						     : stamps[0].start;
-			speech_end_frame = stamps.back().end;
-			uint32_t number_of_frames = speech_end_frame - speech_start_frame;
-
-			// if the speech is pressed up against the end of the buffer
-			// apply the overlapped region, else don't
-			save_overlap_region = (speech_end_frame == resampled_16khz_frames);
-
-			obs_log(gf->log_level,
-				"VAD detected speech from %d to %d (%d frames, %d ms)",
-				speech_start_frame, speech_end_frame, number_of_frames,
-				number_of_frames * 1000 / WHISPER_SAMPLE_RATE);
-
-			// if the speech is less than 1 second - pad with zeros and send for inference
-			if (number_of_frames > 0 && number_of_frames < WHISPER_SAMPLE_RATE) {
-				obs_log(gf->log_level,
-					"Speech segment is less than 1 second, padding with zeros to 1 second");
-				// copy the speech segment to the beginning of the resampled buffer
-				// use memmove to copy the speech segment to the beginning of the buffer
-				memmove(resampled_16khz[0], resampled_16khz[0] + speech_start_frame,
-					number_of_frames * sizeof(float));
-				// zero out the rest of the buffer
-				memset(resampled_16khz[0] + number_of_frames, 0,
-				       (WHISPER_SAMPLE_RATE - number_of_frames) * sizeof(float));
-
-				speech_start_frame = 0;
-				speech_end_frame = WHISPER_SAMPLE_RATE;
-			}
-		}
-	}
-
-	if (!skipped_inference) {
-		// run inference
-		const struct DetectionResultWithText inference_result =
-			run_whisper_inference(gf, resampled_16khz[0] + speech_start_frame,
-					      speech_end_frame - speech_start_frame);
-
-		if (inference_result.result == DETECTION_RESULT_SPEECH) {
-			// output inference result to a text source
-			set_text_callback(gf, inference_result);
-		} else if (inference_result.result == DETECTION_RESULT_SILENCE) {
-			// output inference result to a text source
-			set_text_callback(gf, {inference_result.result, "[silence]", 0, 0, {}});
-		}
-	} else {
-		if (gf->log_words) {
-			obs_log(LOG_INFO, "skipping inference");
-		}
-		set_text_callback(gf, {DETECTION_RESULT_UNKNOWN, "[skip]", 0, 0, {}});
-	}
-
-	// end of timer
-	auto end = std::chrono::high_resolution_clock::now();
-	auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
-	const uint64_t last_num_frames_ms = gf->last_num_frames * 1000 / gf->sample_rate;
-	obs_log(gf->log_level, "audio processing of %lu ms data took %d ms", last_num_frames_ms,
-		(int)duration);
-
-	if (save_overlap_region) {
-		const uint64_t overlap_size_ms =
-			(uint64_t)(gf->overlap_frames * 1000 / gf->sample_rate);
-		obs_log(gf->log_level,
-			"copying %lu overlap frames (%lu ms) from the end of the buffer (pos %lu) to the beginning",
-			gf->overlap_frames, overlap_size_ms,
-			gf->last_num_frames - gf->overlap_frames);
-		for (size_t c = 0; c < gf->channels; c++) {
-			// zero out the copy buffer, just in case
-			memset(gf->copy_buffers[c], 0, gf->frames * sizeof(float));
-			// move overlap frames from the end of the last copy_buffers to the beginning
-			memmove(gf->copy_buffers[c],
-				gf->copy_buffers[c] + gf->last_num_frames - gf->overlap_frames,
-				gf->overlap_frames * sizeof(float));
-		}
-		gf->last_num_frames = gf->overlap_frames;
-	} else {
-		obs_log(gf->log_level, "no overlap needed. zeroing out the copy buffer");
-		// zero out the copy buffer, just in case
-		for (size_t c = 0; c < gf->channels; c++) {
-			memset(gf->copy_buffers[c], 0, gf->frames * sizeof(float));
-		}
-		gf->last_num_frames = 0;
-	}
-}
-
 void run_inference_and_callbacks(transcription_filter_data *gf, uint64_t start_offset_ms,
 				 uint64_t end_offset_ms, int vad_state)
 {
 	// get the data from the entire whisper buffer
+	// add 50ms of silence to the beginning and end of the buffer
 	const size_t pcm32f_size = gf->whisper_buffer.size / sizeof(float);
+	const size_t pcm32f_size_with_silence = pcm32f_size + 2 * WHISPER_SAMPLE_RATE / 100;
 	// allocate a new buffer and copy the data to it
-	float *pcm32f_data = (float *)bzalloc(pcm32f_size * sizeof(float));
-	circlebuf_pop_back(&gf->whisper_buffer, pcm32f_data, pcm32f_size * sizeof(float));
+	float *pcm32f_data = (float *)bzalloc(pcm32f_size_with_silence * sizeof(float));
+	circlebuf_pop_back(&gf->whisper_buffer, pcm32f_data + WHISPER_SAMPLE_RATE / 100,
+			   pcm32f_size * sizeof(float));
 
-	struct DetectionResultWithText inference_result =
-		run_whisper_inference(gf, pcm32f_data, pcm32f_size, start_offset_ms, end_offset_ms);
+	struct DetectionResultWithText inference_result = run_whisper_inference(
+		gf, pcm32f_data, pcm32f_size_with_silence, start_offset_ms, end_offset_ms);
 	// output inference result to a text source
 	set_text_callback(gf, inference_result);
 
 	if (gf->enable_audio_chunks_callback) {
-		audio_chunk_callback(gf, pcm32f_data, pcm32f_size, vad_state, inference_result);
+		audio_chunk_callback(gf, pcm32f_data, pcm32f_size_with_silence, vad_state,
+				     inference_result);
 	}
 
 	// free the buffer
@@ -491,20 +316,9 @@ vad_state vad_based_segmentation(transcription_filter_data *gf, vad_state last_v
 	uint32_t num_frames_from_infos = 0;
 	uint64_t start_timestamp = 0;
 	uint64_t end_timestamp = 0;
-	size_t overlap_size = 0; //gf->sample_rate / 10;
+	size_t overlap_size = 0;
 
 	for (size_t c = 0; c < gf->channels; c++) {
-		// if (!current_vad_on && gf->last_num_frames > overlap_size) {
-		//     if (c == 0) {
-		//         // print only once
-		//         obs_log(gf->log_level, "VAD overlap: %lu frames", overlap_size);
-		//     }
-		//     // move 100ms from the end of copy_buffers to the beginning
-		//     memmove(gf->copy_buffers[c], gf->copy_buffers[c] + gf->last_num_frames - overlap_size,
-		//             overlap_size * sizeof(float));
-		// } else {
-		//     overlap_size = 0;
-		// }
 		// zero the rest of copy_buffers
 		memset(gf->copy_buffers[c] + overlap_size, 0,
 		       (gf->frames - overlap_size) * sizeof(float));

@@ -87,6 +87,8 @@ target_sources(
   PRIVATE src/plugin-main.c
           src/transcription-filter.cpp
           src/transcription-filter.c
+          src/transcription-filter-callbacks.cpp
+          src/transcription-filter-utils.cpp
           src/transcription-utils.cpp
           src/model-utils/model-downloader.cpp
           src/model-utils/model-downloader-ui.cpp
@@ -99,8 +101,7 @@ target_sources(
           src/whisper-utils/token-buffer-thread.cpp
           src/translation/language_codes.cpp
           src/translation/translation.cpp
-          src/translation/translation-utils.cpp
-          src/utils.cpp)
+          src/translation/translation-utils.cpp)
 
 set_target_properties_plugin(${CMAKE_PROJECT_NAME} PROPERTIES OUTPUT_NAME ${_name})
 
@@ -121,8 +122,7 @@ if(ENABLE_TESTS)
             src/whisper-utils/silero-vad-onnx.cpp
             src/whisper-utils/token-buffer-thread.cpp
             src/translation/language_codes.cpp
-            src/translation/translation.cpp
-            src/utils.cpp)
+            src/translation/translation.cpp)
 
   find_libav(${CMAKE_PROJECT_NAME}-tests)
 

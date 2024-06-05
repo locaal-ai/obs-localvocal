@@ -88,6 +88,27 @@ std::string fix_utf8(const std::string &str)
 */
 std::string remove_leading_trailing_nonalpha(const std::string &str)
 {
+	if (str.size() == 0) {
+		return str;
+	}
+	if (str.size() == 1) {
+		if (std::isalpha(str[0])) {
+			return str;
+		} else {
+			return "";
+		}
+	}
+	if (str.size() == 2) {
+		if (std::isalpha(str[0]) && std::isalpha(str[1])) {
+			return str;
+		} else if (std::isalpha(str[0])) {
+			return std::string(1, str[0]);
+		} else if (std::isalpha(str[1])) {
+			return std::string(1, str[1]);
+		} else {
+			return "";
+		}
+	}
 	std::string str_copy = str;
 	// remove trailing spaces, newlines, tabs or punctuation
 	auto last_non_space =
@@ -116,4 +137,24 @@ std::vector<std::string> split(const std::string &string, char delimiter)
 		}
 	}
 	return tokens;
+}
+
+std::vector<std::string> split_words(const std::string &str_copy)
+{
+	std::vector<std::string> words;
+	std::string word;
+	for (char c : str_copy) {
+		if (std::isspace(c)) {
+			if (!word.empty()) {
+				words.push_back(word);
+				word.clear();
+			}
+		} else {
+			word += c;
+		}
+	}
+	if (!word.empty()) {
+		words.push_back(word);
+	}
+	return words;
 }

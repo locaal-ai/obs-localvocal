@@ -1,11 +1,10 @@
+#include <obs-module.h>
 
-#include "translation-utils.h"
-
+#include "translation-includes.h"
 #include "translation.h"
+#include "translation-utils.h"
 #include "plugin-support.h"
 #include "model-utils/model-downloader.h"
-
-#include <obs-module.h>
 
 void start_translation(struct transcription_filter_data *gf)
 {
