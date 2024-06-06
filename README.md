@@ -16,31 +16,27 @@ LocalVocal live-streaming AI assistant plugin allows you to transcribe, locally 
 
 If this free plugin has been valuable to you consider adding a ⭐ to this GH repo, rating it [on OBS](https://obsproject.com/forum/resources/localvocal-live-stream-ai-assistant.1769/), subscribing to [my YouTube channel](https://www.youtube.com/@royshilk) where I post updates, and supporting my work on [GitHub](https://github.com/sponsors/royshil) or [Patreon](https://www.patreon.com/RoyShilkrot) 🙏
 
-For a standalone captioning and translation free open tool consider our [LexiSynth](https://github.com/occ-ai/lexisynth), which also does speech synthesis.
-
 Internally the plugin is running a neural network ([OpenAI Whisper](https://github.com/openai/whisper)) locally to predict in real time the speech and provide captions.
 It's using the [Whisper.cpp](https://github.com/ggerganov/whisper.cpp) project from [ggerganov](https://github.com/ggerganov) to run the Whisper network efficiently on CPUs and GPUs.
 
 ## Usage
 
 <p align="center">
-  <a href="https://youtu.be/5XqTMqpui3Q" target="_blank">
-    <img width="30%" src="https://github-production-user-asset-6210df.s3.amazonaws.com/441170/267728411-334551b8-6a7f-42bf-8434-6ad6b512a401.jpeg" />
-  </a>
-  <a href="https://youtu.be/Q34LQsx-nlg" target="_blank">
-    <img width="30%" src="https://github-production-user-asset-6210df.s3.amazonaws.com/441170/271725640-3e5edd4a-9d07-4d19-b631-c70f91c73c27.PNG" />
-  </a>
-  <a href="https://youtu.be/4BTmoKr0YMw" target="_blank">
-    <img width="30%" src="https://github-production-user-asset-6210df.s3.amazonaws.com/441170/283315931-70c0c583-d1dc-4bd6-9ace-86c8e47f1229.jpg" />
+  <a href="https://youtu.be/vHQ5HGvbRGQ" target="_blank">
+    <img width="50%" src="docs/thumbnail.png" />
   </a>
   <br/>
+  <a href="https://youtu.be/vHQ5HGvbRGQ">https://youtu.be/vHQ5HGvbRGQ</a>
 </p>
 
 Do more with LocalVocal:
 - [Translate Caption any Application](https://youtu.be/qen7NC8kbEQ)
 - [Real-time Translation with DeepL](https://youtu.be/ryWBIEmVka4)
+- [Real-time Translation with OpenAI](https://youtu.be/Q34LQsx-nlg)
+- [ChatGPT + Text-to-speech](https://youtu.be/4BTmoKr0YMw)
 - [POST Captions to YouTube](https://youtu.be/E7HKbO6CP_c)
 - [Local LLM Real-time Translation](https://youtu.be/ZMNILPWDkDw)
+- [Usage Tutorial](https://youtu.be/5XqTMqpui3Q)
 
 Current Features:
 - Transcribe audio to text in real time in 100 languages
@@ -97,7 +93,7 @@ $ ./.github/scripts/package-macos -c Release
 (Note that maybe the outputs will be in the `Release` folder and not the `install` folder like `pakage-macos` expects, so you will need to rename the folder from `build_x86_64/Release` to `build_x86_64/install`)
 
 ### Linux
-  
+
 #### Ubuntu
 
 For successfully building on Ubuntu, first clone the repo, then from the repo directory:
