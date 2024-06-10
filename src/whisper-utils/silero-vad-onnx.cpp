@@ -15,7 +15,7 @@
 
 // #define __DEBUG_SPEECH_PROB___
 
-timestamp_t::timestamp_t(int start_, int end_) : start(start_), end(end_){};
+timestamp_t::timestamp_t(int start_, int end_) : start(start_), end(end_) {};
 
 // assignment operator modifies object, therefore non-const
 timestamp_t &timestamp_t::operator=(const timestamp_t &a)
