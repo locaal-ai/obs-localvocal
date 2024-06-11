@@ -53,3 +53,17 @@ void create_obs_text_source()
 	}
 	obs_source_release(scene_as_source);
 }
+
+bool add_sources_to_list(void *list_property, obs_source_t *source)
+{
+	auto source_id = obs_source_get_id(source);
+	if (strcmp(source_id, "text_ft2_source_v2") != 0 &&
+	    strcmp(source_id, "text_gdiplus_v2") != 0) {
+		return true;
+	}
+
+	obs_property_t *sources = (obs_property_t *)list_property;
+	const char *name = obs_source_get_name(source);
+	obs_property_list_add_string(sources, name, name);
+	return true;
+}

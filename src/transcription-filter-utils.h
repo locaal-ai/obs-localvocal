@@ -2,6 +2,7 @@
 #define TRANSCRIPTION_FILTER_UTILS_H
 
 #include <media-io/audio-io.h>
+#include <obs.h>
 
 // Convert channels number to a speaker layout
 inline enum speaker_layout convert_speaker_layout(uint8_t channels)
@@ -29,5 +30,7 @@ inline enum speaker_layout convert_speaker_layout(uint8_t channels)
 }
 
 void create_obs_text_source();
+
+bool add_sources_to_list(void *list_property, obs_source_t *source);
 
 #endif // TRANSCRIPTION_FILTER_UTILS_H
