@@ -20,8 +20,6 @@
 #include "whisper-utils/whisper-utils.h"
 #include "whisper-utils/whisper-model-utils.h"
 
-#define SEND_TIMED_METADATA_URL "http://localhost:8080/timed-metadata"
-
 void send_caption_to_source(const std::string &target_source_name, const std::string &caption,
 			    struct transcription_filter_data *gf)
 {
@@ -132,7 +130,13 @@ void set_text_callback(struct transcription_filter_data *gf,
 	if (gf->caption_to_stream) {
 		obs_output_t *streaming_output = obs_frontend_get_streaming_output();
 		if (streaming_output) {
-			obs_output_output_caption_text1(streaming_output, str_copy.c_str());
+			// calculate the duration in seconds
+			const uint64_t duration =
+				result.end_timestamp_ms - result.start_timestamp_ms;
+			obs_log(gf->log_level, "Sending caption to streaming output: %s",
+				str_copy.c_str());
+			obs_output_output_caption_text2(streaming_output, str_copy.c_str(),
+							(double)duration / 1000.0);
 			obs_output_release(streaming_output);
 		}
 	}
