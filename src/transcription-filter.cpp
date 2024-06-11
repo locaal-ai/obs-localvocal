@@ -57,6 +57,7 @@ struct obs_audio_data *transcription_filter_filter_audio(void *data, struct obs_
 	if (!audio) {
 		return nullptr;
 	}
+
 	if (data == nullptr) {
 		return audio;
 	}
@@ -137,6 +138,9 @@ void transcription_filter_destroy(void *data)
 	struct transcription_filter_data *gf =
 		static_cast<struct transcription_filter_data *>(data);
 
+	signal_handler_t *sh_filter = obs_source_get_signal_handler(gf->context);
+	signal_handler_disconnect(sh_filter, "enable", enable_callback, gf);
+
 	obs_log(gf->log_level, "filter destroy");
 	shutdown_whisper_thread(gf);
 
@@ -167,7 +171,7 @@ void transcription_filter_update(void *data, obs_data_t *s)
 	struct transcription_filter_data *gf =
 		static_cast<struct transcription_filter_data *>(data);
 
-	gf->log_level = (int)obs_data_get_int(s, "log_level");
+	gf->log_level = LOG_INFO; //(int)obs_data_get_int(s, "log_level");
 	gf->vad_enabled = obs_data_get_bool(s, "vad_enabled");
 	gf->log_words = obs_data_get_bool(s, "log_words");
 	gf->caption_to_stream = obs_data_get_bool(s, "caption_to_stream");
@@ -293,51 +297,61 @@ void transcription_filter_update(void *data, obs_data_t *s)
 		gf->text_source_name = new_text_source_name;
 	}
 
-	obs_log(gf->log_level, "update whisper model");
-	update_whisper_model(gf, s);
-
 	obs_log(gf->log_level, "update whisper params");
-	std::lock_guard<std::mutex> lock(gf->whisper_ctx_mutex);
+	{
+		std::lock_guard<std::mutex> lock(gf->whisper_ctx_mutex);
 
-	gf->sentence_psum_accept_thresh =
-		(float)obs_data_get_double(s, "sentence_psum_accept_thresh");
+		gf->sentence_psum_accept_thresh =
+			(float)obs_data_get_double(s, "sentence_psum_accept_thresh");
 
-	gf->whisper_params = whisper_full_default_params(
-		(whisper_sampling_strategy)obs_data_get_int(s, "whisper_sampling_method"));
-	gf->whisper_params.duration_ms = (int)obs_data_get_int(s, "buffer_size_msec");
-	if (!new_translate || gf->translation_model_index != "whisper-based-translation") {
-		gf->whisper_params.language = obs_data_get_string(s, "whisper_language_select");
-	} else {
-		// take the language from gf->target_lang
-		gf->whisper_params.language = language_codes_2_reverse[gf->target_lang].c_str();
+		gf->whisper_params = whisper_full_default_params(
+			(whisper_sampling_strategy)obs_data_get_int(s, "whisper_sampling_method"));
+		gf->whisper_params.duration_ms = (int)obs_data_get_int(s, "buffer_size_msec");
+		if (!new_translate || gf->translation_model_index != "whisper-based-translation") {
+			gf->whisper_params.language =
+				obs_data_get_string(s, "whisper_language_select");
+		} else {
+			// take the language from gf->target_lang
+			gf->whisper_params.language =
+				language_codes_2_reverse[gf->target_lang].c_str();
+		}
+		gf->whisper_params.initial_prompt = obs_data_get_string(s, "initial_prompt");
+		gf->whisper_params.n_threads = (int)obs_data_get_int(s, "n_threads");
+		gf->whisper_params.n_max_text_ctx = (int)obs_data_get_int(s, "n_max_text_ctx");
+		gf->whisper_params.translate = obs_data_get_bool(s, "whisper_translate");
+		gf->whisper_params.no_context = obs_data_get_bool(s, "no_context");
+		gf->whisper_params.single_segment = obs_data_get_bool(s, "single_segment");
+		gf->whisper_params.print_special = obs_data_get_bool(s, "print_special");
+		gf->whisper_params.print_progress = obs_data_get_bool(s, "print_progress");
+		gf->whisper_params.print_realtime = obs_data_get_bool(s, "print_realtime");
+		gf->whisper_params.print_timestamps = obs_data_get_bool(s, "print_timestamps");
+		gf->whisper_params.token_timestamps = obs_data_get_bool(s, "token_timestamps");
+		gf->whisper_params.thold_pt = (float)obs_data_get_double(s, "thold_pt");
+		gf->whisper_params.thold_ptsum = (float)obs_data_get_double(s, "thold_ptsum");
+		gf->whisper_params.max_len = (int)obs_data_get_int(s, "max_len");
+		gf->whisper_params.split_on_word = obs_data_get_bool(s, "split_on_word");
+		gf->whisper_params.max_tokens = (int)obs_data_get_int(s, "max_tokens");
+		gf->whisper_params.speed_up = obs_data_get_bool(s, "speed_up");
+		gf->whisper_params.suppress_blank = obs_data_get_bool(s, "suppress_blank");
+		gf->whisper_params.suppress_non_speech_tokens =
+			obs_data_get_bool(s, "suppress_non_speech_tokens");
+		gf->whisper_params.temperature = (float)obs_data_get_double(s, "temperature");
+		gf->whisper_params.max_initial_ts = (float)obs_data_get_double(s, "max_initial_ts");
+		gf->whisper_params.length_penalty = (float)obs_data_get_double(s, "length_penalty");
+
+		if (gf->vad_enabled && gf->vad) {
+			const float vad_threshold = (float)obs_data_get_double(s, "vad_threshold");
+			gf->vad->set_threshold(vad_threshold);
+		}
 	}
-	gf->whisper_params.initial_prompt = obs_data_get_string(s, "initial_prompt");
-	gf->whisper_params.n_threads = (int)obs_data_get_int(s, "n_threads");
-	gf->whisper_params.n_max_text_ctx = (int)obs_data_get_int(s, "n_max_text_ctx");
-	gf->whisper_params.translate = obs_data_get_bool(s, "whisper_translate");
-	gf->whisper_params.no_context = obs_data_get_bool(s, "no_context");
-	gf->whisper_params.single_segment = obs_data_get_bool(s, "single_segment");
-	gf->whisper_params.print_special = obs_data_get_bool(s, "print_special");
-	gf->whisper_params.print_progress = obs_data_get_bool(s, "print_progress");
-	gf->whisper_params.print_realtime = obs_data_get_bool(s, "print_realtime");
-	gf->whisper_params.print_timestamps = obs_data_get_bool(s, "print_timestamps");
-	gf->whisper_params.token_timestamps = obs_data_get_bool(s, "token_timestamps");
-	gf->whisper_params.thold_pt = (float)obs_data_get_double(s, "thold_pt");
-	gf->whisper_params.thold_ptsum = (float)obs_data_get_double(s, "thold_ptsum");
-	gf->whisper_params.max_len = (int)obs_data_get_int(s, "max_len");
-	gf->whisper_params.split_on_word = obs_data_get_bool(s, "split_on_word");
-	gf->whisper_params.max_tokens = (int)obs_data_get_int(s, "max_tokens");
-	gf->whisper_params.speed_up = obs_data_get_bool(s, "speed_up");
-	gf->whisper_params.suppress_blank = obs_data_get_bool(s, "suppress_blank");
-	gf->whisper_params.suppress_non_speech_tokens =
-		obs_data_get_bool(s, "suppress_non_speech_tokens");
-	gf->whisper_params.temperature = (float)obs_data_get_double(s, "temperature");
-	gf->whisper_params.max_initial_ts = (float)obs_data_get_double(s, "max_initial_ts");
-	gf->whisper_params.length_penalty = (float)obs_data_get_double(s, "length_penalty");
 
-	if (gf->vad_enabled && gf->vad) {
-		const float vad_threshold = (float)obs_data_get_double(s, "vad_threshold");
-		gf->vad->set_threshold(vad_threshold);
+	if (gf->initial_creation && obs_source_enabled(gf->context)) {
+		// source was enabled on creation
+		obs_data_t *settings = obs_source_get_settings(gf->context);
+		update_whisper_model(gf, settings);
+		obs_data_release(settings);
+		gf->active = true;
+		gf->initial_creation = false;
 	}
 }
 
@@ -421,11 +435,12 @@ void *transcription_filter_create(obs_data_t *settings, obs_source_t *filter)
 	gf->whisper_model_path = std::string(""); // The update function will set the model path
 	gf->whisper_context = nullptr;
 
+	signal_handler_t *sh_filter = obs_source_get_signal_handler(gf->context);
+	signal_handler_connect(sh_filter, "enable", enable_callback, gf);
+
 	obs_log(gf->log_level, "run update");
 	// get the settings updated on the filter data struct
 	transcription_filter_update(gf, settings);
-
-	gf->active = true;
 
 	// handle the event OBS_FRONTEND_EVENT_RECORDING_STARTING to reset the srt sentence number
 	// to match the subtitles with the recording
@@ -464,6 +479,20 @@ void transcription_filter_deactivate(void *data)
 		static_cast<struct transcription_filter_data *>(data);
 	obs_log(gf->log_level, "filter deactivated");
 	gf->active = false;
+}
+
+void transcription_filter_show(void *data)
+{
+	struct transcription_filter_data *gf =
+		static_cast<struct transcription_filter_data *>(data);
+	obs_log(gf->log_level, "filter show");
+}
+
+void transcription_filter_hide(void *data)
+{
+	struct transcription_filter_data *gf =
+		static_cast<struct transcription_filter_data *>(data);
+	obs_log(gf->log_level, "filter hide");
 }
 
 void transcription_filter_defaults(obs_data_t *s)
@@ -586,11 +615,11 @@ obs_properties_t *transcription_filter_properties(void *data)
 		whisper_model_path_external,
 		[](void *data_, obs_properties_t *props, obs_property_t *property,
 		   obs_data_t *settings) {
-			obs_log(LOG_INFO, "whisper_model_path_external modified");
 			UNUSED_PARAMETER(property);
 			UNUSED_PARAMETER(props);
 			struct transcription_filter_data *gf_ =
 				static_cast<struct transcription_filter_data *>(data_);
+			obs_log(gf_->log_level, "whisper_model_path_external modified");
 			transcription_filter_update(gf_, settings);
 			return true;
 		},
