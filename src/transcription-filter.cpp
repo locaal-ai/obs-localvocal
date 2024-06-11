@@ -615,6 +615,8 @@ obs_properties_t *transcription_filter_properties(void *data)
 			if (is_english_only) {
 				// add only the english language
 				obs_property_list_add_string(prop_lang, "English", "en");
+				// set the language to english
+				obs_data_set_string(settings, "whisper_language_select", "en");
 			} else {
 				// add all the languages
 				for (const auto &lang : whisper_available_lang) {
