@@ -30,20 +30,6 @@
 #include "translation/translation.h"
 #include "translation/translation-includes.h"
 
-bool add_sources_to_list(void *list_property, obs_source_t *source)
-{
-	auto source_id = obs_source_get_id(source);
-	if (strcmp(source_id, "text_ft2_source_v2") != 0 &&
-	    strcmp(source_id, "text_gdiplus_v2") != 0) {
-		return true;
-	}
-
-	obs_property_t *sources = (obs_property_t *)list_property;
-	const char *name = obs_source_get_name(source);
-	obs_property_list_add_string(sources, name, name);
-	return true;
-}
-
 void set_source_signals(transcription_filter_data *gf, obs_source_t *parent_source)
 {
 	signal_handler_t *sh = obs_source_get_signal_handler(parent_source);
@@ -618,6 +604,24 @@ obs_properties_t *transcription_filter_properties(void *data)
 		} else {
 			obs_property_set_visible(
 				obs_properties_get(props, "whisper_model_path_external"), false);
+			const std::string model_name = new_model_path;
+			// if the model is english-only -> hide all the languages but english
+			const bool is_english_only =
+				(model_name.find("English") != std::string::npos);
+			// clear the language selection list ("whisper_language_select")
+			obs_property_t *prop_lang =
+				obs_properties_get(props, "whisper_language_select");
+			obs_property_list_clear(prop_lang);
+			if (is_english_only) {
+				// add only the english language
+				obs_property_list_add_string(prop_lang, "English", "en");
+			} else {
+				// add all the languages
+				for (const auto &lang : whisper_available_lang) {
+					obs_property_list_add_string(prop_lang, lang.second.c_str(),
+								     lang.first.c_str());
+				}
+			}
 		}
 		return true;
 	});
@@ -759,7 +763,7 @@ obs_properties_t *transcription_filter_properties(void *data)
 		     {"whisper_params_group", "log_words", "caption_to_stream", "buffer_size_msec",
 		      "overlap_size_msec", "step_by_step_processing", "min_sub_duration",
 		      "process_while_muted", "buffered_output", "vad_enabled", "log_level",
-		      "suppress_sentences", "sentence_psum_accept_thresh"}) {
+		      "suppress_sentences", "sentence_psum_accept_thresh", "vad_threshold"}) {
 			obs_property_set_visible(obs_properties_get(props, prop_name.c_str()),
 						 show_hide);
 		}
@@ -825,18 +829,9 @@ obs_properties_t *transcription_filter_properties(void *data)
 	obs_property_t *whisper_language_select_list = obs_properties_add_list(
 		whisper_params_group, "whisper_language_select", MT_("language"),
 		OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_STRING);
-	// sort the languages by flipping the map
-	std::map<std::string, std::string> whisper_available_lang_flip;
-	for (auto const &pair : whisper_available_lang) {
-		whisper_available_lang_flip[pair.second] = pair.first;
-	}
 	// iterate over all available languages and add them to the list
-	for (auto const &pair : whisper_available_lang_flip) {
-		// Capitalize the language name
-		std::string language_name = pair.first;
-		language_name[0] = (char)toupper(language_name[0]);
-
-		obs_property_list_add_string(whisper_language_select_list, language_name.c_str(),
+	for (auto const &pair : whisper_available_lang_reverse) {
+		obs_property_list_add_string(whisper_language_select_list, pair.first.c_str(),
 					     pair.second.c_str());
 	}
 
