@@ -79,6 +79,7 @@ struct transcription_filter_data {
 	bool fix_utf8 = true;
 	bool enable_audio_chunks_callback = false;
 	bool source_signals_set = false;
+	bool initial_creation = true;
 
 	// Last transcription result
 	std::string last_text;

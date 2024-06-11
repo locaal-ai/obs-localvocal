@@ -17,6 +17,8 @@
 #include "transcription-utils.h"
 #include "translation/translation.h"
 #include "translation/translation-includes.h"
+#include "whisper-utils/whisper-utils.h"
+#include "whisper-utils/whisper-model-utils.h"
 
 #define SEND_TIMED_METADATA_URL "http://localhost:8080/timed-metadata"
 
@@ -284,4 +286,24 @@ void media_stopped_callback(void *data_, calldata_t *cd)
 	obs_log(gf_->log_level, "media_stopped");
 	gf_->active = false;
 	reset_caption_state(gf_);
+}
+
+void enable_callback(void *data_, calldata_t *cd)
+{
+	transcription_filter_data *gf_ = static_cast<struct transcription_filter_data *>(data_);
+	bool enable = calldata_bool(cd, "enabled");
+	if (enable) {
+		obs_log(gf_->log_level, "enable_callback: enable");
+		gf_->active = true;
+		reset_caption_state(gf_);
+		// get filter settings from gf_->context
+		obs_data_t *settings = obs_source_get_settings(gf_->context);
+		update_whisper_model(gf_, settings);
+		obs_data_release(settings);
+	} else {
+		obs_log(gf_->log_level, "enable_callback: disable");
+		gf_->active = false;
+		reset_caption_state(gf_);
+		shutdown_whisper_thread(gf_);
+	}
 }

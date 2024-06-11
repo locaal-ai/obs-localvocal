@@ -14,4 +14,6 @@ struct obs_source_info transcription_filter_info = {
 	.deactivate = transcription_filter_deactivate,
 	.filter_audio = transcription_filter_filter_audio,
 	.filter_remove = transcription_filter_remove,
+	.show = transcription_filter_show,
+	.hide = transcription_filter_hide,
 };

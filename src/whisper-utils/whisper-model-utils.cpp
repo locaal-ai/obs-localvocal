@@ -20,6 +20,9 @@ void update_whisper_model(struct transcription_filter_data *gf, obs_data_t *s)
 		obs_log(LOG_ERROR, "Cannot find Silero VAD model file");
 		return;
 	}
+	obs_log(gf->log_level, "Silero VAD model file: %s", silero_vad_model_file);
+	std::string silero_vad_model_file_str = std::string(silero_vad_model_file);
+	bfree(silero_vad_model_file);
 
 	if (gf->whisper_model_path.empty() || gf->whisper_model_path != new_model_path ||
 	    is_external_model) {
@@ -49,14 +52,15 @@ void update_whisper_model(struct transcription_filter_data *gf, obs_data_t *s)
 				obs_log(LOG_WARNING, "Whisper model does not exist");
 				download_model_with_ui_dialog(
 					model_info,
-					[gf, new_model_path, silero_vad_model_file](
+					[gf, new_model_path, silero_vad_model_file_str](
 						int download_status, const std::string &path) {
 						if (download_status == 0) {
 							obs_log(LOG_INFO,
 								"Model download complete");
 							gf->whisper_model_path = new_model_path;
 							start_whisper_thread_with_path(
-								gf, path, silero_vad_model_file);
+								gf, path,
+								silero_vad_model_file_str.c_str());
 						} else {
 							obs_log(LOG_ERROR, "Model download failed");
 						}
@@ -65,7 +69,7 @@ void update_whisper_model(struct transcription_filter_data *gf, obs_data_t *s)
 				// Model exists, just load it
 				gf->whisper_model_path = new_model_path;
 				start_whisper_thread_with_path(gf, model_file_found,
-							       silero_vad_model_file);
+							       silero_vad_model_file_str.c_str());
 			}
 		} else {
 			// new model is external file, get file location from file property
@@ -82,8 +86,9 @@ void update_whisper_model(struct transcription_filter_data *gf, obs_data_t *s)
 				} else {
 					shutdown_whisper_thread(gf);
 					gf->whisper_model_path = new_model_path;
-					start_whisper_thread_with_path(gf, external_model_file_path,
-								       silero_vad_model_file);
+					start_whisper_thread_with_path(
+						gf, external_model_file_path,
+						silero_vad_model_file_str.c_str());
 				}
 			}
 		}
@@ -101,6 +106,7 @@ void update_whisper_model(struct transcription_filter_data *gf, obs_data_t *s)
 			gf->enable_token_ts_dtw, new_dtw_timestamps);
 		gf->enable_token_ts_dtw = obs_data_get_bool(s, "dtw_token_timestamps");
 		shutdown_whisper_thread(gf);
-		start_whisper_thread_with_path(gf, gf->whisper_model_path, silero_vad_model_file);
+		start_whisper_thread_with_path(gf, gf->whisper_model_path,
+					       silero_vad_model_file_str.c_str());
 	}
 }
