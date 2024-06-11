@@ -152,3 +152,16 @@ std::vector<whisper_token_data> reconstructSentence(const std::vector<whisper_to
 
 	return reconstructed;
 }
+
+std::string to_timestamp(uint64_t t_ms_offset)
+{
+	uint64_t sec = t_ms_offset / 1000;
+	uint64_t msec = t_ms_offset - sec * 1000;
+	uint64_t min = sec / 60;
+	sec = sec - min * 60;
+
+	char buf[32];
+	snprintf(buf, sizeof(buf), "%02d:%02d.%03d", (int)min, (int)sec, (int)msec);
+
+	return std::string(buf);
+}

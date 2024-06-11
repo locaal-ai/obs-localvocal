@@ -22,23 +22,9 @@
 
 struct vad_state {
 	bool vad_on;
-	uint64_t start_timestamp;
-	uint64_t end_timestamp;
+	uint64_t start_ts_offest_ms;
+	uint64_t end_ts_offset_ms;
 };
-
-// Taken from https://github.com/ggerganov/whisper.cpp/blob/master/examples/stream/stream.cpp
-std::string to_timestamp(uint64_t t)
-{
-	uint64_t sec = t / 1000;
-	uint64_t msec = t - sec * 1000;
-	uint64_t min = sec / 60;
-	sec = sec - min * 60;
-
-	char buf[32];
-	snprintf(buf, sizeof(buf), "%02d:%02d.%03d", (int)min, (int)sec, (int)msec);
-
-	return std::string(buf);
-}
 
 struct whisper_context *init_whisper_context(const std::string &model_path_in,
 					     struct transcription_filter_data *gf)
@@ -314,8 +300,8 @@ void run_inference_and_callbacks(transcription_filter_data *gf, uint64_t start_o
 vad_state vad_based_segmentation(transcription_filter_data *gf, vad_state last_vad_state)
 {
 	uint32_t num_frames_from_infos = 0;
-	uint64_t start_timestamp = 0;
-	uint64_t end_timestamp = 0;
+	uint64_t start_timestamp_offset_ns = 0;
+	uint64_t end_timestamp_offset_ns = 0;
 	size_t overlap_size = 0;
 
 	for (size_t c = 0; c < gf->channels; c++) {
@@ -342,8 +328,8 @@ vad_state vad_based_segmentation(transcription_filter_data *gf, vad_state last_v
 		while (gf->info_buffer.size >= size_of_audio_info) {
 			circlebuf_pop_front(&gf->info_buffer, &info_from_buf, size_of_audio_info);
 			num_frames_from_infos += info_from_buf.frames;
-			if (start_timestamp == 0) {
-				start_timestamp = info_from_buf.timestamp;
+			if (start_timestamp_offset_ns == 0) {
+				start_timestamp_offset_ns = info_from_buf.timestamp_offset_ns;
 			}
 			// Check if we're within the needed segment length
 			if (num_frames_from_infos > max_num_frames) {
@@ -354,7 +340,7 @@ vad_state vad_based_segmentation(transcription_filter_data *gf, vad_state last_v
 				break;
 			}
 		}
-		end_timestamp = info_from_buf.timestamp;
+		end_timestamp_offset_ns = info_from_buf.timestamp_offset_ns;
 
 		/* Pop from input circlebuf */
 		for (size_t c = 0; c < gf->channels; c++) {
@@ -386,10 +372,10 @@ vad_state vad_based_segmentation(transcription_filter_data *gf, vad_state last_v
 				     resampled_16khz[0] + resampled_16khz_frames);
 	gf->vad->process(vad_input, false);
 
-	const uint64_t start_offset_ms = start_timestamp / 1000000 - gf->start_timestamp_ms;
-	const uint64_t end_offset_ms = end_timestamp / 1000000 - gf->start_timestamp_ms;
+	const uint64_t start_ts_offset_ms = start_timestamp_offset_ns / 1000000;
+	const uint64_t end_ts_offset_ms = end_timestamp_offset_ns / 1000000;
 
-	vad_state current_vad_state = {false, start_offset_ms, end_offset_ms};
+	vad_state current_vad_state = {false, start_ts_offset_ms, end_ts_offset_ms};
 
 	std::vector<timestamp_t> stamps = gf->vad->get_speech_timestamps();
 	if (stamps.size() == 0) {
@@ -397,8 +383,9 @@ vad_state vad_based_segmentation(transcription_filter_data *gf, vad_state last_v
 			resampled_16khz_frames);
 		if (last_vad_state.vad_on) {
 			obs_log(gf->log_level, "Last VAD was ON: segment end -> send to inference");
-			run_inference_and_callbacks(gf, last_vad_state.start_timestamp,
-						    last_vad_state.end_timestamp, VAD_STATE_WAS_ON);
+			run_inference_and_callbacks(gf, last_vad_state.start_ts_offest_ms,
+						    last_vad_state.end_ts_offset_ms,
+						    VAD_STATE_WAS_ON);
 		}
 
 		if (gf->enable_audio_chunks_callback) {
@@ -406,8 +393,8 @@ vad_state vad_based_segmentation(transcription_filter_data *gf, vad_state last_v
 					     VAD_STATE_IS_OFF,
 					     {DETECTION_RESULT_SILENCE,
 					      "[silence]",
-					      current_vad_state.start_timestamp,
-					      current_vad_state.end_timestamp,
+					      current_vad_state.start_ts_offest_ms,
+					      current_vad_state.end_ts_offset_ms,
 					      {}});
 		}
 	} else {
@@ -447,29 +434,30 @@ vad_state vad_based_segmentation(transcription_filter_data *gf, vad_state last_v
 				obs_log(gf->log_level, "VAD segment end -> send to inference");
 				// find the end timestamp of the segment
 				const uint64_t segment_end_ts =
-					start_offset_ms + end_frame * 1000 / WHISPER_SAMPLE_RATE;
-				run_inference_and_callbacks(gf, last_vad_state.start_timestamp,
+					start_ts_offset_ms + end_frame * 1000 / WHISPER_SAMPLE_RATE;
+				run_inference_and_callbacks(gf, last_vad_state.start_ts_offest_ms,
 							    segment_end_ts,
 							    last_vad_state.vad_on
 								    ? VAD_STATE_WAS_ON
 								    : VAD_STATE_WAS_OFF);
 				current_vad_state.vad_on = false;
-				current_vad_state.start_timestamp = current_vad_state.end_timestamp;
-				current_vad_state.end_timestamp = 0;
+				current_vad_state.start_ts_offest_ms =
+					current_vad_state.end_ts_offset_ms;
+				current_vad_state.end_ts_offset_ms = 0;
 			} else {
 				current_vad_state.vad_on = true;
 				if (last_vad_state.vad_on) {
-					current_vad_state.start_timestamp =
-						last_vad_state.start_timestamp;
+					current_vad_state.start_ts_offest_ms =
+						last_vad_state.start_ts_offest_ms;
 				} else {
-					current_vad_state.start_timestamp =
-						start_offset_ms +
+					current_vad_state.start_ts_offest_ms =
+						start_ts_offset_ms +
 						start_frame * 1000 / WHISPER_SAMPLE_RATE;
 				}
 				obs_log(gf->log_level,
 					"end not reached. vad state: start ts: %llu, end ts: %llu",
-					current_vad_state.start_timestamp,
-					current_vad_state.end_timestamp);
+					current_vad_state.start_ts_offest_ms,
+					current_vad_state.end_ts_offset_ms);
 			}
 			last_vad_state = current_vad_state;
 		}

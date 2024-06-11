@@ -14,4 +14,12 @@ std::pair<int, int> findStartOfOverlap(const std::vector<whisper_token_data> &se
 std::vector<whisper_token_data> reconstructSentence(const std::vector<whisper_token_data> &seq1,
 						    const std::vector<whisper_token_data> &seq2);
 
+/**
+ * @brief Convert a timestamp in milliseconds to a string in the format "MM:SS.sss" .
+ * Taken from https://github.com/ggerganov/whisper.cpp/blob/master/examples/stream/stream.cpp
+ * @param t_ms_offset Timestamp in milliseconds (offset from the beginning of the stream)
+ * @return std::string Timestamp in the format "MM:SS.sss"
+ */
+std::string to_timestamp(uint64_t t_ms_offset);
+
 #endif /* WHISPER_UTILS_H */
