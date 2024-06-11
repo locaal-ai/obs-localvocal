@@ -102,8 +102,14 @@ struct obs_audio_data *transcription_filter_filter_audio(void *data, struct obs_
 		}
 		// push audio packet info (timestamp/frame count) to info circlebuf
 		struct transcription_filter_audio_info info = {0};
-		info.frames = audio->frames;       // number of frames in this packet
-		info.timestamp = audio->timestamp; // timestamp of this packet
+		info.frames = audio->frames; // number of frames in this packet
+		// check if the timestamp is a false "negative" value for uint64_t
+		if (audio->timestamp > (std::numeric_limits<uint64_t>::max() - 100000000)) {
+			// set the timestamp to the current time
+			info.timestamp_offset_ns = 0;
+		} else {
+			info.timestamp_offset_ns = audio->timestamp; // timestamp of this packet
+		}
 		circlebuf_push_back(&gf->info_buffer, &info, sizeof(info));
 	}
 

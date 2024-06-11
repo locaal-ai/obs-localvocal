@@ -127,7 +127,7 @@ struct transcription_filter_data {
 // Audio packet info
 struct transcription_filter_audio_info {
 	uint32_t frames;
-	uint64_t timestamp; // absolute (since epoch) timestamp in ns
+	uint64_t timestamp_offset_ns; // offset (since start of processing) timestamp in ns
 };
 
 // Callback sent when the transcription has a new result

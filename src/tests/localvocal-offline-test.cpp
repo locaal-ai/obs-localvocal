@@ -465,9 +465,10 @@ int wmain(int argc, wchar_t *argv[])
 				struct transcription_filter_audio_info info = {0};
 				info.frames = frames; // number of frames in this packet
 				// make a timestamp from the current position in the audio buffer
-				info.timestamp = start_time + (int64_t)(((float)frames_count /
-									 (float)gf->sample_rate) *
-									1e9);
+				info.timestamp_offset_ns =
+					start_time +
+					(int64_t)(((float)frames_count / (float)gf->sample_rate) *
+						  1e9);
 				circlebuf_push_back(&gf->info_buffer, &info, sizeof(info));
 			}
 			frames_count += frames;
@@ -489,7 +490,7 @@ int wmain(int argc, wchar_t *argv[])
 		struct transcription_filter_audio_info info = {0};
 		info.frames = frames; // number of frames in this packet
 		// make a timestamp from the current frame count
-		info.timestamp = frames_count * 1000 / gf->sample_rate;
+		info.timestamp_offset_ns = frames_count * 1000 / gf->sample_rate;
 		circlebuf_push_back(&gf->info_buffer, &info, sizeof(info));
 	}
 
