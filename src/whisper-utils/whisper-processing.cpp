@@ -476,7 +476,7 @@ void whisper_loop(void *data)
 	struct transcription_filter_data *gf =
 		static_cast<struct transcription_filter_data *>(data);
 
-	obs_log(LOG_INFO, "starting whisper thread");
+	obs_log(gf->log_level, "Starting whisper thread");
 
 	vad_state current_vad_state = {false, 0, 0};
 	// 500 ms worth of audio is needed for VAD segmentation
@@ -511,5 +511,5 @@ void whisper_loop(void *data)
 		gf->wshiper_thread_cv.wait_for(lock, std::chrono::milliseconds(50));
 	}
 
-	obs_log(LOG_INFO, "exiting whisper thread");
+	obs_log(gf->log_level, "Exiting whisper thread");
 }

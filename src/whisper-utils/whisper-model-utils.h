@@ -5,6 +5,6 @@
 
 #include "transcription-filter-data.h"
 
-void update_whisper_model(struct transcription_filter_data *gf, obs_data_t *s);
+void update_whisper_model(struct transcription_filter_data *gf);
 
 #endif // WHISPER_MODEL_UTILS_H

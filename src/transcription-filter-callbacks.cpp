@@ -300,10 +300,7 @@ void enable_callback(void *data_, calldata_t *cd)
 		obs_log(gf_->log_level, "enable_callback: enable");
 		gf_->active = true;
 		reset_caption_state(gf_);
-		// get filter settings from gf_->context
-		obs_data_t *settings = obs_source_get_settings(gf_->context);
-		update_whisper_model(gf_, settings);
-		obs_data_release(settings);
+		update_whisper_model(gf_);
 	} else {
 		obs_log(gf_->log_level, "enable_callback: disable");
 		gf_->active = false;

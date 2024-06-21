@@ -171,7 +171,7 @@ void transcription_filter_update(void *data, obs_data_t *s)
 	struct transcription_filter_data *gf =
 		static_cast<struct transcription_filter_data *>(data);
 
-	gf->log_level = LOG_INFO; //(int)obs_data_get_int(s, "log_level");
+	gf->log_level = (int)obs_data_get_int(s, "log_level");
 	gf->vad_enabled = obs_data_get_bool(s, "vad_enabled");
 	gf->log_words = obs_data_get_bool(s, "log_words");
 	gf->caption_to_stream = obs_data_get_bool(s, "caption_to_stream");
@@ -216,9 +216,9 @@ void transcription_filter_update(void *data, obs_data_t *s)
 			}
 		}
 	} else {
-		obs_log(LOG_INFO, "buffered_output disable");
+		obs_log(gf->log_level, "buffered_output disable");
 		if (gf->buffered_output) {
-			obs_log(LOG_INFO, "buffered_output currently enabled, disabling");
+			obs_log(gf->log_level, "buffered_output currently enabled, disabling");
 			if (gf->captions_monitor.isEnabled()) {
 				gf->captions_monitor.clear();
 				gf->captions_monitor.stopThread();
@@ -345,11 +345,11 @@ void transcription_filter_update(void *data, obs_data_t *s)
 		}
 	}
 
-	if (gf->initial_creation && obs_source_enabled(gf->context)) {
+	if (gf->initial_creation && gf->context != nullptr && obs_source_enabled(gf->context)) {
+		obs_log(LOG_INFO, "Initial filter creation and source enabled");
+
 		// source was enabled on creation
-		obs_data_t *settings = obs_source_get_settings(gf->context);
-		update_whisper_model(gf, settings);
-		obs_data_release(settings);
+		update_whisper_model(gf);
 		gf->active = true;
 		gf->initial_creation = false;
 	}
@@ -497,7 +497,7 @@ void transcription_filter_hide(void *data)
 
 void transcription_filter_defaults(obs_data_t *s)
 {
-	obs_log(LOG_INFO, "filter defaults");
+	obs_log(LOG_DEBUG, "filter defaults");
 
 	obs_data_set_default_bool(s, "buffered_output", false);
 	obs_data_set_default_int(s, "buffer_num_lines", 2);
