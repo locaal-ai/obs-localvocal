@@ -9,10 +9,28 @@
 #include "plugin-support.h"
 #include "model-utils/model-downloader.h"
 
-void update_whisper_model(struct transcription_filter_data *gf, obs_data_t *s)
+void update_whisper_model(struct transcription_filter_data *gf)
 {
-	// update the whisper model path
+	if (gf->context == nullptr) {
+		obs_log(LOG_ERROR, "obs_source_t context is null");
+		return;
+	}
+
+	obs_data_t *s = obs_source_get_settings(gf->context);
+	if (s == nullptr) {
+		obs_log(LOG_ERROR, "obs_data_t settings is null");
+		return;
+	}
+
+	// Get settings from context
 	std::string new_model_path = obs_data_get_string(s, "whisper_model_path");
+	std::string external_model_file_path =
+		obs_data_get_string(s, "whisper_model_path_external");
+	const bool new_dtw_timestamps = obs_data_get_bool(s, "dtw_token_timestamps");
+	obs_data_release(s);
+
+	// update the whisper model path
+
 	const bool is_external_model = new_model_path.find("!!!external!!!") != std::string::npos;
 
 	char *silero_vad_model_file = obs_module_file("models/silero-vad/silero_vad.onnx");
@@ -73,8 +91,6 @@ void update_whisper_model(struct transcription_filter_data *gf, obs_data_t *s)
 			}
 		} else {
 			// new model is external file, get file location from file property
-			std::string external_model_file_path =
-				obs_data_get_string(s, "whisper_model_path_external");
 			if (external_model_file_path.empty()) {
 				obs_log(LOG_WARNING, "External model file path is empty");
 			} else {
@@ -98,13 +114,11 @@ void update_whisper_model(struct transcription_filter_data *gf, obs_data_t *s)
 			gf->whisper_model_path.c_str(), new_model_path.c_str());
 	}
 
-	const bool new_dtw_timestamps = obs_data_get_bool(s, "dtw_token_timestamps");
-
 	if (new_dtw_timestamps != gf->enable_token_ts_dtw) {
 		// dtw_token_timestamps changed
 		obs_log(gf->log_level, "dtw_token_timestamps changed from %d to %d",
 			gf->enable_token_ts_dtw, new_dtw_timestamps);
-		gf->enable_token_ts_dtw = obs_data_get_bool(s, "dtw_token_timestamps");
+		gf->enable_token_ts_dtw = new_dtw_timestamps;
 		shutdown_whisper_thread(gf);
 		start_whisper_thread_with_path(gf, gf->whisper_model_path,
 					       silero_vad_model_file_str.c_str());

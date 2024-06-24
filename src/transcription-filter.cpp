@@ -171,7 +171,7 @@ void transcription_filter_update(void *data, obs_data_t *s)
 	struct transcription_filter_data *gf =
 		static_cast<struct transcription_filter_data *>(data);
 
-	gf->log_level = LOG_INFO; //(int)obs_data_get_int(s, "log_level");
+	gf->log_level = (int)obs_data_get_int(s, "log_level");
 	gf->vad_enabled = obs_data_get_bool(s, "vad_enabled");
 	gf->log_words = obs_data_get_bool(s, "log_words");
 	gf->caption_to_stream = obs_data_get_bool(s, "caption_to_stream");
@@ -216,9 +216,9 @@ void transcription_filter_update(void *data, obs_data_t *s)
 			}
 		}
 	} else {
-		obs_log(LOG_INFO, "buffered_output disable");
+		obs_log(gf->log_level, "buffered_output disable");
 		if (gf->buffered_output) {
-			obs_log(LOG_INFO, "buffered_output currently enabled, disabling");
+			obs_log(gf->log_level, "buffered_output currently enabled, disabling");
 			if (gf->captions_monitor.isEnabled()) {
 				gf->captions_monitor.clear();
 				gf->captions_monitor.stopThread();
@@ -312,8 +312,12 @@ void transcription_filter_update(void *data, obs_data_t *s)
 				obs_data_get_string(s, "whisper_language_select");
 		} else {
 			// take the language from gf->target_lang
-			gf->whisper_params.language =
-				language_codes_2_reverse[gf->target_lang].c_str();
+			if (language_codes_2_reverse.count(gf->target_lang) > 0) {
+				gf->whisper_params.language =
+					language_codes_2_reverse[gf->target_lang].c_str();
+			} else {
+				gf->whisper_params.language = "auto";
+			}
 		}
 		gf->whisper_params.initial_prompt = obs_data_get_string(s, "initial_prompt");
 		gf->whisper_params.n_threads = (int)obs_data_get_int(s, "n_threads");
@@ -345,11 +349,11 @@ void transcription_filter_update(void *data, obs_data_t *s)
 		}
 	}
 
-	if (gf->initial_creation && obs_source_enabled(gf->context)) {
+	if (gf->initial_creation && gf->context != nullptr && obs_source_enabled(gf->context)) {
+		obs_log(LOG_INFO, "Initial filter creation and source enabled");
+
 		// source was enabled on creation
-		obs_data_t *settings = obs_source_get_settings(gf->context);
-		update_whisper_model(gf, settings);
-		obs_data_release(settings);
+		update_whisper_model(gf);
 		gf->active = true;
 		gf->initial_creation = false;
 	}
@@ -413,7 +417,7 @@ void *transcription_filter_create(obs_data_t *settings, obs_source_t *filter)
 	const char *subtitle_sources = obs_data_get_string(settings, "subtitle_sources");
 	if (subtitle_sources == nullptr || strcmp(subtitle_sources, "none") == 0 ||
 	    strcmp(subtitle_sources, "(null)") == 0 || strlen(subtitle_sources) == 0) {
-		obs_log(LOG_INFO, "create text source");
+		obs_log(gf->log_level, "Create text source");
 		// check if a source called "LocalVocal Subtitles" exists
 		obs_source_t *source = obs_get_source_by_name("LocalVocal Subtitles");
 		if (source) {
@@ -497,7 +501,7 @@ void transcription_filter_hide(void *data)
 
 void transcription_filter_defaults(obs_data_t *s)
 {
-	obs_log(LOG_INFO, "filter defaults");
+	obs_log(LOG_DEBUG, "filter defaults");
 
 	obs_data_set_default_bool(s, "buffered_output", false);
 	obs_data_set_default_int(s, "buffer_num_lines", 2);
@@ -658,6 +662,8 @@ obs_properties_t *transcription_filter_properties(void *data)
 					obs_property_list_add_string(prop_lang, lang.second.c_str(),
 								     lang.first.c_str());
 				}
+				// set the language to auto (default)
+				obs_data_set_string(settings, "whisper_language_select", "auto");
 			}
 		}
 		return true;
