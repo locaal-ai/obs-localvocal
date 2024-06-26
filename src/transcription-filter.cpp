@@ -863,21 +863,6 @@ obs_properties_t *transcription_filter_properties(void *data)
 	obs_properties_add_int_slider(buffered_output_group, "buffer_num_chars_per_line",
 				      MT_("buffer_num_chars_per_line"), 1, 100, 1);
 
-	// on selection of buffer output type
-	obs_property_set_modified_callback(buffer_type_list, [](obs_properties_t *props,
-								obs_property_t *property,
-								obs_data_t *settings) {
-		UNUSED_PARAMETER(property);
-		UNUSED_PARAMETER(props);
-
-		// If the buffer output type is "Word" set the number of words per line to 10
-		const bool isSegmentationWord =
-			(obs_data_get_int(settings, "buffer_output_type") == SEGMENTATION_WORD);
-		obs_data_set_int(settings, "buffer_num_chars_per_line",
-				 isSegmentationWord ? 8 : 30);
-		return true;
-	});
-
 	// on enable/disable buffered output, show/hide the group
 	obs_property_set_modified_callback(buffered_output_prop, [](obs_properties_t *props,
 								    obs_property_t *property,

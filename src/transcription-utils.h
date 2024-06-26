@@ -4,6 +4,8 @@
 #include <string>
 #include <vector>
 #include <chrono>
+#include <algorithm>
+#include <cctype>
 
 // Fix UTF8 string for Windows
 std::string fix_utf8(const std::string &str);
