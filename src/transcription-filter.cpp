@@ -167,9 +167,9 @@ void transcription_filter_destroy(void *data)
 
 void transcription_filter_update(void *data, obs_data_t *s)
 {
-	obs_log(LOG_INFO, "LocalVocal filter update");
 	struct transcription_filter_data *gf =
 		static_cast<struct transcription_filter_data *>(data);
+	obs_log(gf->log_level, "LocalVocal filter update");
 
 	gf->log_level = (int)obs_data_get_int(s, "log_level");
 	gf->vad_enabled = obs_data_get_bool(s, "vad_enabled");
@@ -188,11 +188,13 @@ void transcription_filter_update(void *data, obs_data_t *s)
 	bool new_buffered_output = obs_data_get_bool(s, "buffered_output");
 	int new_buffer_num_lines = (int)obs_data_get_int(s, "buffer_num_lines");
 	int new_buffer_num_chars_per_line = (int)obs_data_get_int(s, "buffer_num_chars_per_line");
+	TokenBufferSegmentation new_buffer_output_type =
+		(TokenBufferSegmentation)obs_data_get_int(s, "buffer_output_type");
 
 	if (new_buffered_output) {
-		obs_log(LOG_INFO, "buffered_output enable");
+		obs_log(gf->log_level, "buffered_output enable");
 		if (!gf->buffered_output || !gf->captions_monitor.isEnabled()) {
-			obs_log(LOG_INFO, "buffered_output currently disabled, enabling");
+			obs_log(gf->log_level, "buffered_output currently disabled, enabling");
 			gf->buffered_output = true;
 			gf->captions_monitor.initialize(
 				gf,
@@ -203,18 +205,23 @@ void transcription_filter_update(void *data, obs_data_t *s)
 					}
 				},
 				new_buffer_num_lines, new_buffer_num_chars_per_line,
-				std::chrono::seconds(10));
+				std::chrono::seconds(3), new_buffer_output_type);
 		} else {
 			if (new_buffer_num_lines != gf->buffered_output_num_lines ||
-			    new_buffer_num_chars_per_line != gf->buffered_output_num_chars) {
-				obs_log(LOG_INFO, "buffered_output parameters changed, updating");
+			    new_buffer_num_chars_per_line != gf->buffered_output_num_chars ||
+			    new_buffer_output_type != gf->buffered_output_output_type) {
+				obs_log(gf->log_level,
+					"buffered_output parameters changed, updating");
+				gf->captions_monitor.clear();
 				gf->captions_monitor.setNumSentences(new_buffer_num_lines);
 				gf->captions_monitor.setNumPerSentence(
 					new_buffer_num_chars_per_line);
-				gf->buffered_output_num_lines = new_buffer_num_lines;
-				gf->buffered_output_num_chars = new_buffer_num_chars_per_line;
+				gf->captions_monitor.setSegmentation(new_buffer_output_type);
 			}
 		}
+		gf->buffered_output_num_lines = new_buffer_num_lines;
+		gf->buffered_output_num_chars = new_buffer_num_chars_per_line;
+		gf->buffered_output_output_type = new_buffer_output_type;
 	} else {
 		obs_log(gf->log_level, "buffered_output disable");
 		if (gf->buffered_output) {
@@ -349,13 +356,23 @@ void transcription_filter_update(void *data, obs_data_t *s)
 		}
 	}
 
-	if (gf->initial_creation && gf->context != nullptr && obs_source_enabled(gf->context)) {
-		obs_log(LOG_INFO, "Initial filter creation and source enabled");
+	if (gf->context != nullptr && obs_source_enabled(gf->context)) {
+		if (gf->initial_creation) {
+			obs_log(LOG_INFO, "Initial filter creation and source enabled");
 
-		// source was enabled on creation
-		update_whisper_model(gf);
-		gf->active = true;
-		gf->initial_creation = false;
+			// source was enabled on creation
+			update_whisper_model(gf);
+			gf->active = true;
+			gf->initial_creation = false;
+		} else {
+			// check if the whisper model selection has changed
+			const std::string new_model_path =
+				obs_data_get_string(s, "whisper_model_path");
+			if (gf->whisper_model_path != new_model_path) {
+				obs_log(LOG_INFO, "New model selected: %s", new_model_path.c_str());
+				update_whisper_model(gf);
+			}
+		}
 	}
 }
 
@@ -506,9 +523,11 @@ void transcription_filter_defaults(obs_data_t *s)
 	obs_data_set_default_bool(s, "buffered_output", false);
 	obs_data_set_default_int(s, "buffer_num_lines", 2);
 	obs_data_set_default_int(s, "buffer_num_chars_per_line", 30);
+	obs_data_set_default_int(s, "buffer_output_type",
+				 (int)TokenBufferSegmentation::SEGMENTATION_TOKEN);
 
 	obs_data_set_default_bool(s, "vad_enabled", true);
-	obs_data_set_default_double(s, "vad_threshold", 0.5);
+	obs_data_set_default_double(s, "vad_threshold", 0.65);
 	obs_data_set_default_int(s, "log_level", LOG_DEBUG);
 	obs_data_set_default_bool(s, "log_words", false);
 	obs_data_set_default_bool(s, "caption_to_stream", false);
@@ -669,6 +688,16 @@ obs_properties_t *transcription_filter_properties(void *data)
 		return true;
 	});
 
+	// Add language selector
+	obs_property_t *whisper_language_select_list =
+		obs_properties_add_list(ppts, "whisper_language_select", MT_("language"),
+					OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_STRING);
+	// iterate over all available languages and add them to the list
+	for (auto const &pair : whisper_available_lang_reverse) {
+		obs_property_list_add_string(whisper_language_select_list, pair.first.c_str(),
+					     pair.second.c_str());
+	}
+
 	// add translation option group
 	obs_properties_t *translation_group = obs_properties_create();
 	obs_property_t *translation_group_prop = obs_properties_add_group(
@@ -806,7 +835,8 @@ obs_properties_t *transcription_filter_properties(void *data)
 		     {"whisper_params_group", "log_words", "caption_to_stream", "buffer_size_msec",
 		      "overlap_size_msec", "step_by_step_processing", "min_sub_duration",
 		      "process_while_muted", "buffered_output", "vad_enabled", "log_level",
-		      "suppress_sentences", "sentence_psum_accept_thresh", "vad_threshold"}) {
+		      "suppress_sentences", "sentence_psum_accept_thresh", "vad_threshold",
+		      "buffered_output_group"}) {
 			obs_property_set_visible(obs_properties_get(props, prop_name.c_str()),
 						 show_hide);
 		}
@@ -820,6 +850,12 @@ obs_properties_t *transcription_filter_properties(void *data)
 	obs_properties_t *buffered_output_group = obs_properties_create();
 	obs_properties_add_group(ppts, "buffered_output_group", MT_("buffered_output_parameters"),
 				 OBS_GROUP_NORMAL, buffered_output_group);
+	// add buffer "type" character or word
+	obs_property_t *buffer_type_list = obs_properties_add_list(
+		buffered_output_group, "buffer_output_type", MT_("buffer_output_type"),
+		OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_INT);
+	obs_property_list_add_int(buffer_type_list, "Character", SEGMENTATION_TOKEN);
+	obs_property_list_add_int(buffer_type_list, "Word", SEGMENTATION_WORD);
 	// add buffer lines parameter
 	obs_properties_add_int_slider(buffered_output_group, "buffer_num_lines",
 				      MT_("buffer_num_lines"), 1, 5, 1);
@@ -867,16 +903,6 @@ obs_properties_t *transcription_filter_properties(void *data)
 	obs_properties_t *whisper_params_group = obs_properties_create();
 	obs_properties_add_group(ppts, "whisper_params_group", MT_("whisper_parameters"),
 				 OBS_GROUP_NORMAL, whisper_params_group);
-
-	// Add language selector
-	obs_property_t *whisper_language_select_list = obs_properties_add_list(
-		whisper_params_group, "whisper_language_select", MT_("language"),
-		OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_STRING);
-	// iterate over all available languages and add them to the list
-	for (auto const &pair : whisper_available_lang_reverse) {
-		obs_property_list_add_string(whisper_language_select_list, pair.first.c_str(),
-					     pair.second.c_str());
-	}
 
 	obs_property_t *whisper_sampling_method_list = obs_properties_add_list(
 		whisper_params_group, "whisper_sampling_method", MT_("whisper_sampling_method"),

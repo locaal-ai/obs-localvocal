@@ -108,6 +108,8 @@ struct transcription_filter_data {
 	TokenBufferThread captions_monitor;
 	int buffered_output_num_lines = 2;
 	int buffered_output_num_chars = 30;
+	TokenBufferSegmentation buffered_output_output_type =
+		TokenBufferSegmentation::SEGMENTATION_TOKEN;
 
 	// ctor
 	transcription_filter_data() : whisper_buf_mutex(), whisper_ctx_mutex(), wshiper_thread_cv()
