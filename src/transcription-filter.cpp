@@ -212,15 +212,16 @@ void transcription_filter_update(void *data, obs_data_t *s)
 			    new_buffer_output_type != gf->buffered_output_output_type) {
 				obs_log(gf->log_level,
 					"buffered_output parameters changed, updating");
+				gf->captions_monitor.clear();
 				gf->captions_monitor.setNumSentences(new_buffer_num_lines);
 				gf->captions_monitor.setNumPerSentence(
 					new_buffer_num_chars_per_line);
 				gf->captions_monitor.setSegmentation(new_buffer_output_type);
-				gf->buffered_output_num_lines = new_buffer_num_lines;
-				gf->buffered_output_num_chars = new_buffer_num_chars_per_line;
-				gf->buffered_output_output_type = new_buffer_output_type;
 			}
 		}
+		gf->buffered_output_num_lines = new_buffer_num_lines;
+		gf->buffered_output_num_chars = new_buffer_num_chars_per_line;
+		gf->buffered_output_output_type = new_buffer_output_type;
 	} else {
 		obs_log(gf->log_level, "buffered_output disable");
 		if (gf->buffered_output) {
@@ -867,11 +868,13 @@ obs_properties_t *transcription_filter_properties(void *data)
 								obs_property_t *property,
 								obs_data_t *settings) {
 		UNUSED_PARAMETER(property);
+		UNUSED_PARAMETER(props);
+
 		// If the buffer output type is "Word" set the number of words per line to 10
 		const bool isSegmentationWord =
 			(obs_data_get_int(settings, "buffer_output_type") == SEGMENTATION_WORD);
 		obs_data_set_int(settings, "buffer_num_chars_per_line",
-				 isSegmentationWord ? 10 : 30);
+				 isSegmentationWord ? 8 : 30);
 		return true;
 	});
 

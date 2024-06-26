@@ -9,6 +9,7 @@
 
 #ifdef _WIN32
 #include <Windows.h>
+#include <transcription-utils.h>
 #define SPACE L" "
 #define NEWLINE L"\n"
 #else
@@ -233,7 +234,9 @@ void TokenBufferThread::monitor()
 				}
 				// build the caption from the sentences
 				for (const auto &sentence : sentences) {
-					caption += sentence;
+					if (!sentence.empty()) {
+						caption += trim(sentence);
+					}
 					caption += NEWLINE;
 				}
 
