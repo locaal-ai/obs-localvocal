@@ -23,6 +23,7 @@ typedef std::string TokenBufferString;
 struct transcription_filter_data;
 
 enum TokenBufferSegmentation { SEGMENTATION_WORD = 0, SEGMENTATION_TOKEN, SEGMENTATION_SENTENCE };
+enum TokenBufferSpeed { SPEED_SLOW = 0, SPEED_NORMAL, SPEED_FAST };
 
 class TokenBufferThread {
 public:
@@ -43,10 +44,16 @@ public:
 
 	void setNumSentences(size_t numSentences_) { numSentences = numSentences_; }
 	void setNumPerSentence(size_t numPerSentence_) { numPerSentence = numPerSentence_; }
+	void setMaxTime(std::chrono::seconds maxTime_) { maxTime = maxTime_; }
+	void setSegmentation(TokenBufferSegmentation segmentation_)
+	{
+		segmentation = segmentation_;
+	}
 
 private:
 	void monitor();
 	void log_token_vector(const std::vector<std::string> &tokens);
+	int getWaitTime(TokenBufferSpeed speed) const;
 	struct transcription_filter_data *gf;
 	std::deque<TokenBufferString> inputQueue;
 	std::deque<TokenBufferString> presentationQueue;
@@ -61,6 +68,9 @@ private:
 	size_t numSentences;
 	size_t numPerSentence;
 	TokenBufferSegmentation segmentation;
+	// timestamp of the last caption
+	std::chrono::time_point<std::chrono::steady_clock> lastCaptionTime;
+	std::string lastCaption;
 };
 
 #endif

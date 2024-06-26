@@ -18,12 +18,13 @@
 
 TokenBufferThread::TokenBufferThread() noexcept
 	: gf(nullptr),
-	  numSentences(1),
-	  numPerSentence(1),
+	  numSentences(2),
+	  numPerSentence(30),
 	  maxTime(0),
 	  stop(true),
 	  presentationQueueMutex(),
-	  inputQueueMutex()
+	  inputQueueMutex(),
+	  segmentation(SEGMENTATION_TOKEN)
 {
 }
 
@@ -110,6 +111,8 @@ void TokenBufferThread::clear()
 		std::lock_guard<std::mutex> lock(presentationQueueMutex);
 		presentationQueue.clear();
 	}
+	this->lastCaption = "";
+	this->lastCaptionTime = std::chrono::steady_clock::now();
 	this->callback("");
 }
 
@@ -134,6 +137,13 @@ void TokenBufferThread::monitor()
 				for (size_t i = 0; i < this->numPerSentence; i++) {
 					presentationQueue.pop_front();
 				}
+				if (this->segmentation == SEGMENTATION_TOKEN) {
+					// pop tokens until a space is found
+					while (!presentationQueue.empty() &&
+					       presentationQueue.front() != SPACE) {
+						presentationQueue.pop_front();
+					}
+				}
 			}
 
 			{
@@ -146,10 +156,23 @@ void TokenBufferThread::monitor()
 						for (const auto &token : inputQueue) {
 							presentationQueue.push_back(token);
 						}
-					} else {
+					} else if (this->segmentation == SEGMENTATION_TOKEN) {
 						// add one token to the presentation queue
 						presentationQueue.push_back(inputQueue.front());
 						inputQueue.pop_front();
+					} else {
+						// skip spaces in the beginning of the input queue
+						while (inputQueue.front() == SPACE) {
+							inputQueue.pop_front();
+						}
+						// add one word to the presentation queue
+						TokenBufferString word;
+						while (!inputQueue.empty() &&
+						       inputQueue.front() != SPACE) {
+							word += inputQueue.front();
+							inputQueue.pop_front();
+						}
+						presentationQueue.push_back(word);
 					}
 				}
 			}
@@ -158,47 +181,60 @@ void TokenBufferThread::monitor()
 				// build a caption from the presentation queue in sentences
 				// with a maximum of numPerSentence tokens/words per sentence
 				// and a newline between sentences
-				TokenBufferString caption;
-				if (this->segmentation == SEGMENTATION_WORD) {
-					// iterate through the presentation queue tokens and make words (based on spaces)
-					// then build a caption with a maximum of numPerSentence words per sentence
-					size_t wordsInSentence = 0;
-					TokenBufferString word;
-					for (const auto &token : presentationQueue) {
-						// keep adding tokens to the word until a space is found
-						word += token;
-						if (word.find(SPACE) != TokenBufferString::npos) {
-							// cut the word at the space and add it to the caption
-							caption += word.substr(0, word.find(SPACE));
-							wordsInSentence++;
-							// keep the rest of the word for the next iteration
-							word = word.substr(word.find(SPACE) + 1);
+				std::vector<TokenBufferString> sentences(1);
 
-							if (wordsInSentence ==
-							    this->numPerSentence) {
-								caption += word;
-								caption += SPACE;
-								wordsInSentence = 0;
-								word.clear();
-							}
+				if (this->segmentation == SEGMENTATION_WORD) {
+					// add words from the presentation queue to the sentences
+					// if a sentence is full - start a new one
+					size_t wordsInSentence = 0;
+					for (size_t i = 0; i < presentationQueue.size(); i++) {
+						const auto &word = presentationQueue[i];
+						sentences.back() += word + SPACE;
+						wordsInSentence++;
+						if (wordsInSentence == this->numPerSentence) {
+							sentences.push_back(TokenBufferString());
 						}
 					}
 				} else {
 					// iterate through the presentation queue tokens and build a caption
-					size_t tokensInSentence = 0;
-					for (const auto &token : presentationQueue) {
+					for (size_t i = 0; i < presentationQueue.size(); i++) {
+						const auto &token = presentationQueue[i];
 						// skip spaces in the beginning of a sentence (tokensInSentence == 0)
-						if (token == SPACE && tokensInSentence == 0) {
+						if (token == SPACE &&
+						    sentences.back().length() == 0) {
 							continue;
 						}
 
-						caption += token;
-						tokensInSentence++;
-						if (tokensInSentence == this->numPerSentence) {
-							caption += NEWLINE;
-							tokensInSentence = 0;
+						sentences.back() += token;
+						if (sentences.back().length() ==
+						    this->numPerSentence) {
+							// if the next character is not a space - this is a broken word
+							// roll back to the last space, replace it with a newline
+							size_t lastSpace =
+								sentences.back().find_last_of(
+									SPACE);
+							sentences.push_back(sentences.back().substr(
+								lastSpace + 1));
+							sentences[sentences.size() - 2] =
+								sentences[sentences.size() - 2]
+									.substr(0, lastSpace);
 						}
 					}
+				}
+
+				TokenBufferString caption;
+				// if there are more sentences than numSentences - remove the oldest ones
+				while (sentences.size() > this->numSentences) {
+					sentences.erase(sentences.begin());
+				}
+				// if there are less sentences than numSentences - add empty sentences
+				while (sentences.size() < this->numSentences) {
+					sentences.push_back(TokenBufferString());
+				}
+				// build the caption from the sentences
+				for (const auto &sentence : sentences) {
+					caption += sentence;
+					caption += NEWLINE;
 				}
 
 #ifdef _WIN32
@@ -222,19 +258,59 @@ void TokenBufferThread::monitor()
 
 		if (caption_out.empty()) {
 			// if no caption was built, sleep for a while
+			this->lastCaption = "";
+			this->lastCaptionTime = std::chrono::steady_clock::now();
 			std::this_thread::sleep_for(std::chrono::milliseconds(100));
 			continue;
 		}
 
-		// emit the caption
-		this->callback(caption_out);
+		if (caption_out == lastCaption) {
+			// if it has been max_time since the last caption - clear the presentation queue
+			if (this->maxTime.count() > 0) {
+				auto now = std::chrono::steady_clock::now();
+				auto duration = std::chrono::duration_cast<std::chrono::seconds>(
+					now - this->lastCaptionTime);
+				if (duration > this->maxTime) {
+					this->clear();
+				}
+			}
+		} else {
+			// emit the caption
+			this->callback(caption_out);
+			this->lastCaption = caption_out;
+			this->lastCaptionTime = std::chrono::steady_clock::now();
+		}
 
 		// check the input queue size (iqs), if it's big - sleep less
-		std::this_thread::sleep_for(std::chrono::milliseconds(inputQueue.size() > 30 ? 33
-								      : inputQueue.size() > 15
-									      ? 66
-									      : 100));
+		std::this_thread::sleep_for(std::chrono::milliseconds(
+			inputQueue.size() > 30   ? getWaitTime(SPEED_FAST)
+			: inputQueue.size() > 15 ? getWaitTime(SPEED_NORMAL)
+						 : getWaitTime(SPEED_SLOW)));
 	}
 
 	obs_log(LOG_INFO, "TokenBufferThread::monitor: done");
+}
+
+int TokenBufferThread::getWaitTime(TokenBufferSpeed speed) const
+{
+	if (this->segmentation == SEGMENTATION_WORD) {
+		switch (speed) {
+		case SPEED_SLOW:
+			return 200;
+		case SPEED_NORMAL:
+			return 150;
+		case SPEED_FAST:
+			return 100;
+		}
+	} else if (this->segmentation == SEGMENTATION_TOKEN) {
+		switch (speed) {
+		case SPEED_SLOW:
+			return 100;
+		case SPEED_NORMAL:
+			return 66;
+		case SPEED_FAST:
+			return 33;
+		}
+	}
+	return 1000;
 }
