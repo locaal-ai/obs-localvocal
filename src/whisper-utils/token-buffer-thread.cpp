@@ -4,12 +4,12 @@
 
 #include "token-buffer-thread.h"
 #include "whisper-utils.h"
+#include "transcription-utils.h"
 
 #include <obs-module.h>
 
 #ifdef _WIN32
 #include <Windows.h>
-#include <transcription-utils.h>
 #define SPACE L" "
 #define NEWLINE L"\n"
 #else
