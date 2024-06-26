@@ -235,7 +235,7 @@ void TokenBufferThread::monitor()
 				// build the caption from the sentences
 				for (const auto &sentence : sentences) {
 					if (!sentence.empty()) {
-						caption += trim(sentence);
+						caption += trim<TokenBufferString>(sentence);
 					}
 					caption += NEWLINE;
 				}
