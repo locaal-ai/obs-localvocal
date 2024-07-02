@@ -34,20 +34,24 @@ TokenBufferThread::~TokenBufferThread()
 	stopThread();
 }
 
-void TokenBufferThread::initialize(struct transcription_filter_data *gf_,
-				   std::function<void(const std::string &)> callback_,
-				   size_t numSentences_, size_t numPerSentence_,
-				   std::chrono::seconds maxTime_,
-				   TokenBufferSegmentation segmentation_)
+void TokenBufferThread::initialize(
+	struct transcription_filter_data *gf_,
+	std::function<void(const std::string &)> captionPresentationCallback_,
+	std::function<void(const std::string &)> sentenceOutputCallback_, size_t numSentences_,
+	size_t numPerSentence_, std::chrono::seconds maxTime_,
+	TokenBufferSegmentation segmentation_)
 {
 	this->gf = gf_;
-	this->callback = callback_;
+	this->captionPresentationCallback = captionPresentationCallback_;
+	this->sentenceOutputCallback = sentenceOutputCallback_;
 	this->numSentences = numSentences_;
 	this->numPerSentence = numPerSentence_;
 	this->segmentation = segmentation_;
 	this->maxTime = maxTime_;
 	this->stop = false;
 	this->workerThread = std::thread(&TokenBufferThread::monitor, this);
+	this->lastContributionTime = std::chrono::steady_clock::now();
+	this->lastCaptionTime = std::chrono::steady_clock::now();
 }
 
 void TokenBufferThread::stopThread()
@@ -80,26 +84,29 @@ void TokenBufferThread::addSentence(const std::string &sentence)
 	std::wstring sentence_ws(count, 0);
 	MultiByteToWideChar(CP_UTF8, 0, sentence.c_str(), (int)sentence.length(), &sentence_ws[0],
 			    count);
-	// split to characters
-	std::vector<std::wstring> characters;
-	for (const auto &c : sentence_ws) {
-		characters.push_back(std::wstring(1, c));
-	}
 #else
-	// split to characters
-	std::vector<std::string> characters;
-	for (const auto &c : sentence) {
-		characters.push_back(std::string(1, c));
-	}
+	std::string sentence_ws = sentence;
 #endif
+	// split to characters
+	std::vector<TokenBufferString> characters;
+	for (const auto &c : sentence_ws) {
+		characters.push_back(TokenBufferString(1, c));
+	}
 
 	std::lock_guard<std::mutex> lock(inputQueueMutex);
 
-	// add the reconstructed sentence to the wordQueue
+	// add the characters to the inputQueue
 	for (const auto &character : characters) {
 		inputQueue.push_back(character);
 	}
 	inputQueue.push_back(SPACE);
+
+	// add to the contribution queue as well
+	for (const auto &character : characters) {
+		contributionQueue.push_back(character);
+	}
+	contributionQueue.push_back(SPACE);
+	this->lastContributionTime = std::chrono::steady_clock::now();
 }
 
 void TokenBufferThread::clear()
@@ -114,14 +121,14 @@ void TokenBufferThread::clear()
 	}
 	this->lastCaption = "";
 	this->lastCaptionTime = std::chrono::steady_clock::now();
-	this->callback("");
+	this->captionPresentationCallback("");
 }
 
 void TokenBufferThread::monitor()
 {
 	obs_log(LOG_INFO, "TokenBufferThread::monitor");
 
-	this->callback("");
+	this->captionPresentationCallback("");
 
 	while (true) {
 		std::string caption_out;
@@ -152,11 +159,13 @@ void TokenBufferThread::monitor()
 
 				if (!inputQueue.empty()) {
 					// if there are token on the input queue
+					// then add to the presentation queue based on the segmentation
 					if (this->segmentation == SEGMENTATION_SENTENCE) {
 						// add all the tokens from the input queue to the presentation queue
 						for (const auto &token : inputQueue) {
 							presentationQueue.push_back(token);
 						}
+						inputQueue.clear();
 					} else if (this->segmentation == SEGMENTATION_TOKEN) {
 						// add one token to the presentation queue
 						presentationQueue.push_back(inputQueue.front());
@@ -259,29 +268,65 @@ void TokenBufferThread::monitor()
 			break;
 		}
 
+		const auto now = std::chrono::steady_clock::now();
+
+		// check if enough time passed since last contribution (debounce)
+		const auto durationSinceLastContribution =
+			std::chrono::duration_cast<std::chrono::seconds>(
+				now - this->lastContributionTime);
+		if (durationSinceLastContribution > std::chrono::milliseconds(500)) {
+			if (!lastContributionIsSent) {
+				// take the contribution queue and send it to the output
+				TokenBufferString contribution;
+				for (const auto &token : contributionQueue) {
+					contribution += token;
+				}
+				contributionQueue.clear();
+#ifdef _WIN32
+				// convert caption to multibyte for obs
+				int count = WideCharToMultiByte(CP_UTF8, 0, contribution.c_str(),
+								(int)contribution.length(), NULL, 0,
+								NULL, NULL);
+				std::string contribution_out = std::string(count, 0);
+				WideCharToMultiByte(CP_UTF8, 0, contribution.c_str(),
+						    (int)contribution.length(),
+						    &contribution_out[0], count, NULL, NULL);
+#else
+				std::string contribution_out(contribution.begin(),
+							     contribution.end());
+#endif
+
+				obs_log(LOG_INFO, "TokenBufferThread::monitor: output '%s'",
+					contribution_out.c_str());
+				this->sentenceOutputCallback(contribution_out);
+				lastContributionIsSent = true;
+			}
+		} else {
+			lastContributionIsSent = false;
+		}
+
 		if (caption_out.empty()) {
 			// if no caption was built, sleep for a while
 			this->lastCaption = "";
-			this->lastCaptionTime = std::chrono::steady_clock::now();
+			this->lastCaptionTime = now;
 			std::this_thread::sleep_for(std::chrono::milliseconds(100));
 			continue;
 		}
 
 		if (caption_out == lastCaption) {
 			// if it has been max_time since the last caption - clear the presentation queue
+			const auto duration = std::chrono::duration_cast<std::chrono::seconds>(
+				now - this->lastCaptionTime);
 			if (this->maxTime.count() > 0) {
-				auto now = std::chrono::steady_clock::now();
-				auto duration = std::chrono::duration_cast<std::chrono::seconds>(
-					now - this->lastCaptionTime);
 				if (duration > this->maxTime) {
 					this->clear();
 				}
 			}
 		} else {
 			// emit the caption
-			this->callback(caption_out);
+			this->captionPresentationCallback(caption_out);
 			this->lastCaption = caption_out;
-			this->lastCaptionTime = std::chrono::steady_clock::now();
+			this->lastCaptionTime = now;
 		}
 
 		// check the input queue size (iqs), if it's big - sleep less

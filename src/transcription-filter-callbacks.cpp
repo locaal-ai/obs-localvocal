@@ -48,6 +48,101 @@ void audio_chunk_callback(struct transcription_filter_data *gf, const float *pcm
 	// stub
 }
 
+std::string send_sentence_to_translation(const std::string &sentence,
+					 struct transcription_filter_data *gf)
+{
+	const std::string last_text = gf->last_text;
+	gf->last_text = sentence;
+	if (gf->translate && !sentence.empty() && sentence != last_text) {
+		obs_log(gf->log_level, "Translating text. %s -> %s", gf->source_lang.c_str(),
+			gf->target_lang.c_str());
+		std::string translated_text;
+		if (translate(gf->translation_ctx, sentence, gf->source_lang, gf->target_lang,
+			      translated_text) == OBS_POLYGLOT_TRANSLATION_SUCCESS) {
+			if (gf->log_words) {
+				obs_log(LOG_INFO, "Translation: '%s' -> '%s'", sentence.c_str(),
+					translated_text.c_str());
+			}
+			if (gf->translation_output == "none") {
+				// overwrite the original text with the translated text
+				return translated_text;
+			} else {
+				// send the translation to the selected source
+				send_caption_to_source(gf->translation_output, translated_text, gf);
+			}
+		} else {
+			obs_log(gf->log_level, "Failed to translate text");
+		}
+	}
+	return sentence;
+}
+
+void send_sentence_to_file(struct transcription_filter_data *gf,
+			   const DetectionResultWithText &result, const std::string &str_copy)
+{
+	// Check if we should save the sentence
+	if (gf->save_only_while_recording && !obs_frontend_recording_active()) {
+		// We are not recording, do not save the sentence to file
+		return;
+	}
+	// should the file be truncated?
+	std::ios_base::openmode openmode = std::ios::out;
+	if (gf->truncate_output_file) {
+		openmode |= std::ios::trunc;
+	} else {
+		openmode |= std::ios::app;
+	}
+	if (!gf->save_srt) {
+		// Write raw sentence to file
+		std::ofstream output_file(gf->output_file_path, openmode);
+		output_file << str_copy << std::endl;
+		output_file.close();
+	} else {
+		obs_log(gf->log_level, "Saving sentence to file %s, sentence #%d",
+			gf->output_file_path.c_str(), gf->sentence_number);
+		// Append sentence to file in .srt format
+		std::ofstream output_file(gf->output_file_path, openmode);
+		output_file << gf->sentence_number << std::endl;
+		// use the start and end timestamps to calculate the start and end time in srt format
+		auto format_ts_for_srt = [&output_file](uint64_t ts) {
+			uint64_t time_s = ts / 1000;
+			uint64_t time_m = time_s / 60;
+			uint64_t time_h = time_m / 60;
+			uint64_t time_ms_rem = ts % 1000;
+			uint64_t time_s_rem = time_s % 60;
+			uint64_t time_m_rem = time_m % 60;
+			uint64_t time_h_rem = time_h % 60;
+			output_file << std::setfill('0') << std::setw(2) << time_h_rem << ":"
+				    << std::setfill('0') << std::setw(2) << time_m_rem << ":"
+				    << std::setfill('0') << std::setw(2) << time_s_rem << ","
+				    << std::setfill('0') << std::setw(3) << time_ms_rem;
+		};
+		format_ts_for_srt(result.start_timestamp_ms);
+		output_file << " --> ";
+		format_ts_for_srt(result.end_timestamp_ms);
+		output_file << std::endl;
+
+		output_file << str_copy << std::endl;
+		output_file << std::endl;
+		output_file.close();
+		gf->sentence_number++;
+	}
+}
+
+void send_caption_to_stream(DetectionResultWithText result, const std::string &str_copy,
+			    struct transcription_filter_data *gf)
+{
+	obs_output_t *streaming_output = obs_frontend_get_streaming_output();
+	if (streaming_output) {
+		// calculate the duration in seconds
+		const uint64_t duration = result.end_timestamp_ms - result.start_timestamp_ms;
+		obs_log(gf->log_level, "Sending caption to streaming output: %s", str_copy.c_str());
+		obs_output_output_caption_text2(streaming_output, str_copy.c_str(),
+						(double)duration / 1000.0);
+		obs_output_release(streaming_output);
+	}
+}
+
 void set_text_callback(struct transcription_filter_data *gf,
 		       const DetectionResultWithText &resultIn)
 {
@@ -98,103 +193,25 @@ void set_text_callback(struct transcription_filter_data *gf,
 		}
 	}
 
-	if (gf->translate && !str_copy.empty() && str_copy != gf->last_text &&
-	    result.result == DETECTION_RESULT_SPEECH) {
-		obs_log(gf->log_level, "Translating text. %s -> %s", gf->source_lang.c_str(),
-			gf->target_lang.c_str());
-		std::string translated_text;
-		if (translate(gf->translation_ctx, str_copy, gf->source_lang, gf->target_lang,
-			      translated_text) == OBS_POLYGLOT_TRANSLATION_SUCCESS) {
-			if (gf->log_words) {
-				obs_log(LOG_INFO, "Translation: '%s' -> '%s'", str_copy.c_str(),
-					translated_text.c_str());
-			}
-			if (gf->translation_output == "none") {
-				// overwrite the original text with the translated text
-				str_copy = translated_text;
-			} else {
-				// send the translation to the selected source
-				send_caption_to_source(gf->translation_output, translated_text, gf);
-			}
-		} else {
-			obs_log(gf->log_level, "Failed to translate text");
-		}
-	}
-
-	gf->last_text = str_copy;
-
 	if (gf->buffered_output) {
 		gf->captions_monitor.addSentence(str_copy);
+	} else {
+		// non-buffered output
+		if (gf->translate) {
+			// send the sentence to translation (if enabled)
+			str_copy = send_sentence_to_translation(str_copy, gf);
+		} else {
+			// send the sentence to the selected source
+			send_caption_to_source(gf->text_source_name, str_copy, gf);
+		}
 	}
 
 	if (gf->caption_to_stream) {
-		obs_output_t *streaming_output = obs_frontend_get_streaming_output();
-		if (streaming_output) {
-			// calculate the duration in seconds
-			const uint64_t duration =
-				result.end_timestamp_ms - result.start_timestamp_ms;
-			obs_log(gf->log_level, "Sending caption to streaming output: %s",
-				str_copy.c_str());
-			obs_output_output_caption_text2(streaming_output, str_copy.c_str(),
-							(double)duration / 1000.0);
-			obs_output_release(streaming_output);
-		}
+		send_caption_to_stream(result, str_copy, gf);
 	}
 
 	if (gf->output_file_path != "" && gf->text_source_name.empty()) {
-		// Check if we should save the sentence
-		if (gf->save_only_while_recording && !obs_frontend_recording_active()) {
-			// We are not recording, do not save the sentence to file
-			return;
-		}
-		// should the file be truncated?
-		std::ios_base::openmode openmode = std::ios::out;
-		if (gf->truncate_output_file) {
-			openmode |= std::ios::trunc;
-		} else {
-			openmode |= std::ios::app;
-		}
-		if (!gf->save_srt) {
-			// Write raw sentence to file
-			std::ofstream output_file(gf->output_file_path, openmode);
-			output_file << str_copy << std::endl;
-			output_file.close();
-		} else {
-			obs_log(gf->log_level, "Saving sentence to file %s, sentence #%d",
-				gf->output_file_path.c_str(), gf->sentence_number);
-			// Append sentence to file in .srt format
-			std::ofstream output_file(gf->output_file_path, openmode);
-			output_file << gf->sentence_number << std::endl;
-			// use the start and end timestamps to calculate the start and end time in srt format
-			auto format_ts_for_srt = [&output_file](uint64_t ts) {
-				uint64_t time_s = ts / 1000;
-				uint64_t time_m = time_s / 60;
-				uint64_t time_h = time_m / 60;
-				uint64_t time_ms_rem = ts % 1000;
-				uint64_t time_s_rem = time_s % 60;
-				uint64_t time_m_rem = time_m % 60;
-				uint64_t time_h_rem = time_h % 60;
-				output_file << std::setfill('0') << std::setw(2) << time_h_rem
-					    << ":" << std::setfill('0') << std::setw(2)
-					    << time_m_rem << ":" << std::setfill('0')
-					    << std::setw(2) << time_s_rem << ","
-					    << std::setfill('0') << std::setw(3) << time_ms_rem;
-			};
-			format_ts_for_srt(result.start_timestamp_ms);
-			output_file << " --> ";
-			format_ts_for_srt(result.end_timestamp_ms);
-			output_file << std::endl;
-
-			output_file << str_copy << std::endl;
-			output_file << std::endl;
-			output_file.close();
-			gf->sentence_number++;
-		}
-	} else {
-		if (!gf->buffered_output) {
-			// Send the caption to the text source
-			send_caption_to_source(gf->text_source_name, str_copy, gf);
-		}
+		send_sentence_to_file(gf, result, str_copy);
 	}
 };
 

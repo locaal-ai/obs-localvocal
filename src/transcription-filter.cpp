@@ -204,6 +204,12 @@ void transcription_filter_update(void *data, obs_data_t *s)
 								       gf);
 					}
 				},
+				[gf](const std::string &sentence) {
+					obs_log(LOG_INFO, "sentence: %s", sentence.c_str());
+					if (gf->buffered_output && gf->translate) {
+						send_sentence_to_translation(sentence, gf);
+					}
+				},
 				new_buffer_num_lines, new_buffer_num_chars_per_line,
 				std::chrono::seconds(3), new_buffer_output_type);
 		} else {
