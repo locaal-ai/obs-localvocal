@@ -47,6 +47,7 @@ Current Features:
 - Bring your own Whisper model (any GGML)
 - Translate captions in real time to major languages (both Whisper built-in translation as well as NMT models with [CTranslate2](https://github.com/OpenNMT/CTranslate2))
 - CUDA, OpenCL, Apple Arm64, AVX & SSE acceleration support
+- Filter out or replace any part of the produced captions
 
 Roadmap:
 - More robust built-in translation options
@@ -56,7 +57,7 @@ Roadmap:
 Check out our other plugins:
 - [Background Removal](https://github.com/occ-ai/obs-backgroundremoval) removes background from webcam without a green screen.
 - [Detect](https://github.com/occ-ai/obs-detect) will detect and track >80 types of objects in real-time inside OBS
-- 🚧 Experimental 🚧 [CleanStream](https://github.com/occ-ai/obs-cleanstream) for real-time filler word (uh,um) and profanity removal from live audio stream
+- [CleanStream](https://github.com/occ-ai/obs-cleanstream) for real-time filler word (uh,um) and profanity removal from live audio stream
 - [URL/API Source](https://github.com/occ-ai/obs-urlsource) that allows fetching live data from an API and displaying it in OBS.
 - [Polyglot](https://github.com/occ-ai/obs-polyglot) translation AI plugin for real-time, local translation to hunderds of languages
 
