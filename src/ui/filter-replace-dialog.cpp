@@ -9,12 +9,14 @@ FilterReplaceDialog::FilterReplaceDialog(QWidget *parent, transcription_filter_d
 	ui->setupUi(this);
 
 	// populate the tableWidget with the filter_words_replace map
-	ui->tableWidget->setRowCount(ctx->filter_words_replace.size());
+	ui->tableWidget->setRowCount((int)ctx->filter_words_replace.size());
 	for (size_t i = 0; i < ctx->filter_words_replace.size(); i++) {
 		const std::string key = std::get<0>(ctx->filter_words_replace[i]);
 		const std::string value = std::get<1>(ctx->filter_words_replace[i]);
-		ui->tableWidget->setItem(i, 0, new QTableWidgetItem(QString::fromStdString(key)));
-		ui->tableWidget->setItem(i, 1, new QTableWidgetItem(QString::fromStdString(value)));
+		ui->tableWidget->setItem((int)i, 0,
+					 new QTableWidgetItem(QString::fromStdString(key)));
+		ui->tableWidget->setItem((int)i, 1,
+					 new QTableWidgetItem(QString::fromStdString(value)));
 	}
 
 	// connect toolButton_add
@@ -52,7 +54,7 @@ void FilterReplaceDialog::removeFilter()
 
 void FilterReplaceDialog::editFilter(QTableWidgetItem *item)
 {
-	if (item->row() >= ctx->filter_words_replace.size()) {
+	if (item->row() >= (int)ctx->filter_words_replace.size()) {
 		return;
 	}
 
