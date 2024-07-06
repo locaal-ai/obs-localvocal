@@ -191,8 +191,15 @@ void transcription_filter_update(void *data, obs_data_t *s)
 	int new_buffer_num_chars_per_line = (int)obs_data_get_int(s, "buffer_num_chars_per_line");
 	TokenBufferSegmentation new_buffer_output_type =
 		(TokenBufferSegmentation)obs_data_get_int(s, "buffer_output_type");
-	gf->filter_words_replace =
-		deserialize_filter_words_replace(obs_data_get_string(s, "filter_words_replace"));
+	const char *filter_words_replace = obs_data_get_string(s, "filter_words_replace");
+	if (filter_words_replace != nullptr && strlen(filter_words_replace) > 0) {
+		obs_log(gf->log_level, "filter_words_replace: %s", filter_words_replace);
+		// deserialize the filter words replace
+		gf->filter_words_replace = deserialize_filter_words_replace(filter_words_replace);
+	} else {
+		// clear the filter words replace
+		gf->filter_words_replace.clear();
+	}
 
 	if (new_buffered_output) {
 		obs_log(gf->log_level, "buffered_output enable");
@@ -249,10 +256,23 @@ void transcription_filter_update(void *data, obs_data_t *s)
 	gf->translation_ctx.add_context = obs_data_get_bool(s, "translate_add_context");
 	gf->translation_ctx.input_tokenization_style =
 		(InputTokenizationStyle)obs_data_get_int(s, "translate_input_tokenization_style");
-	gf->translation_output = obs_data_get_string(s, "translate_output");
-	std::string new_translate_model_index = obs_data_get_string(s, "translate_model");
+	const char *translate_output_cstr = obs_data_get_string(s, "translate_output");
+	gf->translation_output =
+		(translate_output_cstr != nullptr && strlen(translate_output_cstr) > 0)
+			? translate_output_cstr
+			: "";
+	const char *translate_model_path_cstr = obs_data_get_string(s, "translate_model_path");
+	std::string new_translate_model_index =
+		(translate_model_path_cstr != nullptr && strlen(translate_model_path_cstr) > 0)
+			? translate_model_path_cstr
+			: "";
+	const char *translate_model_path_external_cstr =
+		obs_data_get_string(s, "translate_model_path_external");
 	std::string new_translation_model_path_external =
-		obs_data_get_string(s, "translation_model_path_external");
+		(translate_model_path_external_cstr != nullptr &&
+		 strlen(translate_model_path_external_cstr) > 0)
+			? translate_model_path_external_cstr
+			: "";
 
 	if (new_translate != gf->translate ||
 	    new_translate_model_index != gf->translation_model_index ||
@@ -306,6 +326,9 @@ void transcription_filter_update(void *data, obs_data_t *s)
 				obs_data_get_string(s, "subtitle_output_filename");
 			if (output_file_path != nullptr && strlen(output_file_path) > 0) {
 				gf->output_file_path = output_file_path;
+			} else {
+				obs_log(gf->log_level,
+					"File output seleced, but no output file path set");
 			}
 		}
 	} else {
@@ -323,8 +346,12 @@ void transcription_filter_update(void *data, obs_data_t *s)
 			(whisper_sampling_strategy)obs_data_get_int(s, "whisper_sampling_method"));
 		gf->whisper_params.duration_ms = (int)obs_data_get_int(s, "buffer_size_msec");
 		if (!new_translate || gf->translation_model_index != "whisper-based-translation") {
-			gf->whisper_params.language =
+			const char *whisper_language_select =
 				obs_data_get_string(s, "whisper_language_select");
+			gf->whisper_params.language = (whisper_language_select != nullptr &&
+						       strlen(whisper_language_select) > 0)
+							      ? whisper_language_select
+							      : "auto";
 		} else {
 			// take the language from gf->target_lang
 			if (language_codes_2_reverse.count(gf->target_lang) > 0) {
@@ -334,7 +361,10 @@ void transcription_filter_update(void *data, obs_data_t *s)
 				gf->whisper_params.language = "auto";
 			}
 		}
-		gf->whisper_params.initial_prompt = obs_data_get_string(s, "initial_prompt");
+		gf->whisper_params.initial_prompt =
+			obs_data_get_string(s, "initial_prompt") != nullptr
+				? obs_data_get_string(s, "initial_prompt")
+				: "";
 		gf->whisper_params.n_threads = (int)obs_data_get_int(s, "n_threads");
 		gf->whisper_params.n_max_text_ctx = (int)obs_data_get_int(s, "n_max_text_ctx");
 		gf->whisper_params.translate = obs_data_get_bool(s, "whisper_translate");
@@ -375,7 +405,9 @@ void transcription_filter_update(void *data, obs_data_t *s)
 		} else {
 			// check if the whisper model selection has changed
 			const std::string new_model_path =
-				obs_data_get_string(s, "whisper_model_path");
+				obs_data_get_string(s, "whisper_model_path") != nullptr
+					? obs_data_get_string(s, "whisper_model_path")
+					: "Whisper Tiny English (74Mb)";
 			if (gf->whisper_model_path != new_model_path) {
 				obs_log(LOG_INFO, "New model selected: %s", new_model_path.c_str());
 				update_whisper_model(gf);
@@ -416,6 +448,11 @@ void *transcription_filter_create(obs_data_t *settings, obs_source_t *filter)
 	// allocate copy buffers
 	gf->copy_buffers[0] =
 		static_cast<float *>(bzalloc(gf->channels * gf->frames * sizeof(float)));
+	if (gf->copy_buffers[0] == nullptr) {
+		obs_log(LOG_ERROR, "Failed to allocate copy buffer");
+		gf->active = false;
+		return nullptr;
+	}
 	for (size_t c = 1; c < gf->channels; c++) { // set the channel pointers
 		gf->copy_buffers[c] = gf->copy_buffers[0] + c * gf->frames;
 	}
@@ -437,21 +474,18 @@ void *transcription_filter_create(obs_data_t *settings, obs_source_t *filter)
 	dst.speakers = convert_speaker_layout((uint8_t)1);
 
 	gf->resampler_to_whisper = audio_resampler_create(&dst, &src);
+	if (!gf->resampler_to_whisper) {
+		obs_log(LOG_ERROR, "Failed to create resampler");
+		gf->active = false;
+		return nullptr;
+	}
 
 	obs_log(gf->log_level, "clear text source data");
 	const char *subtitle_sources = obs_data_get_string(settings, "subtitle_sources");
-	if (subtitle_sources == nullptr || strcmp(subtitle_sources, "none") == 0 ||
-	    strcmp(subtitle_sources, "(null)") == 0 || strlen(subtitle_sources) == 0) {
+	if (subtitle_sources == nullptr || strlen(subtitle_sources) == 0 ||
+	    strcmp(subtitle_sources, "none") == 0 || strcmp(subtitle_sources, "(null)") == 0) {
 		obs_log(gf->log_level, "Create text source");
-		// check if a source called "LocalVocal Subtitles" exists
-		obs_source_t *source = obs_get_source_by_name("LocalVocal Subtitles");
-		if (source) {
-			// source exists, release it
-			obs_source_release(source);
-		} else {
-			// create a new OBS text source called "LocalVocal Subtitles"
-			create_obs_text_source();
-		}
+		create_obs_text_source_if_needed();
 		gf->text_source_name = "LocalVocal Subtitles";
 		obs_data_set_string(settings, "subtitle_sources", "LocalVocal Subtitles");
 	} else {
@@ -465,6 +499,12 @@ void *transcription_filter_create(obs_data_t *settings, obs_source_t *filter)
 	gf->whisper_context = nullptr;
 
 	signal_handler_t *sh_filter = obs_source_get_signal_handler(gf->context);
+	if (sh_filter == nullptr) {
+		obs_log(LOG_ERROR, "Failed to get signal handler");
+		gf->active = false;
+		return nullptr;
+	}
+
 	signal_handler_connect(sh_filter, "enable", enable_callback, gf);
 
 	obs_log(gf->log_level, "run update");
