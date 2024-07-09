@@ -29,7 +29,7 @@ inline enum speaker_layout convert_speaker_layout(uint8_t channels)
 	}
 }
 
-void create_obs_text_source();
+void create_obs_text_source_if_needed();
 
 bool add_sources_to_list(void *list_property, obs_source_t *source);
 

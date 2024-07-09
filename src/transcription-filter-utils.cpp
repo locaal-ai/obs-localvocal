@@ -4,17 +4,23 @@
 #include <obs.h>
 #include <obs-frontend-api.h>
 
-void create_obs_text_source()
+void create_obs_text_source_if_needed()
 {
+	// check if a source called "LocalVocal Subtitles" exists
+	obs_source_t *source = obs_get_source_by_name("LocalVocal Subtitles");
+	if (source) {
+		// source already exists, release it
+		obs_source_release(source);
+		return;
+	}
+
 	// create a new OBS text source called "LocalVocal Subtitles"
 	obs_source_t *scene_as_source = obs_frontend_get_current_scene();
 	obs_scene_t *scene = obs_scene_from_source(scene_as_source);
 #ifdef _WIN32
-	obs_source_t *source =
-		obs_source_create("text_gdiplus_v2", "LocalVocal Subtitles", nullptr, nullptr);
+	source = obs_source_create("text_gdiplus_v2", "LocalVocal Subtitles", nullptr, nullptr);
 #else
-	obs_source_t *source =
-		obs_source_create("text_ft2_source_v2", "LocalVocal Subtitles", nullptr, nullptr);
+	source = obs_source_create("text_ft2_source_v2", "LocalVocal Subtitles", nullptr, nullptr);
 #endif
 	if (source) {
 		// add source to the current scene

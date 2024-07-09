@@ -23,15 +23,28 @@ void update_whisper_model(struct transcription_filter_data *gf)
 	}
 
 	// Get settings from context
-	std::string new_model_path = obs_data_get_string(s, "whisper_model_path");
+	std::string new_model_path = obs_data_get_string(s, "whisper_model_path") != nullptr
+					     ? obs_data_get_string(s, "whisper_model_path")
+					     : "";
 	std::string external_model_file_path =
-		obs_data_get_string(s, "whisper_model_path_external");
+		obs_data_get_string(s, "whisper_model_path_external") != nullptr
+			? obs_data_get_string(s, "whisper_model_path_external")
+			: "";
 	const bool new_dtw_timestamps = obs_data_get_bool(s, "dtw_token_timestamps");
 	obs_data_release(s);
 
 	// update the whisper model path
 
 	const bool is_external_model = new_model_path.find("!!!external!!!") != std::string::npos;
+
+	if (!is_external_model && new_model_path.empty()) {
+		obs_log(LOG_WARNING, "Whisper model path is empty");
+		return;
+	}
+	if (is_external_model && external_model_file_path.empty()) {
+		obs_log(LOG_WARNING, "External model file path is empty");
+		return;
+	}
 
 	char *silero_vad_model_file = obs_module_file("models/silero-vad/silero_vad.onnx");
 	if (silero_vad_model_file == nullptr) {
