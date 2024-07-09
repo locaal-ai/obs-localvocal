@@ -209,7 +209,7 @@ void set_text_callback(struct transcription_filter_data *gf,
 		send_caption_to_stream(result, str_copy, gf);
 	}
 
-	if (gf->output_file_path != "" && gf->text_source_name.empty()) {
+	if (gf->save_to_file && gf->output_file_path != "") {
 		send_sentence_to_file(gf, result, str_copy);
 	}
 };
