@@ -65,6 +65,7 @@ struct transcription_filter_data {
 	bool log_words;
 	bool caption_to_stream;
 	bool active = false;
+	bool save_to_file = false;
 	bool save_srt = false;
 	bool truncate_output_file = false;
 	bool save_only_while_recording = false;

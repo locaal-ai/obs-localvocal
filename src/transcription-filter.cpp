@@ -176,6 +176,7 @@ void transcription_filter_update(void *data, obs_data_t *s)
 	gf->vad_enabled = obs_data_get_bool(s, "vad_enabled");
 	gf->log_words = obs_data_get_bool(s, "log_words");
 	gf->caption_to_stream = obs_data_get_bool(s, "caption_to_stream");
+	gf->save_to_file = obs_data_get_bool(s, "file_output_enable");
 	gf->save_srt = obs_data_get_bool(s, "subtitle_save_srt");
 	gf->truncate_output_file = obs_data_get_bool(s, "truncate_output_file");
 	gf->save_only_while_recording = obs_data_get_bool(s, "only_while_recording");
@@ -199,6 +200,17 @@ void transcription_filter_update(void *data, obs_data_t *s)
 	} else {
 		// clear the filter words replace
 		gf->filter_words_replace.clear();
+	}
+
+	if (gf->save_to_file) {
+		gf->output_file_path = "";
+		// set the output file path
+		const char *output_file_path = obs_data_get_string(s, "subtitle_output_filename");
+		if (output_file_path != nullptr && strlen(output_file_path) > 0) {
+			gf->output_file_path = output_file_path;
+		} else {
+			obs_log(gf->log_level, "output file path is empty, but selected to save");
+		}
 	}
 
 	if (new_buffered_output) {
@@ -315,22 +327,9 @@ void transcription_filter_update(void *data, obs_data_t *s)
 	const char *new_text_source_name = obs_data_get_string(s, "subtitle_sources");
 
 	if (new_text_source_name == nullptr || strcmp(new_text_source_name, "none") == 0 ||
-	    strcmp(new_text_source_name, "(null)") == 0 ||
-	    strcmp(new_text_source_name, "text_file") == 0 || strlen(new_text_source_name) == 0) {
+	    strcmp(new_text_source_name, "(null)") == 0 || strlen(new_text_source_name) == 0) {
 		// new selected text source is not valid, release the old one
 		gf->text_source_name.clear();
-		gf->output_file_path = "";
-		if (strcmp(new_text_source_name, "text_file") == 0) {
-			// set the output file path
-			const char *output_file_path =
-				obs_data_get_string(s, "subtitle_output_filename");
-			if (output_file_path != nullptr && strlen(output_file_path) > 0) {
-				gf->output_file_path = output_file_path;
-			} else {
-				obs_log(gf->log_level,
-					"File output seleced, but no output file path set");
-			}
-		}
 	} else {
 		gf->text_source_name = new_text_source_name;
 	}
@@ -519,13 +518,12 @@ void *transcription_filter_create(obs_data_t *settings, obs_source_t *filter)
 	return gf;
 }
 
-bool subs_output_select_changed(obs_properties_t *props, obs_property_t *property,
+bool file_output_select_changed(obs_properties_t *props, obs_property_t *property,
 				obs_data_t *settings)
 {
 	UNUSED_PARAMETER(property);
 	// Show or hide the output filename selection input
-	const char *new_output = obs_data_get_string(settings, "subtitle_sources");
-	const bool show_hide = (strcmp(new_output, "text_file") == 0);
+	const bool show_hide = obs_data_get_bool(settings, "file_output_enable");
 	for (const std::string &prop_name :
 	     {"subtitle_output_filename", "subtitle_save_srt", "truncate_output_file",
 	      "only_while_recording", "rename_file_to_match_recording"}) {
@@ -645,9 +643,12 @@ obs_properties_t *transcription_filter_properties(void *data)
 					OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_STRING);
 	// Add "none" option
 	obs_property_list_add_string(subs_output, MT_("none_no_output"), "none");
-	obs_property_list_add_string(subs_output, MT_("text_file_output"), "text_file");
 	// Add text sources
 	obs_enum_sources(add_sources_to_list, subs_output);
+
+	// add a checkbox for file output
+	obs_property_t *file_output_enable =
+		obs_properties_add_bool(ppts, "file_output_enable", MT_("file_output_enable"));
 
 	obs_properties_add_path(ppts, "subtitle_output_filename", MT_("output_filename"),
 				OBS_PATH_FILE_SAVE, "Text (*.txt)", NULL);
@@ -657,7 +658,7 @@ obs_properties_t *transcription_filter_properties(void *data)
 	obs_properties_add_bool(ppts, "rename_file_to_match_recording",
 				MT_("rename_file_to_match_recording"));
 
-	obs_property_set_modified_callback(subs_output, subs_output_select_changed);
+	obs_property_set_modified_callback(file_output_enable, file_output_select_changed);
 
 	// Add a list of available whisper models to download
 	obs_property_t *whisper_models_list =
