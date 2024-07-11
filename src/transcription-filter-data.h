@@ -38,6 +38,7 @@ struct transcription_filter_data {
 	size_t min_sub_duration;
 	// Last time a subtitle was rendered
 	uint64_t last_sub_render_time;
+	bool cleared_last_sub;
 
 	/* PCM buffers */
 	float *copy_buffers[MAX_PREPROC_CHANNELS];
