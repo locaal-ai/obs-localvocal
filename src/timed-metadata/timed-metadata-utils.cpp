@@ -19,17 +19,6 @@
 
 #include <nlohmann/json.hpp>
 
-// URL encode function using libcurl
-std::string urlEncode(const std::string &value)
-{
-	CURL *curl = curl_easy_init();
-	char *output = curl_easy_escape(curl, value.c_str(), value.length());
-	std::string result(output);
-	curl_free(output);
-	curl_easy_cleanup(curl);
-	return result;
-}
-
 // HMAC SHA-256 function
 std::string hmacSha256(const std::string &key, const std::string &data, bool isHexKey = false)
 {
@@ -46,10 +35,10 @@ std::string hmacSha256(const std::string &key, const std::string &data, bool isH
 			unsigned char byte = (unsigned char)strtol(byteString.c_str(), NULL, 16);
 			hexKey.push_back(byte);
 		}
-		pkey = EVP_PKEY_new_mac_key(EVP_PKEY_HMAC, NULL, hexKey.data(), hexKey.size());
+		pkey = EVP_PKEY_new_mac_key(EVP_PKEY_HMAC, NULL, hexKey.data(), (int)hexKey.size());
 	} else {
 		pkey = EVP_PKEY_new_mac_key(EVP_PKEY_HMAC, NULL, (unsigned char *)key.c_str(),
-					    key.length());
+					    (int)key.length());
 	}
 
 	EVP_MD_CTX *ctx = EVP_MD_CTX_new();
