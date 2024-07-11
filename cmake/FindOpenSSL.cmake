@@ -1,6 +1,9 @@
-set(OPENSSL_ROOT_DIR
-    "${CMAKE_CURRENT_SOURCE_DIR}/vcpkg_installed/x64-windows"
-    CACHE STRING "Path to OpenSSL")
+if(WIN32)
+  set(OPENSSL_ROOT_DIR
+      "${CMAKE_CURRENT_SOURCE_DIR}/vcpkg_installed/x64-windows"
+      CACHE STRING "Path to OpenSSL")
+endif()
+
 find_package(OpenSSL REQUIRED)
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE OpenSSL::SSL)
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE OpenSSL::Crypto)
