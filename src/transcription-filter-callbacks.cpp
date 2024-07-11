@@ -98,6 +98,11 @@ void send_sentence_to_file(struct transcription_filter_data *gf,
 		output_file << str_copy << std::endl;
 		output_file.close();
 	} else {
+		if (result.start_timestamp_ms == 0 && result.end_timestamp_ms == 0) {
+			// No timestamps, do not save the sentence to srt
+			return;
+		}
+
 		obs_log(gf->log_level, "Saving sentence to file %s, sentence #%d",
 			gf->output_file_path.c_str(), gf->sentence_number);
 		// Append sentence to file in .srt format
@@ -147,18 +152,10 @@ void set_text_callback(struct transcription_filter_data *gf,
 		       const DetectionResultWithText &resultIn)
 {
 	DetectionResultWithText result = resultIn;
-	uint64_t now = now_ms();
-	if (result.text.empty() || result.result != DETECTION_RESULT_SPEECH) {
-		// check if we should clear the current sub depending on the minimum subtitle duration
-		if ((now - gf->last_sub_render_time) > gf->min_sub_duration) {
-			// clear the current sub, run an empty sub
-			result.text = "";
-		} else {
-			// nothing to do, the incoming sub is empty
-			return;
-		}
+	if (!result.text.empty() && result.result == DETECTION_RESULT_SPEECH) {
+		gf->last_sub_render_time = now_ms();
+		gf->cleared_last_sub = false;
 	}
-	gf->last_sub_render_time = now;
 
 	std::string str_copy = result.text;
 
@@ -185,10 +182,6 @@ void set_text_callback(struct transcription_filter_data *gf,
 		if (original_str_copy != str_copy) {
 			obs_log(gf->log_level, "------ Suppressed text: '%s' -> '%s'",
 				original_str_copy.c_str(), str_copy.c_str());
-		}
-		if (remove_leading_trailing_nonalpha(str_copy).empty()) {
-			// if the text is empty after suppression, return
-			return;
 		}
 	}
 
