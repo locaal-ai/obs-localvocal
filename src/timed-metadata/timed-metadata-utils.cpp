@@ -17,6 +17,8 @@
 
 #include <obs-module.h>
 
+#include <nlohmann/json.hpp>
+
 // URL encode function using libcurl
 std::string urlEncode(const std::string &value)
 {
@@ -118,43 +120,6 @@ size_t WriteCallback(void *ptr, size_t size, size_t nmemb, std::string *data)
 	return size * nmemb;
 }
 
-std::string escapeJsonString(const std::string &input)
-{
-	std::ostringstream ss;
-	for (auto i = input.begin(); i != input.end(); ++i) {
-		switch (*i) {
-		case '"':
-			ss << "\\\"";
-			break;
-		case '\\':
-			ss << "\\\\";
-			break;
-		case '/':
-			ss << "\\/";
-			break;
-		case '\b':
-			ss << "\\b";
-			break;
-		case '\f':
-			ss << "\\f";
-			break;
-		case '\n':
-			ss << "\\n";
-			break;
-		case '\r':
-			ss << "\\r";
-			break;
-		case '\t':
-			ss << "\\t";
-			break;
-		default:
-			ss << *i;
-			break;
-		}
-	}
-	return ss.str();
-}
-
 void send_timed_metadata_to_ivs_endpoint(struct transcription_filter_data *gf,
 					 Translation_Mode mode, const std::string &source_text,
 					 const std::string &target_text)
@@ -169,53 +134,29 @@ void send_timed_metadata_to_ivs_endpoint(struct transcription_filter_data *gf,
 	std::string HOST = "ivs." + REGION + ".amazonaws.com";
 
 	// Construct the inner JSON string
-	std::string inner_meta_data = "";
+	nlohmann::json inner_meta_data;
 	if (mode == NON_WHISPER_TRANSLATE) {
 		obs_log(LOG_INFO, "send_timed_metadata_to_ivs_endpoint - source text not empty");
-		inner_meta_data = R"({
-        "captions": [
-            {
-                "language": ")" + gf->source_lang +
-				  R"(",
-                "text": ")" + source_text +
-				  R"("
-            },
-            {
-                "language": ")" + gf->target_lang +
-				  R"(",
-                "text": ")" + target_text +
-				  R"("
-            }
-        ]
-	})";
-	} else {
+		inner_meta_data = {{"captions",
+				    {{{"language", gf->source_lang}, {"text", source_text}},
+				     {{"language", gf->target_lang}, {"text", target_text}}}}};
+	} else if (mode == WHISPER_TRANSLATE) {
 		obs_log(LOG_INFO, "send_timed_metadata_to_ivs_endpoint - source text empty");
-		inner_meta_data = R"({
-        "captions": [
-            {
-                "language": ")" + gf->target_lang +
-				  R"(",
-                "text": ")" + target_text +
-				  R"("
-            }
-        ]
-    })";
+		inner_meta_data = {
+			{"captions", {{{"language", gf->target_lang}, {"text", target_text}}}}};
+	} else {
+		obs_log(LOG_INFO, "send_timed_metadata_to_ivs_endpoint - transcription mode");
+		inner_meta_data = {
+			{"captions", {{{"language", gf->source_lang}, {"text", source_text}}}}};
 	}
 
-	// Escape the inner JSON string
-	std::string escaped_inner_meta_data = escapeJsonString(inner_meta_data);
-
 	// Construct the outer JSON string
-	std::string METADATA = R"({
-        "channelArn": ")" + CHANNEL_ARN +
-			       R"(",
-        "metadata": ")" + escaped_inner_meta_data +
-			       R"("
-    })";
+	nlohmann::json METADATA = {{"channelArn", CHANNEL_ARN},
+				   {"metadata", inner_meta_data.dump()}};
 
 	std::string DATE = getCurrentDate();
 	std::string TIMESTAMP = getCurrentTimestamp();
-	std::string PAYLOAD_HASH = sha256(METADATA);
+	std::string PAYLOAD_HASH = sha256(METADATA.dump());
 
 	std::cout << "Payload Hash: " << PAYLOAD_HASH << std::endl;
 
@@ -271,7 +212,7 @@ void send_timed_metadata_to_ivs_endpoint(struct transcription_filter_data *gf,
 		headers = curl_slist_append(headers, ("x-amz-date: " + TIMESTAMP).c_str());
 		headers = curl_slist_append(headers, ("Authorization: " + AUTH_HEADER).c_str());
 		curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
-		curl_easy_setopt(curl, CURLOPT_POSTFIELDS, METADATA.c_str());
+		curl_easy_setopt(curl, CURLOPT_POSTFIELDS, METADATA.dump().c_str());
 
 		std::string response_string;
 		std::string header_string;
