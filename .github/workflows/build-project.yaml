@@ -271,18 +271,18 @@ jobs:
           "pluginName=${ProductName}" >> $env:GITHUB_OUTPUT
           "pluginVersion=${ProductVersion}" >> $env:GITHUB_OUTPUT
 
-      -name: Install vcpkg
+      - name: Install vcpkg
+        id: vcpkg
         run: |
           git clone https://github.com/microsoft/vcpkg.git 
-          # cd vcpkg
-          # # run bootstrap-vcpkg.bat
-          # .\bootstrap-vcpkg.bat
-          # # Configure the VCPKG_ROOT and PATH environment variables
-          # Add-Content $env:GITHUB_ENV "VCPKG_ROOT=${{ github.workspace }}/vcpkg"
-          # Add-Content $env:GITHUB_PATH "${{ github.workspace }}/vcpkg"
-          # # Install the necessary packages
-          # cd ..
-          # vcpkg install
+          cd vcpkg
+          .\bootstrap-vcpkg.bat
+          # Configure the VCPKG_ROOT and PATH environment variables
+          Add-Content $env:GITHUB_ENV "VCPKG_ROOT=${{ github.workspace }}/vcpkg"
+          Add-Content $env:GITHUB_PATH "${{ github.workspace }}/vcpkg"
+          # Install the necessary packages
+          cd ..
+          vcpkg install
 
       - name: Build Plugin 🧱
         uses: ./.github/actions/build-plugin
