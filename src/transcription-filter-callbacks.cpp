@@ -19,6 +19,7 @@
 #include "translation/translation-includes.h"
 #include "whisper-utils/whisper-utils.h"
 #include "whisper-utils/whisper-model-utils.h"
+#include "timed-metadata/timed-metadata-utils.h"
 
 void send_caption_to_source(const std::string &target_source_name, const std::string &caption,
 			    struct transcription_filter_data *gf)
@@ -63,6 +64,7 @@ std::string send_sentence_to_translation(const std::string &sentence,
 				obs_log(LOG_INFO, "Translation: '%s' -> '%s'", sentence.c_str(),
 					translated_text.c_str());
 			}
+
 			if (gf->translation_output == "none") {
 				// overwrite the original text with the translated text
 				return translated_text;
@@ -198,10 +200,17 @@ void set_text_callback(struct transcription_filter_data *gf,
 		// non-buffered output
 		if (gf->translate) {
 			// send the sentence to translation (if enabled)
-			str_copy = send_sentence_to_translation(str_copy, gf);
+			std::string translated_text = send_sentence_to_translation(str_copy, gf);
+
+			send_timed_metadata_to_server(gf, NON_WHISPER_TRANSLATE, str_copy,
+						      translated_text);
+
+			str_copy = translated_text;
 		} else {
 			// send the sentence to the selected source
 			send_caption_to_source(gf->text_source_name, str_copy, gf);
+
+			send_timed_metadata_to_server(gf, TRANSCRIBE, str_copy, "");
 		}
 	}
 

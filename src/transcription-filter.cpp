@@ -262,6 +262,14 @@ void transcription_filter_update(void *data, obs_data_t *s)
 		}
 	}
 
+	// Amazon IVS settings
+	gf->ivs_enabled = obs_data_get_bool(s, "amazon_ivs_group");
+	gf->ivs_channel_arn = obs_data_get_string(s, "amazon_ivs_channel_arn");
+	gf->aws_access_key = obs_data_get_string(s, "aws_access_key");
+	gf->aws_secret_key = obs_data_get_string(s, "aws_secret_key");
+	gf->aws_region = obs_data_get_string(s, "aws_region");
+
+	// translation settings
 	bool new_translate = obs_data_get_bool(s, "translate");
 	gf->source_lang = obs_data_get_string(s, "translate_source_language");
 	gf->target_lang = obs_data_get_string(s, "translate_target_language");
@@ -604,6 +612,13 @@ void transcription_filter_defaults(obs_data_t *s)
 	obs_data_set_default_int(s, "translation_no_repeat_ngram_size", 1);
 	obs_data_set_default_int(s, "translation_max_input_length", 65);
 
+	// Amazon IVS
+	obs_data_set_default_bool(s, "amazon_ivs_group", false);
+	obs_data_set_default_string(s, "amazon_ivs_channel_arn", "");
+	obs_data_set_default_string(s, "aws_access_key", "");
+	obs_data_set_default_string(s, "aws_secret_key", "");
+	obs_data_set_default_string(s, "aws_region", "us-west-2");
+
 	// Whisper parameters
 	obs_data_set_default_int(s, "whisper_sampling_method", WHISPER_SAMPLING_BEAM_SEARCH);
 	obs_data_set_default_string(s, "initial_prompt", "");
@@ -884,7 +899,7 @@ obs_properties_t *transcription_filter_properties(void *data)
 		      "overlap_size_msec", "step_by_step_processing", "min_sub_duration",
 		      "process_while_muted", "buffered_output", "vad_enabled", "log_level",
 		      "open_filter_ui", "sentence_psum_accept_thresh", "vad_threshold",
-		      "buffered_output_group"}) {
+		      "buffered_output_group", "amazon_ivs_group"}) {
 			obs_property_set_visible(obs_properties_get(props, prop_name.c_str()),
 						 show_hide);
 		}
@@ -922,6 +937,23 @@ obs_properties_t *transcription_filter_properties(void *data)
 					 show_hide);
 		return true;
 	});
+
+	// add group for Amazon IVS settings
+	obs_properties_t *amazon_ivs_group = obs_properties_create();
+	obs_properties_add_group(ppts, "amazon_ivs_group", MT_("amazon_ivs_parameters"),
+				 OBS_GROUP_CHECKABLE, amazon_ivs_group);
+	// add Amazon IVS channel ARN
+	obs_properties_add_text(amazon_ivs_group, "amazon_ivs_channel_arn",
+				MT_("amazon_ivs_channel_arn"), OBS_TEXT_DEFAULT);
+	// add AWS_ACCESS_KEY
+	obs_properties_add_text(amazon_ivs_group, "aws_access_key", MT_("aws_access_key"),
+				OBS_TEXT_DEFAULT);
+	// add AWS_SECRET_KEY
+	obs_properties_add_text(amazon_ivs_group, "aws_secret_key", MT_("aws_secret_key"),
+				OBS_TEXT_PASSWORD);
+	// add region
+	obs_properties_add_text(amazon_ivs_group, "aws_region", MT_("aws_region"),
+				OBS_TEXT_DEFAULT);
 
 	obs_properties_add_bool(ppts, "log_words", MT_("log_words"));
 	obs_properties_add_bool(ppts, "caption_to_stream", MT_("caption_to_stream"));

@@ -112,6 +112,13 @@ struct transcription_filter_data {
 	TokenBufferSegmentation buffered_output_output_type =
 		TokenBufferSegmentation::SEGMENTATION_TOKEN;
 
+	// Amazon IVS settings
+	bool ivs_enabled = false;
+	std::string ivs_channel_arn;
+	std::string aws_access_key;
+	std::string aws_secret_key;
+	std::string aws_region;
+
 	// ctor
 	transcription_filter_data() : whisper_buf_mutex(), whisper_ctx_mutex(), wshiper_thread_cv()
 	{
