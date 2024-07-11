@@ -275,7 +275,8 @@ jobs:
         run: |
           git clone https://github.com/microsoft/vcpkg.git 
           cd vcpkg
-          bootstrap-vcpkg.bat
+          # run bootstrap-vcpkg.bat
+          .\bootstrap-vcpkg.bat
           # Configure the VCPKG_ROOT and PATH environment variables
           Add-Content $env:GITHUB_ENV "VCPKG_ROOT=${{ github.workspace }}/vcpkg"
           Add-Content $env:GITHUB_PATH "${{ github.workspace }}/vcpkg"
