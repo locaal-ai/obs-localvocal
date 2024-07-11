@@ -125,10 +125,22 @@ std::string get_filename_from_url(const std::string &url)
 
 void ModelDownloadWorker::download_model()
 {
-	char *config_folder = obs_module_get_config_path(obs_current_module(), "models");
-	const std::filesystem::path module_config_models_folder =
-		std::filesystem::absolute(config_folder);
+	char *config_folder = obs_module_config_path("models");
+#ifdef _WIN32
+	// convert mbstring to wstring
+	int count = MultiByteToWideChar(CP_UTF8, 0, config_folder, strlen(config_folder), NULL, 0);
+	std::wstring config_folder_str(count, 0);
+	MultiByteToWideChar(CP_UTF8, 0, config_folder, strlen(config_folder), &config_folder_str[0],
+			    count);
+	obs_log(LOG_INFO, "Download: Config models folder: %S", config_folder_str.c_str());
+#else
+	std::string config_folder_str = config_folder;
+	obs_log(LOG_INFO, "Download: Config models folder: %s", config_folder_str.c_str());
+#endif
 	bfree(config_folder);
+
+	const std::filesystem::path module_config_models_folder =
+		std::filesystem::absolute(config_folder_str);
 
 	// Check if the config folder exists
 	if (!std::filesystem::exists(module_config_models_folder)) {
