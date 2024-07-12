@@ -276,28 +276,16 @@ void transcription_filter_update(void *data, obs_data_t *s)
 	gf->translation_ctx.add_context = obs_data_get_bool(s, "translate_add_context");
 	gf->translation_ctx.input_tokenization_style =
 		(InputTokenizationStyle)obs_data_get_int(s, "translate_input_tokenization_style");
-	const char *translate_output_cstr = obs_data_get_string(s, "translate_output");
-	gf->translation_output =
-		(translate_output_cstr != nullptr && strlen(translate_output_cstr) > 0)
-			? translate_output_cstr
-			: "";
-	const char *translate_model_path_cstr = obs_data_get_string(s, "translate_model_path");
-	std::string new_translate_model_index =
-		(translate_model_path_cstr != nullptr && strlen(translate_model_path_cstr) > 0)
-			? translate_model_path_cstr
-			: "";
-	const char *translate_model_path_external_cstr =
-		obs_data_get_string(s, "translate_model_path_external");
+	gf->translation_output = obs_data_get_string(s, "translate_output");
+	std::string new_translate_model_index = obs_data_get_string(s, "translate_model");
 	std::string new_translation_model_path_external =
-		(translate_model_path_external_cstr != nullptr &&
-		 strlen(translate_model_path_external_cstr) > 0)
-			? translate_model_path_external_cstr
-			: "";
+		obs_data_get_string(s, "translate_model_path_external");
 
-	if (new_translate != gf->translate ||
-	    new_translate_model_index != gf->translation_model_index ||
-	    new_translation_model_path_external != gf->translation_model_path_external) {
-		if (new_translate) {
+	if (new_translate) {
+		if (new_translate != gf->translate ||
+		    new_translate_model_index != gf->translation_model_index ||
+		    new_translation_model_path_external != gf->translation_model_path_external) {
+			// translation settings changed
 			gf->translation_model_index = new_translate_model_index;
 			gf->translation_model_path_external = new_translation_model_path_external;
 			if (gf->translation_model_index != "whisper-based-translation") {
@@ -307,9 +295,9 @@ void transcription_filter_update(void *data, obs_data_t *s)
 				obs_log(gf->log_level, "Starting whisper-based translation...");
 				gf->translate = false;
 			}
-		} else {
-			gf->translate = false;
 		}
+	} else {
+		gf->translate = false;
 	}
 
 	// translation options

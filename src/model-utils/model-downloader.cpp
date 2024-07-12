@@ -8,6 +8,12 @@
 
 std::string find_model_folder(const ModelInfo &model_info)
 {
+	if (model_info.friendly_name.empty() || model_info.local_folder_name.empty() ||
+	    model_info.files.empty()) {
+		obs_log(LOG_ERROR, "Model info is invalid.");
+		return "";
+	}
+
 	char *data_folder_models = obs_module_file("models");
 	const std::filesystem::path module_data_models_folder =
 		std::filesystem::absolute(data_folder_models);
