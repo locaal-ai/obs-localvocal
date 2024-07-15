@@ -33,9 +33,25 @@ std::string find_model_folder(const ModelInfo &model_info)
 	}
 
 	// Check if model exists in the config folder
-	char *config_folder = obs_module_get_config_path(obs_current_module(), "models");
+	char *config_folder = obs_module_config_path("models");
+	if (!config_folder) {
+		obs_log(LOG_INFO, "Config folder not set.");
+		return "";
+	}
+#ifdef _WIN32
+	// convert mbstring to wstring
+	int count = MultiByteToWideChar(CP_UTF8, 0, config_folder, strlen(config_folder), NULL, 0);
+	std::wstring config_folder_str(count, 0);
+	MultiByteToWideChar(CP_UTF8, 0, config_folder, strlen(config_folder), &config_folder_str[0],
+			    count);
+	obs_log(LOG_INFO, "Config models folder: %S", config_folder_str.c_str());
+#else
+	std::string config_folder_str = config_folder;
+	obs_log(LOG_INFO, "Config models folder: %s", config_folder_str.c_str());
+#endif
+
 	const std::filesystem::path module_config_models_folder =
-		std::filesystem::absolute(config_folder);
+		std::filesystem::absolute(config_folder_str);
 	bfree(config_folder);
 
 	obs_log(LOG_INFO, "Checking if model '%s' exists in config...",
@@ -44,9 +60,9 @@ std::string find_model_folder(const ModelInfo &model_info)
 	const std::string model_local_config_path =
 		(module_config_models_folder / model_info.local_folder_name).string();
 
-	obs_log(LOG_INFO, "Model path in config: %s", model_local_config_path.c_str());
+	obs_log(LOG_INFO, "Lookig for model in config: %s", model_local_config_path.c_str());
 	if (std::filesystem::exists(model_local_config_path)) {
-		obs_log(LOG_INFO, "Model exists in config folder: %s",
+		obs_log(LOG_INFO, "Model folder exists in config folder: %s",
 			model_local_config_path.c_str());
 		return model_local_config_path;
 	}

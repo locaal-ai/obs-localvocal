@@ -504,7 +504,20 @@ void whisper_loop(void *data)
 			current_vad_state = vad_based_segmentation(gf, current_vad_state);
 		}
 
-		// Sleep for 10 ms using the condition variable wshiper_thread_cv
+		if (!gf->cleared_last_sub) {
+			// check if we should clear the current sub depending on the minimum subtitle duration
+			uint64_t now = now_ms();
+			if ((now - gf->last_sub_render_time) > gf->min_sub_duration) {
+				// clear the current sub, call the callback with an empty string
+				obs_log(LOG_INFO,
+					"Clearing current subtitle. now: %lu ms, last: %lu ms", now,
+					gf->last_sub_render_time);
+				set_text_callback(gf, {DETECTION_RESULT_UNKNOWN, "", 0, 0, {}});
+				gf->cleared_last_sub = true;
+			}
+		}
+
+		// Sleep using the condition variable wshiper_thread_cv
 		// This will wake up the thread if there is new data in the input buffer
 		// or if the whisper context is null
 		std::unique_lock<std::mutex> lock(gf->whisper_ctx_mutex);
