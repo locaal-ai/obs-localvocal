@@ -268,28 +268,16 @@ void transcription_filter_update(void *data, obs_data_t *s)
 	gf->translation_ctx.add_context = obs_data_get_bool(s, "translate_add_context");
 	gf->translation_ctx.input_tokenization_style =
 		(InputTokenizationStyle)obs_data_get_int(s, "translate_input_tokenization_style");
-	const char *translate_output_cstr = obs_data_get_string(s, "translate_output");
-	gf->translation_output =
-		(translate_output_cstr != nullptr && strlen(translate_output_cstr) > 0)
-			? translate_output_cstr
-			: "";
-	const char *translate_model_path_cstr = obs_data_get_string(s, "translate_model_path");
-	std::string new_translate_model_index =
-		(translate_model_path_cstr != nullptr && strlen(translate_model_path_cstr) > 0)
-			? translate_model_path_cstr
-			: "";
-	const char *translate_model_path_external_cstr =
-		obs_data_get_string(s, "translate_model_path_external");
+	gf->translation_output = obs_data_get_string(s, "translate_output");
+	std::string new_translate_model_index = obs_data_get_string(s, "translate_model");
 	std::string new_translation_model_path_external =
-		(translate_model_path_external_cstr != nullptr &&
-		 strlen(translate_model_path_external_cstr) > 0)
-			? translate_model_path_external_cstr
-			: "";
+		obs_data_get_string(s, "translation_model_path_external");
 
-	if (new_translate != gf->translate ||
-	    new_translate_model_index != gf->translation_model_index ||
-	    new_translation_model_path_external != gf->translation_model_path_external) {
-		if (new_translate) {
+	if (new_translate) {
+		if (new_translate != gf->translate ||
+		    new_translate_model_index != gf->translation_model_index ||
+		    new_translation_model_path_external != gf->translation_model_path_external) {
+			// translation settings changed
 			gf->translation_model_index = new_translate_model_index;
 			gf->translation_model_path_external = new_translation_model_path_external;
 			if (gf->translation_model_index != "whisper-based-translation") {
@@ -299,9 +287,9 @@ void transcription_filter_update(void *data, obs_data_t *s)
 				obs_log(gf->log_level, "Starting whisper-based translation...");
 				gf->translate = false;
 			}
-		} else {
-			gf->translate = false;
 		}
+	} else {
+		gf->translate = false;
 	}
 
 	// translation options
@@ -631,6 +619,46 @@ void transcription_filter_defaults(obs_data_t *s)
 	obs_data_set_default_double(s, "length_penalty", -1.0);
 }
 
+bool translation_options_callback(obs_properties_t *props, obs_property_t *property,
+				  obs_data_t *settings)
+{
+	UNUSED_PARAMETER(property);
+	// Show/Hide the translation group
+	const bool translate_enabled = obs_data_get_bool(settings, "translate");
+	const bool is_advanced = obs_data_get_int(settings, "advanced_settings_mode") == 1;
+	for (const auto &prop : {"translate_target_language", "translate_model"}) {
+		obs_property_set_visible(obs_properties_get(props, prop), translate_enabled);
+	}
+	for (const auto &prop :
+	     {"translate_source_language", "translate_add_context", "translate_output",
+	      "translate_input_tokenization_style", "translation_sampling_temperature",
+	      "translation_repetition_penalty", "translation_beam_size",
+	      "translation_max_decoding_length", "translation_no_repeat_ngram_size",
+	      "translation_max_input_length"}) {
+		obs_property_set_visible(obs_properties_get(props, prop),
+					 translate_enabled && is_advanced);
+	}
+	const bool is_external =
+		(strcmp(obs_data_get_string(settings, "translate_model"), "!!!external!!!") == 0);
+	obs_property_set_visible(obs_properties_get(props, "translation_model_path_external"),
+				 is_external && translate_enabled);
+	return true;
+}
+
+bool advanced_settings_callback(obs_properties_t *props, obs_property_t *property,
+				obs_data_t *settings)
+{
+	UNUSED_PARAMETER(property);
+	// If advanced settings is enabled, show the advanced settings group
+	const bool show_hide = obs_data_get_int(settings, "advanced_settings_mode") == 1;
+	for (const std::string &prop_name : {"whisper_params_group", "buffered_output_group",
+					     "log_group", "advanced_group", "file_output_enable"}) {
+		obs_property_set_visible(obs_properties_get(props, prop_name.c_str()), show_hide);
+	}
+	translation_options_callback(props, NULL, settings);
+	return true;
+}
+
 obs_properties_t *transcription_filter_properties(void *data)
 {
 	struct transcription_filter_data *gf =
@@ -642,14 +670,10 @@ obs_properties_t *transcription_filter_properties(void *data)
 	obs_property_t *advanced_settings = obs_properties_add_list(ppts, "advanced_settings_mode",
 								    MT_("advanced_settings_mode"),
 								    OBS_COMBO_TYPE_LIST,
-								    OBS_COMBO_FORMAT_STRING);
-	obs_property_list_add_string(advanced_settings, MT_("simple_mode"), "false");
-	obs_property_list_add_string(advanced_settings, MT_("advanced_mode"), "true");
-	obs_property_set_modified_callback2(
-		advanced_settings,
-		[](void *data_, obs_properties_t *props, obs_property_t *property,
-		   obs_data_t *settings) { return true; },
-		gf);
+								    OBS_COMBO_FORMAT_INT);
+	obs_property_list_add_int(advanced_settings, MT_("simple_mode"), 0);
+	obs_property_list_add_int(advanced_settings, MT_("advanced_mode"), 1);
+	obs_property_set_modified_callback(advanced_settings, advanced_settings_callback);
 
 	// add "General" group
 	obs_properties_t *general_group = obs_properties_create();
@@ -701,20 +725,6 @@ obs_properties_t *transcription_filter_properties(void *data)
 	// Hide the external model file selection input
 	obs_property_set_visible(obs_properties_get(ppts, "whisper_model_path_external"), false);
 
-	obs_property_set_modified_callback2(
-		whisper_model_path_external,
-		[](void *data_, obs_properties_t *props, obs_property_t *property,
-		   obs_data_t *settings) {
-			UNUSED_PARAMETER(property);
-			UNUSED_PARAMETER(props);
-			struct transcription_filter_data *gf_ =
-				static_cast<struct transcription_filter_data *>(data_);
-			obs_log(gf_->log_level, "whisper_model_path_external modified");
-			transcription_filter_update(gf_, settings);
-			return true;
-		},
-		gf);
-
 	// Add a callback to the model list to handle the external model file selection
 	obs_property_set_modified_callback(whisper_models_list, [](obs_properties_t *props,
 								   obs_property_t *property,
@@ -723,60 +733,47 @@ obs_properties_t *transcription_filter_properties(void *data)
 		// If the selected model is the external model, show the external model file selection
 		// input
 		const char *new_model_path = obs_data_get_string(settings, "whisper_model_path");
-		if (strcmp(new_model_path, "!!!external!!!") == 0) {
+		const bool is_external = strcmp(new_model_path, "!!!external!!!") == 0;
+		if (is_external) {
 			obs_property_set_visible(
 				obs_properties_get(props, "whisper_model_path_external"), true);
 		} else {
 			obs_property_set_visible(
 				obs_properties_get(props, "whisper_model_path_external"), false);
-			const std::string model_name = new_model_path;
-			// if the model is english-only -> hide all the languages but english
-			const bool is_english_only =
-				(model_name.find("English") != std::string::npos);
-			// clear the language selection list ("whisper_language_select")
-			obs_property_t *prop_lang =
-				obs_properties_get(props, "whisper_language_select");
-			obs_property_list_clear(prop_lang);
-			if (is_english_only) {
-				// add only the english language
-				obs_property_list_add_string(prop_lang, "English", "en");
-				// set the language to english
-				obs_data_set_string(settings, "whisper_language_select", "en");
-			} else {
-				// add all the languages
-				for (const auto &lang : whisper_available_lang) {
-					obs_property_list_add_string(prop_lang, lang.second.c_str(),
-								     lang.first.c_str());
-				}
-				// set the language to auto (default)
-				obs_data_set_string(settings, "whisper_language_select", "auto");
+		}
+
+		const std::string model_name = new_model_path;
+		// if the model is english-only -> hide all the languages but english
+		const bool is_english_only_internal =
+			(model_name.find("English") != std::string::npos) && !is_external;
+		// clear the language selection list ("whisper_language_select")
+		obs_property_t *prop_lang = obs_properties_get(props, "whisper_language_select");
+		obs_property_list_clear(prop_lang);
+		if (is_english_only_internal) {
+			// add only the english language
+			obs_property_list_add_string(prop_lang, "English", "en");
+			// set the language to english
+			obs_data_set_string(settings, "whisper_language_select", "en");
+		} else {
+			// add all the languages
+			for (const auto &lang : whisper_available_lang) {
+				obs_property_list_add_string(prop_lang, lang.second.c_str(),
+							     lang.first.c_str());
 			}
+			// set the language to auto (default)
+			obs_data_set_string(settings, "whisper_language_select", "auto");
 		}
 		return true;
 	});
-
-	// create a file output group
-	obs_properties_t *file_output_group = obs_properties_create();
-	obs_property_t *file_output_group_prop =
-		obs_properties_add_group(ppts, "file_output_enable", MT_("file_output_group"),
-					 OBS_GROUP_CHECKABLE, file_output_group);
-
-	// add a checkbox for file output
-	obs_properties_add_path(file_output_group, "subtitle_output_filename",
-				MT_("output_filename"), OBS_PATH_FILE_SAVE, "Text (*.txt)", NULL);
-	obs_properties_add_bool(file_output_group, "subtitle_save_srt", MT_("save_srt"));
-	obs_properties_add_bool(file_output_group, "truncate_output_file",
-				MT_("truncate_output_file"));
-	obs_properties_add_bool(file_output_group, "only_while_recording",
-				MT_("only_while_recording"));
-	obs_properties_add_bool(file_output_group, "rename_file_to_match_recording",
-				MT_("rename_file_to_match_recording"));
-	obs_property_set_modified_callback(file_output_group_prop, file_output_select_changed);
 
 	// add translation option group
 	obs_properties_t *translation_group = obs_properties_create();
 	obs_property_t *translation_group_prop = obs_properties_add_group(
 		ppts, "translate", MT_("translate"), OBS_GROUP_CHECKABLE, translation_group);
+
+	// add explaination text
+	obs_properties_add_text(translation_group, "translate_explaination",
+				MT_("translate_explaination"), OBS_TEXT_INFO);
 
 	// add translation model selection
 	obs_property_t *prop_translate_model = obs_properties_add_list(
@@ -812,17 +809,18 @@ obs_properties_t *transcription_filter_properties(void *data)
 		const char *new_model_path = obs_data_get_string(settings, "translate_model");
 		const bool is_external = (strcmp(new_model_path, "!!!external!!!") == 0);
 		const bool is_whisper = (strcmp(new_model_path, "whisper-based-translation") == 0);
+		const bool is_advanced = obs_data_get_int(settings, "advanced_settings_mode") == 1;
 		obs_property_set_visible(
 			obs_properties_get(props, "translation_model_path_external"), is_external);
 		obs_property_set_visible(obs_properties_get(props, "translate_source_language"),
-					 !is_whisper);
+					 !is_whisper && is_advanced);
 		obs_property_set_visible(obs_properties_get(props, "translate_add_context"),
-					 !is_whisper);
+					 !is_whisper && is_advanced);
 		obs_property_set_visible(obs_properties_get(props,
 							    "translate_input_tokenization_style"),
-					 !is_whisper);
+					 !is_whisper && is_advanced);
 		obs_property_set_visible(obs_properties_get(props, "translate_output"),
-					 !is_whisper);
+					 !is_whisper && is_advanced);
 		return true;
 	});
 	// add target language selection
@@ -853,29 +851,7 @@ obs_properties_t *transcription_filter_properties(void *data)
 	obs_enum_sources(add_sources_to_list, prop_output);
 
 	// add callback to enable/disable translation group
-	obs_property_set_modified_callback(translation_group_prop, [](obs_properties_t *props,
-								      obs_property_t *property,
-								      obs_data_t *settings) {
-		UNUSED_PARAMETER(property);
-		// Show/Hide the translation group
-		const bool translate_enabled = obs_data_get_bool(settings, "translate");
-		for (const auto &prop :
-		     {"translate_target_language", "translate_source_language",
-		      "translate_add_context", "translate_output", "translate_model",
-		      "translate_input_tokenization_style", "translation_sampling_temperature",
-		      "translation_repetition_penalty", "translation_beam_size",
-		      "translation_max_decoding_length", "translation_no_repeat_ngram_size",
-		      "translation_max_input_length"}) {
-			obs_property_set_visible(obs_properties_get(props, prop),
-						 translate_enabled);
-		}
-		const bool is_external = (strcmp(obs_data_get_string(settings, "translate_model"),
-						 "!!!external!!!") == 0);
-		obs_property_set_visible(obs_properties_get(props,
-							    "translation_model_path_external"),
-					 is_external && translate_enabled);
-		return true;
-	});
+	obs_property_set_modified_callback(translation_group_prop, translation_options_callback);
 	// add tokenization style options
 	obs_property_t *prop_token_style =
 		obs_properties_add_list(translation_group, "translate_input_tokenization_style",
@@ -898,33 +874,30 @@ obs_properties_t *transcription_filter_properties(void *data)
 	obs_properties_add_int_slider(translation_group, "translation_no_repeat_ngram_size",
 				      MT_("translation_no_repeat_ngram_size"), 1, 10, 1);
 
-	obs_property_t *advanced_settings_prop =
-		obs_properties_add_bool(ppts, "advanced_settings", MT_("advanced_settings"));
-	obs_property_set_modified_callback(advanced_settings_prop, [](obs_properties_t *props,
-								      obs_property_t *property,
-								      obs_data_t *settings) {
-		UNUSED_PARAMETER(property);
-		// If advanced settings is enabled, show the advanced settings group
-		const bool show_hide = obs_data_get_bool(settings, "advanced_settings");
-		for (const std::string &prop_name :
-		     {"whisper_params_group", "log_words", "caption_to_stream", "buffer_size_msec",
-		      "overlap_size_msec", "step_by_step_processing", "min_sub_duration",
-		      "process_while_muted", "buffered_output", "vad_enabled", "log_level",
-		      "open_filter_ui", "sentence_psum_accept_thresh", "vad_threshold",
-		      "buffered_output_group"}) {
-			obs_property_set_visible(obs_properties_get(props, prop_name.c_str()),
-						 show_hide);
-		}
-		return true;
-	});
+	// create a file output group
+	obs_properties_t *file_output_group = obs_properties_create();
+	obs_property_t *file_output_group_prop =
+		obs_properties_add_group(ppts, "file_output_enable", MT_("file_output_group"),
+					 OBS_GROUP_CHECKABLE, file_output_group);
 
-	obs_property_t *buffered_output_prop =
-		obs_properties_add_bool(ppts, "buffered_output", MT_("buffered_output"));
+	// add a checkbox for file output
+	obs_properties_add_path(file_output_group, "subtitle_output_filename",
+				MT_("output_filename"), OBS_PATH_FILE_SAVE, "Text (*.txt)", NULL);
+	obs_properties_add_bool(file_output_group, "subtitle_save_srt", MT_("save_srt"));
+	obs_properties_add_bool(file_output_group, "truncate_output_file",
+				MT_("truncate_output_file"));
+	obs_properties_add_bool(file_output_group, "only_while_recording",
+				MT_("only_while_recording"));
+	obs_properties_add_bool(file_output_group, "rename_file_to_match_recording",
+				MT_("rename_file_to_match_recording"));
+	obs_property_set_modified_callback(file_output_group_prop, file_output_select_changed);
 
 	// add buffered output options group
 	obs_properties_t *buffered_output_group = obs_properties_create();
 	obs_properties_add_group(ppts, "buffered_output_group", MT_("buffered_output_parameters"),
 				 OBS_GROUP_NORMAL, buffered_output_group);
+	obs_property_t *buffered_output_prop = obs_properties_add_bool(
+		buffered_output_group, "buffered_output", MT_("buffered_output"));
 	// add buffer "type" character or word
 	obs_property_t *buffer_type_list = obs_properties_add_list(
 		buffered_output_group, "buffer_output_type", MT_("buffer_output_type"),
@@ -950,22 +923,35 @@ obs_properties_t *transcription_filter_properties(void *data)
 		return true;
 	});
 
-	obs_properties_add_bool(ppts, "log_words", MT_("log_words"));
-	obs_properties_add_bool(ppts, "caption_to_stream", MT_("caption_to_stream"));
+	// add a group for advanced configuration
+	obs_properties_t *advanced_config_group = obs_properties_create();
+	obs_property_t *advanced_group_prop =
+		obs_properties_add_group(ppts, "advanced_group", MT_("advanced_group"),
+					 OBS_GROUP_NORMAL, advanced_config_group);
 
-	obs_properties_add_int_slider(ppts, "min_sub_duration", MT_("min_sub_duration"), 1000, 5000,
-				      50);
-	obs_properties_add_float_slider(ppts, "sentence_psum_accept_thresh",
+	obs_properties_add_bool(advanced_config_group, "caption_to_stream",
+				MT_("caption_to_stream"));
+
+	obs_properties_add_int_slider(advanced_config_group, "min_sub_duration",
+				      MT_("min_sub_duration"), 1000, 5000, 50);
+	obs_properties_add_float_slider(advanced_config_group, "sentence_psum_accept_thresh",
 					MT_("sentence_psum_accept_thresh"), 0.0, 1.0, 0.05);
 
-	obs_properties_add_bool(ppts, "process_while_muted", MT_("process_while_muted"));
+	obs_properties_add_bool(advanced_config_group, "process_while_muted",
+				MT_("process_while_muted"));
 
-	obs_properties_add_bool(ppts, "vad_enabled", MT_("vad_enabled"));
+	obs_properties_add_bool(advanced_config_group, "vad_enabled", MT_("vad_enabled"));
 	// add vad threshold slider
-	obs_properties_add_float_slider(ppts, "vad_threshold", MT_("vad_threshold"), 0.0, 1.0,
-					0.05);
+	obs_properties_add_float_slider(advanced_config_group, "vad_threshold",
+					MT_("vad_threshold"), 0.0, 1.0, 0.05);
 
-	obs_property_t *list = obs_properties_add_list(ppts, "log_level", MT_("log_level"),
+	// add a group for Logging options
+	obs_properties_t *log_group = obs_properties_create();
+	obs_property_t *log_group_prop = obs_properties_add_group(
+		ppts, "log_group", MT_("log_group"), OBS_GROUP_NORMAL, log_group);
+
+	obs_properties_add_bool(log_group, "log_words", MT_("log_words"));
+	obs_property_t *list = obs_properties_add_list(log_group, "log_level", MT_("log_level"),
 						       OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_INT);
 	obs_property_list_add_int(list, "DEBUG (Won't show)", LOG_DEBUG);
 	obs_property_list_add_int(list, "INFO", LOG_INFO);
@@ -973,7 +959,7 @@ obs_properties_t *transcription_filter_properties(void *data)
 
 	// add button to open filter and replace UI dialog
 	obs_properties_add_button2(
-		ppts, "open_filter_ui", MT_("open_filter_ui"),
+		advanced_config_group, "open_filter_ui", MT_("open_filter_ui"),
 		[](obs_properties_t *props, obs_property_t *property, void *data_) {
 			UNUSED_PARAMETER(props);
 			UNUSED_PARAMETER(property);
