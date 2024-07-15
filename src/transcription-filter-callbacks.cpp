@@ -189,13 +189,10 @@ void set_text_callback(struct transcription_filter_data *gf,
 		gf->captions_monitor.addSentence(str_copy);
 	} else {
 		// non-buffered output
-		if (gf->translate) {
-			// send the sentence to translation (if enabled)
-			str_copy = send_sentence_to_translation(str_copy, gf);
-		} else {
-			// send the sentence to the selected source
-			send_caption_to_source(gf->text_source_name, str_copy, gf);
-		}
+		// send the sentence to translation (if enabled)
+		str_copy = send_sentence_to_translation(str_copy, gf);
+		// send the sentence to the selected source
+		send_caption_to_source(gf->text_source_name, str_copy, gf);
 	}
 
 	if (gf->caption_to_stream) {
