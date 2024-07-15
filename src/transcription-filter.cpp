@@ -677,8 +677,8 @@ obs_properties_t *transcription_filter_properties(void *data)
 
 	// add "General" group
 	obs_properties_t *general_group = obs_properties_create();
-	obs_property_t *general_group_prop = obs_properties_add_group(
-		ppts, "general_group", MT_("general_group"), OBS_GROUP_NORMAL, general_group);
+	obs_properties_add_group(ppts, "general_group", MT_("general_group"), OBS_GROUP_NORMAL,
+				 general_group);
 
 	obs_property_t *subs_output =
 		obs_properties_add_list(general_group, "subtitle_sources", MT_("subtitle_sources"),
@@ -700,9 +700,8 @@ obs_properties_t *transcription_filter_properties(void *data)
 
 	// add "Transcription" group
 	obs_properties_t *transcription_group = obs_properties_create();
-	obs_property_t *transcription_group_prop =
-		obs_properties_add_group(ppts, "transcription_group", MT_("transcription_group"),
-					 OBS_GROUP_NORMAL, transcription_group);
+	obs_properties_add_group(ppts, "transcription_group", MT_("transcription_group"),
+				 OBS_GROUP_NORMAL, transcription_group);
 
 	// Add a list of available whisper models to download
 	obs_property_t *whisper_models_list = obs_properties_add_list(
@@ -719,9 +718,8 @@ obs_properties_t *transcription_filter_properties(void *data)
 				     "!!!external!!!");
 
 	// Add a file selection input to select an external model file
-	obs_property_t *whisper_model_path_external = obs_properties_add_path(
-		transcription_group, "whisper_model_path_external", MT_("external_model_file"),
-		OBS_PATH_FILE, "Model (*.bin)", NULL);
+	obs_properties_add_path(transcription_group, "whisper_model_path_external",
+				MT_("external_model_file"), OBS_PATH_FILE, "Model (*.bin)", NULL);
 	// Hide the external model file selection input
 	obs_property_set_visible(obs_properties_get(ppts, "whisper_model_path_external"), false);
 
@@ -925,9 +923,8 @@ obs_properties_t *transcription_filter_properties(void *data)
 
 	// add a group for advanced configuration
 	obs_properties_t *advanced_config_group = obs_properties_create();
-	obs_property_t *advanced_group_prop =
-		obs_properties_add_group(ppts, "advanced_group", MT_("advanced_group"),
-					 OBS_GROUP_NORMAL, advanced_config_group);
+	obs_properties_add_group(ppts, "advanced_group", MT_("advanced_group"), OBS_GROUP_NORMAL,
+				 advanced_config_group);
 
 	obs_properties_add_bool(advanced_config_group, "caption_to_stream",
 				MT_("caption_to_stream"));
@@ -947,8 +944,7 @@ obs_properties_t *transcription_filter_properties(void *data)
 
 	// add a group for Logging options
 	obs_properties_t *log_group = obs_properties_create();
-	obs_property_t *log_group_prop = obs_properties_add_group(
-		ppts, "log_group", MT_("log_group"), OBS_GROUP_NORMAL, log_group);
+	obs_properties_add_group(ppts, "log_group", MT_("log_group"), OBS_GROUP_NORMAL, log_group);
 
 	obs_properties_add_bool(log_group, "log_words", MT_("log_words"));
 	obs_property_t *list = obs_properties_add_list(log_group, "log_level", MT_("log_level"),
