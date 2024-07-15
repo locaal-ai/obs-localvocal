@@ -279,7 +279,7 @@ void transcription_filter_update(void *data, obs_data_t *s)
 	gf->translation_output = obs_data_get_string(s, "translate_output");
 	std::string new_translate_model_index = obs_data_get_string(s, "translate_model");
 	std::string new_translation_model_path_external =
-		obs_data_get_string(s, "translate_model_path_external");
+		obs_data_get_string(s, "translation_model_path_external");
 
 	if (new_translate) {
 		if (new_translate != gf->translate ||
