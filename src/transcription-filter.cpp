@@ -638,32 +638,52 @@ obs_properties_t *transcription_filter_properties(void *data)
 
 	obs_properties_t *ppts = obs_properties_create();
 
+	// add a drop down selection for advanced vs simple settings
+	obs_property_t *advanced_settings = obs_properties_add_list(ppts, "advanced_settings_mode",
+								    MT_("advanced_settings_mode"),
+								    OBS_COMBO_TYPE_LIST,
+								    OBS_COMBO_FORMAT_STRING);
+	obs_property_list_add_string(advanced_settings, MT_("simple_mode"), "false");
+	obs_property_list_add_string(advanced_settings, MT_("advanced_mode"), "true");
+	obs_property_set_modified_callback2(
+		advanced_settings,
+		[](void *data_, obs_properties_t *props, obs_property_t *property,
+		   obs_data_t *settings) { return true; },
+		gf);
+
+	// add "General" group
+	obs_properties_t *general_group = obs_properties_create();
+	obs_property_t *general_group_prop = obs_properties_add_group(
+		ppts, "general_group", MT_("general_group"), OBS_GROUP_NORMAL, general_group);
+
 	obs_property_t *subs_output =
-		obs_properties_add_list(ppts, "subtitle_sources", MT_("subtitle_sources"),
+		obs_properties_add_list(general_group, "subtitle_sources", MT_("subtitle_sources"),
 					OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_STRING);
 	// Add "none" option
 	obs_property_list_add_string(subs_output, MT_("none_no_output"), "none");
 	// Add text sources
 	obs_enum_sources(add_sources_to_list, subs_output);
 
-	// add a checkbox for file output
-	obs_property_t *file_output_enable =
-		obs_properties_add_bool(ppts, "file_output_enable", MT_("file_output_enable"));
+	// Add language selector
+	obs_property_t *whisper_language_select_list =
+		obs_properties_add_list(general_group, "whisper_language_select", MT_("language"),
+					OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_STRING);
+	// iterate over all available languages and add them to the list
+	for (auto const &pair : whisper_available_lang_reverse) {
+		obs_property_list_add_string(whisper_language_select_list, pair.first.c_str(),
+					     pair.second.c_str());
+	}
 
-	obs_properties_add_path(ppts, "subtitle_output_filename", MT_("output_filename"),
-				OBS_PATH_FILE_SAVE, "Text (*.txt)", NULL);
-	obs_properties_add_bool(ppts, "subtitle_save_srt", MT_("save_srt"));
-	obs_properties_add_bool(ppts, "truncate_output_file", MT_("truncate_output_file"));
-	obs_properties_add_bool(ppts, "only_while_recording", MT_("only_while_recording"));
-	obs_properties_add_bool(ppts, "rename_file_to_match_recording",
-				MT_("rename_file_to_match_recording"));
-
-	obs_property_set_modified_callback(file_output_enable, file_output_select_changed);
+	// add "Transcription" group
+	obs_properties_t *transcription_group = obs_properties_create();
+	obs_property_t *transcription_group_prop =
+		obs_properties_add_group(ppts, "transcription_group", MT_("transcription_group"),
+					 OBS_GROUP_NORMAL, transcription_group);
 
 	// Add a list of available whisper models to download
-	obs_property_t *whisper_models_list =
-		obs_properties_add_list(ppts, "whisper_model_path", MT_("whisper_model"),
-					OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_STRING);
+	obs_property_t *whisper_models_list = obs_properties_add_list(
+		transcription_group, "whisper_model_path", MT_("whisper_model"),
+		OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_STRING);
 	// Add models from models_info map
 	for (const auto &model_info : models_info) {
 		if (model_info.second.type == MODEL_TYPE_TRANSCRIPTION) {
@@ -671,14 +691,13 @@ obs_properties_t *transcription_filter_properties(void *data)
 						     model_info.first.c_str());
 		}
 	}
-
 	obs_property_list_add_string(whisper_models_list, "Load external model file",
 				     "!!!external!!!");
 
 	// Add a file selection input to select an external model file
 	obs_property_t *whisper_model_path_external = obs_properties_add_path(
-		ppts, "whisper_model_path_external", MT_("external_model_file"), OBS_PATH_FILE,
-		"Model (*.bin)", NULL);
+		transcription_group, "whisper_model_path_external", MT_("external_model_file"),
+		OBS_PATH_FILE, "Model (*.bin)", NULL);
 	// Hide the external model file selection input
 	obs_property_set_visible(obs_properties_get(ppts, "whisper_model_path_external"), false);
 
@@ -736,22 +755,30 @@ obs_properties_t *transcription_filter_properties(void *data)
 		return true;
 	});
 
-	// Add language selector
-	obs_property_t *whisper_language_select_list =
-		obs_properties_add_list(ppts, "whisper_language_select", MT_("language"),
-					OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_STRING);
-	// iterate over all available languages and add them to the list
-	for (auto const &pair : whisper_available_lang_reverse) {
-		obs_property_list_add_string(whisper_language_select_list, pair.first.c_str(),
-					     pair.second.c_str());
-	}
+	// create a file output group
+	obs_properties_t *file_output_group = obs_properties_create();
+	obs_property_t *file_output_group_prop =
+		obs_properties_add_group(ppts, "file_output_enable", MT_("file_output_group"),
+					 OBS_GROUP_CHECKABLE, file_output_group);
+
+	// add a checkbox for file output
+	obs_properties_add_path(file_output_group, "subtitle_output_filename",
+				MT_("output_filename"), OBS_PATH_FILE_SAVE, "Text (*.txt)", NULL);
+	obs_properties_add_bool(file_output_group, "subtitle_save_srt", MT_("save_srt"));
+	obs_properties_add_bool(file_output_group, "truncate_output_file",
+				MT_("truncate_output_file"));
+	obs_properties_add_bool(file_output_group, "only_while_recording",
+				MT_("only_while_recording"));
+	obs_properties_add_bool(file_output_group, "rename_file_to_match_recording",
+				MT_("rename_file_to_match_recording"));
+	obs_property_set_modified_callback(file_output_group_prop, file_output_select_changed);
 
 	// add translation option group
 	obs_properties_t *translation_group = obs_properties_create();
 	obs_property_t *translation_group_prop = obs_properties_add_group(
 		ppts, "translate", MT_("translate"), OBS_GROUP_CHECKABLE, translation_group);
 
-	// add translatio model selection
+	// add translation model selection
 	obs_property_t *prop_translate_model = obs_properties_add_list(
 		translation_group, "translate_model", MT_("translate_model"), OBS_COMBO_TYPE_LIST,
 		OBS_COMBO_FORMAT_STRING);
