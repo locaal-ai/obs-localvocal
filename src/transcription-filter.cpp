@@ -564,9 +564,9 @@ void transcription_filter_defaults(obs_data_t *s)
 
 	obs_data_set_default_bool(s, "buffered_output", false);
 	obs_data_set_default_int(s, "buffer_num_lines", 2);
-	obs_data_set_default_int(s, "buffer_num_chars_per_line", 30);
+	obs_data_set_default_int(s, "buffer_num_chars_per_line", 8);
 	obs_data_set_default_int(s, "buffer_output_type",
-				 (int)TokenBufferSegmentation::SEGMENTATION_TOKEN);
+				 (int)TokenBufferSegmentation::SEGMENTATION_WORD);
 
 	obs_data_set_default_bool(s, "vad_enabled", true);
 	obs_data_set_default_double(s, "vad_threshold", 0.65);
@@ -740,45 +740,64 @@ obs_properties_t *transcription_filter_properties(void *data)
 	obs_property_set_visible(obs_properties_get(ppts, "whisper_model_path_external"), false);
 
 	// Add a callback to the model list to handle the external model file selection
-	obs_property_set_modified_callback(whisper_models_list, [](obs_properties_t *props,
-								   obs_property_t *property,
-								   obs_data_t *settings) {
-		UNUSED_PARAMETER(property);
-		// If the selected model is the external model, show the external model file selection
-		// input
-		const char *new_model_path = obs_data_get_string(settings, "whisper_model_path");
-		const bool is_external = strcmp(new_model_path, "!!!external!!!") == 0;
-		if (is_external) {
-			obs_property_set_visible(
-				obs_properties_get(props, "whisper_model_path_external"), true);
-		} else {
-			obs_property_set_visible(
-				obs_properties_get(props, "whisper_model_path_external"), false);
-		}
-
-		const std::string model_name = new_model_path;
-		// if the model is english-only -> hide all the languages but english
-		const bool is_english_only_internal =
-			(model_name.find("English") != std::string::npos) && !is_external;
-		// clear the language selection list ("whisper_language_select")
-		obs_property_t *prop_lang = obs_properties_get(props, "whisper_language_select");
-		obs_property_list_clear(prop_lang);
-		if (is_english_only_internal) {
-			// add only the english language
-			obs_property_list_add_string(prop_lang, "English", "en");
-			// set the language to english
-			obs_data_set_string(settings, "whisper_language_select", "en");
-		} else {
-			// add all the languages
-			for (const auto &lang : whisper_available_lang) {
-				obs_property_list_add_string(prop_lang, lang.second.c_str(),
-							     lang.first.c_str());
+	obs_property_set_modified_callback2(
+		whisper_models_list,
+		[](void *data_, obs_properties_t *props, obs_property_t *property,
+		   obs_data_t *settings) {
+			UNUSED_PARAMETER(property);
+			struct transcription_filter_data *gf_ =
+				static_cast<struct transcription_filter_data *>(data_);
+			// If the selected model is the external model, show the external model file selection
+			// input
+			const char *new_model_path_cstr =
+				obs_data_get_string(settings, "whisper_model_path") != nullptr
+					? obs_data_get_string(settings, "whisper_model_path")
+					: "";
+			const std::string new_model_path = new_model_path_cstr;
+			const bool is_external =
+				(new_model_path.find("!!!external!!!") != std::string::npos);
+			if (is_external) {
+				obs_property_set_visible(
+					obs_properties_get(props, "whisper_model_path_external"),
+					true);
+			} else {
+				obs_property_set_visible(
+					obs_properties_get(props, "whisper_model_path_external"),
+					false);
 			}
-			// set the language to auto (default)
-			obs_data_set_string(settings, "whisper_language_select", "auto");
-		}
-		return true;
-	});
+
+			// check if this is a new model selection
+			if (gf_->whisper_model_loaded_new) {
+				// if the model is english-only -> hide all the languages but english
+				const bool is_english_only_internal =
+					(new_model_path.find("English") != std::string::npos) &&
+					!is_external;
+				// clear the language selection list ("whisper_language_select")
+				obs_property_t *prop_lang =
+					obs_properties_get(props, "whisper_language_select");
+				obs_property_list_clear(prop_lang);
+				if (is_english_only_internal) {
+					// add only the english language
+					obs_property_list_add_string(prop_lang, "English", "en");
+					// set the language to english
+					obs_data_set_string(settings, "whisper_language_select",
+							    "en");
+				} else {
+					// add all the languages
+					for (const auto &lang : whisper_available_lang) {
+						obs_property_list_add_string(prop_lang,
+									     lang.second.c_str(),
+									     lang.first.c_str());
+					}
+					// set the language to auto (default)
+					obs_data_set_string(settings, "whisper_language_select",
+							    "auto");
+				}
+				gf_->whisper_model_loaded_new = false;
+			}
+			return true;
+		},
+		gf);
 
 	// add translation option group
 	obs_properties_t *translation_group = obs_properties_create();

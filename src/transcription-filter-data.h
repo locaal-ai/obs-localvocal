@@ -51,6 +51,7 @@ struct transcription_filter_data {
 
 	/* whisper */
 	std::string whisper_model_path;
+	bool whisper_model_loaded_new;
 	struct whisper_context *whisper_context;
 	whisper_full_params whisper_params;
 

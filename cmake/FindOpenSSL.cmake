@@ -7,8 +7,8 @@ elseif(APPLE)
 
   FetchContent_Declare(
     openssl-macos-fetch
-    URL "https://www.openssl.org/source/openssl-1.1.1k.tar.gz"
-    URL_HASH SHA256=3f
+    URL "https://github.com/occ-ai/occ-ai-dep-openssl/releases/download/0.0.1/openssl-3.3.1-macos.tar.gz"
+    URL_HASH SHA256=d578921b7168e21451f0b6e4ac4cb989c17abc6829c8c43f32136c1c2544ffde
   )
 
   FetchContent_MakeAvailable(openssl-macos-fetch)
