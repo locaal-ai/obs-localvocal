@@ -94,7 +94,6 @@ struct transcription_filter_data {
 	// Output file path to write the subtitles
 	std::string output_file_path;
 	std::string whisper_model_file_currently_loaded;
-	bool whisper_model_loaded_new;
 
 	// Use std for thread and mutex
 	std::thread whisper_thread;

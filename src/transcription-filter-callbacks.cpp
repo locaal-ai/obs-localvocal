@@ -222,6 +222,14 @@ void set_text_callback(struct transcription_filter_data *gf,
 	// send the sentence to translation (if enabled)
 	std::string translated_sentence = send_sentence_to_translation(str_copy, gf);
 
+	// Timed metadata request
+	if (!gf->translate) {
+		send_timed_metadata_to_server(gf, TRANSCRIBE, str_copy, "");
+	} else {
+		send_timed_metadata_to_server(gf, NON_WHISPER_TRANSLATE, str_copy,
+					      translated_sentence);
+	}
+
 	if (gf->translate) {
 		if (gf->translation_output == "none") {
 			// overwrite the original text with the translated text
@@ -242,10 +250,6 @@ void set_text_callback(struct transcription_filter_data *gf,
 	} else {
 		// non-buffered output - send the sentence to the selected source
 		send_caption_to_source(gf->text_source_name, str_copy, gf);
-
-		if (!gf->translate) {
-			send_timed_metadata_to_server(gf, TRANSCRIBE, str_copy, "");
-		}
 	}
 
 	if (gf->caption_to_stream) {

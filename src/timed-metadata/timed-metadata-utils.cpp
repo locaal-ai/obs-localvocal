@@ -141,12 +141,19 @@ void send_timed_metadata_to_ivs_endpoint(struct transcription_filter_data *gf,
 	}
 
 	// Construct the outer JSON string
-	nlohmann::json METADATA = {{"channelArn", CHANNEL_ARN},
-				   {"metadata", inner_meta_data.dump()}};
+	nlohmann::json inner_meta_data_as_string = inner_meta_data.dump();
+	std::string METADATA = R"({
+        "channelArn": ")" + CHANNEL_ARN +
+			       R"(",
+        "metadata": )" + inner_meta_data_as_string.dump() +
+			       R"(
+    })";
+
+	obs_log(LOG_INFO, METADATA.c_str());
 
 	std::string DATE = getCurrentDate();
 	std::string TIMESTAMP = getCurrentTimestamp();
-	std::string PAYLOAD_HASH = sha256(METADATA.dump());
+	std::string PAYLOAD_HASH = sha256(METADATA);
 
 	std::ostringstream canonicalRequest;
 	canonicalRequest << "POST\n"
@@ -200,7 +207,7 @@ void send_timed_metadata_to_ivs_endpoint(struct transcription_filter_data *gf,
 	headers = curl_slist_append(headers, ("x-amz-date: " + TIMESTAMP).c_str());
 	headers = curl_slist_append(headers, ("Authorization: " + AUTH_HEADER).c_str());
 	curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
-	curl_easy_setopt(curl, CURLOPT_POSTFIELDS, METADATA.dump().c_str());
+	curl_easy_setopt(curl, CURLOPT_POSTFIELDS, METADATA.c_str());
 
 	std::string response_string;
 	std::string header_string;
