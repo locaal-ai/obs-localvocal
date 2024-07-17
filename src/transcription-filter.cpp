@@ -162,6 +162,9 @@ void transcription_filter_destroy(void *data)
 	if (gf->captions_monitor.isEnabled()) {
 		gf->captions_monitor.stopThread();
 	}
+	if (gf->translation_monitor.isEnabled()) {
+		gf->translation_monitor.stopThread();
+	}
 
 	bfree(gf);
 }
@@ -226,12 +229,19 @@ void transcription_filter_update(void *data, obs_data_t *s)
 								       gf);
 					}
 				},
-				[gf](const std::string &sentence) {
-					obs_log(LOG_INFO, "sentence: %s", sentence.c_str());
-					if (gf->buffered_output && gf->translate) {
-						send_sentence_to_translation(sentence, gf);
+				[gf](const std::string &sentence) {}, new_buffer_num_lines,
+				new_buffer_num_chars_per_line, std::chrono::seconds(3),
+				new_buffer_output_type);
+			gf->translation_monitor.initialize(
+				gf,
+				[gf](const std::string &translated_text) {
+					if (gf->buffered_output &&
+					    gf->translation_output != "none") {
+						send_caption_to_source(gf->translation_output,
+								       translated_text, gf);
 					}
 				},
+				[gf](const std::string &translated_sentence) {},
 				new_buffer_num_lines, new_buffer_num_chars_per_line,
 				std::chrono::seconds(3), new_buffer_output_type);
 		} else {
@@ -245,6 +255,11 @@ void transcription_filter_update(void *data, obs_data_t *s)
 				gf->captions_monitor.setNumPerSentence(
 					new_buffer_num_chars_per_line);
 				gf->captions_monitor.setSegmentation(new_buffer_output_type);
+				gf->translation_monitor.clear();
+				gf->translation_monitor.setNumSentences(new_buffer_num_lines);
+				gf->translation_monitor.setNumPerSentence(
+					new_buffer_num_chars_per_line);
+				gf->translation_monitor.setSegmentation(new_buffer_output_type);
 			}
 		}
 		gf->buffered_output_num_lines = new_buffer_num_lines;
@@ -257,6 +272,8 @@ void transcription_filter_update(void *data, obs_data_t *s)
 			if (gf->captions_monitor.isEnabled()) {
 				gf->captions_monitor.clear();
 				gf->captions_monitor.stopThread();
+				gf->translation_monitor.clear();
+				gf->translation_monitor.stopThread();
 			}
 			gf->buffered_output = false;
 		}

@@ -63,7 +63,7 @@ bool file_output_select_changed(obs_properties_t *props, obs_property_t *propert
 	const bool show_hide = obs_data_get_bool(settings, "file_output_enable");
 	for (const std::string &prop_name :
 	     {"subtitle_output_filename", "subtitle_save_srt", "truncate_output_file",
-	      "only_while_recording", "rename_file_to_match_recording"}) {
+	      "only_while_recording", "rename_file_to_match_recording", "file_output_info"}) {
 		obs_property_set_visible(obs_properties_get(props, prop_name.c_str()), show_hide);
 	}
 	return true;
@@ -256,13 +256,16 @@ void add_file_output_group_properties(obs_properties_t *ppts)
 {
 	// create a file output group
 	obs_properties_t *file_output_group = obs_properties_create();
+	// add a checkbox group for file output
 	obs_property_t *file_output_group_prop =
 		obs_properties_add_group(ppts, "file_output_enable", MT_("file_output_group"),
 					 OBS_GROUP_CHECKABLE, file_output_group);
 
-	// add a checkbox for file output
 	obs_properties_add_path(file_output_group, "subtitle_output_filename",
 				MT_("output_filename"), OBS_PATH_FILE_SAVE, "Text (*.txt)", NULL);
+	// add info text about the file output
+	obs_properties_add_text(file_output_group, "file_output_info", MT_("file_output_info"),
+				OBS_TEXT_INFO);
 	obs_properties_add_bool(file_output_group, "subtitle_save_srt", MT_("save_srt"));
 	obs_properties_add_bool(file_output_group, "truncate_output_file",
 				MT_("truncate_output_file"));
@@ -293,18 +296,6 @@ void add_buffered_output_group_properties(obs_properties_t *ppts)
 	// add buffer number of characters per line parameter
 	obs_properties_add_int_slider(buffered_output_group, "buffer_num_chars_per_line",
 				      MT_("buffer_num_chars_per_line"), 1, 100, 1);
-
-	// on enable/disable buffered output, show/hide the group
-	obs_property_set_modified_callback(buffered_output_prop, [](obs_properties_t *props,
-								    obs_property_t *property,
-								    obs_data_t *settings) {
-		UNUSED_PARAMETER(property);
-		// If buffered output is enabled, show the buffered output group
-		const bool show_hide = obs_data_get_bool(settings, "buffered_output");
-		obs_property_set_visible(obs_properties_get(props, "buffered_output_group"),
-					 show_hide);
-		return true;
-	});
 }
 
 void add_advanced_group_properties(obs_properties_t *ppts, struct transcription_filter_data *gf)
