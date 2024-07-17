@@ -282,8 +282,7 @@ void add_buffered_output_group_properties(obs_properties_t *ppts)
 	obs_properties_t *buffered_output_group = obs_properties_create();
 	obs_properties_add_group(ppts, "buffered_output_group", MT_("buffered_output_parameters"),
 				 OBS_GROUP_NORMAL, buffered_output_group);
-	obs_property_t *buffered_output_prop = obs_properties_add_bool(
-		buffered_output_group, "buffered_output", MT_("buffered_output"));
+	obs_properties_add_bool(buffered_output_group, "buffered_output", MT_("buffered_output"));
 	// add buffer "type" character or word
 	obs_property_t *buffer_type_list = obs_properties_add_list(
 		buffered_output_group, "buffer_output_type", MT_("buffer_output_type"),
