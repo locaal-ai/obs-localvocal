@@ -90,6 +90,7 @@ target_sources(
           src/transcription-filter.cpp
           src/transcription-filter.c
           src/transcription-filter-callbacks.cpp
+          src/transcription-filter-properties.cpp
           src/transcription-filter-utils.cpp
           src/transcription-utils.cpp
           src/model-utils/model-downloader.cpp
