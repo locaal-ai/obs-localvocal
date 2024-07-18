@@ -125,7 +125,7 @@ int translate(struct translation_context &translation_ctx, const std::string &te
 			// set input tokens
 			std::vector<std::string> input_tokens = {};
 			std::vector<std::string> new_input_tokens = translation_ctx.tokenizer(
-				"<2" + language_codes_2_reverse[target_lang] + "> " + text);
+				"<2" + language_codes_to_whisper[target_lang] + "> " + text);
 			input_tokens.insert(input_tokens.end(), new_input_tokens.begin(),
 					    new_input_tokens.end());
 			const std::vector<std::vector<std::string>> batch = {input_tokens};

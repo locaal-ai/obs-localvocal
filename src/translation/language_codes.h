@@ -6,7 +6,7 @@
 
 extern std::map<std::string, std::string> language_codes;
 extern std::map<std::string, std::string> language_codes_reverse;
-extern std::map<std::string, std::string> language_codes_2;
-extern std::map<std::string, std::string> language_codes_2_reverse;
+extern std::map<std::string, std::string> language_codes_from_whisper;
+extern std::map<std::string, std::string> language_codes_to_whisper;
 
 #endif // LANGUAGE_CODES_H

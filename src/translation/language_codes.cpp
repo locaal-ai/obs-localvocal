@@ -201,7 +201,7 @@ std::map<std::string, std::string> language_codes_reverse = {{"Afrikaans", "__af
 							     {"Chinese", "__zh__"},
 							     {"Zulu", "__zu__"}};
 
-std::map<std::string, std::string> language_codes_2 = {
+std::map<std::string, std::string> language_codes_from_whisper = {
 	{"af", "__af__"},   {"am", "__am__"}, {"ar", "__ar__"}, {"ast", "__ast__"},
 	{"az", "__az__"},   {"ba", "__ba__"}, {"be", "__be__"}, {"bg", "__bg__"},
 	{"bn", "__bn__"},   {"br", "__br__"}, {"bs", "__bs__"}, {"ca", "__ca__"},
@@ -228,7 +228,7 @@ std::map<std::string, std::string> language_codes_2 = {
 	{"uz", "__uz__"},   {"vi", "__vi__"}, {"wo", "__wo__"}, {"xh", "__xh__"},
 	{"yi", "__yi__"},   {"yo", "__yo__"}, {"zh", "__zh__"}, {"zu", "__zu__"}};
 
-std::map<std::string, std::string> language_codes_2_reverse = {
+std::map<std::string, std::string> language_codes_to_whisper = {
 	{"__af__", "af"},   {"__am__", "am"}, {"__ar__", "ar"}, {"__ast__", "ast"},
 	{"__az__", "az"},   {"__ba__", "ba"}, {"__be__", "be"}, {"__bg__", "bg"},
 	{"__bn__", "bn"},   {"__br__", "br"}, {"__bs__", "bs"}, {"__ca__", "ca"},

@@ -297,7 +297,7 @@ void TokenBufferThread::monitor()
 							     contribution.end());
 #endif
 
-				obs_log(LOG_INFO, "TokenBufferThread::monitor: output '%s'",
+				obs_log(gf->log_level, "TokenBufferThread::monitor: output '%s'",
 					contribution_out.c_str());
 				this->sentenceOutputCallback(contribution_out);
 				lastContributionIsSent = true;

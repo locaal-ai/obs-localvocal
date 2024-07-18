@@ -26,11 +26,10 @@ bool translation_options_callback(obs_properties_t *props, obs_property_t *prope
 		obs_property_set_visible(obs_properties_get(props, prop), translate_enabled);
 	}
 	for (const auto &prop :
-	     {"translate_source_language", "translate_add_context",
-	      "translate_input_tokenization_style", "translation_sampling_temperature",
-	      "translation_repetition_penalty", "translation_beam_size",
-	      "translation_max_decoding_length", "translation_no_repeat_ngram_size",
-	      "translation_max_input_length"}) {
+	     {"translate_add_context", "translate_input_tokenization_style",
+	      "translation_sampling_temperature", "translation_repetition_penalty",
+	      "translation_beam_size", "translation_max_decoding_length",
+	      "translation_no_repeat_ngram_size", "translation_max_input_length"}) {
 		obs_property_set_visible(obs_properties_get(props, prop),
 					 translate_enabled && is_advanced);
 	}
@@ -130,8 +129,6 @@ bool translation_external_model_selection(obs_properties_t *props, obs_property_
 	const bool is_advanced = obs_data_get_int(settings, "advanced_settings_mode") == 1;
 	obs_property_set_visible(obs_properties_get(props, "translation_model_path_external"),
 				 is_external);
-	obs_property_set_visible(obs_properties_get(props, "translate_source_language"),
-				 !is_whisper && is_advanced);
 	obs_property_set_visible(obs_properties_get(props, "translate_add_context"),
 				 !is_whisper && is_advanced);
 	obs_property_set_visible(obs_properties_get(props, "translate_input_tokenization_style"),
@@ -214,17 +211,12 @@ void add_translation_group_properties(obs_properties_t *ppts)
 	obs_property_t *prop_tgt = obs_properties_add_list(
 		translation_group, "translate_target_language", MT_("target_language"),
 		OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_STRING);
-	obs_property_t *prop_src = obs_properties_add_list(
-		translation_group, "translate_source_language", MT_("source_language"),
-		OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_STRING);
 	obs_properties_add_bool(translation_group, "translate_add_context",
 				MT_("translate_add_context"));
 
 	// Populate the dropdown with the language codes
 	for (const auto &language : language_codes) {
 		obs_property_list_add_string(prop_tgt, language.second.c_str(),
-					     language.first.c_str());
-		obs_property_list_add_string(prop_src, language.second.c_str(),
 					     language.first.c_str());
 	}
 	// add option for routing the translation to an output source
@@ -233,8 +225,6 @@ void add_translation_group_properties(obs_properties_t *ppts)
 							      OBS_COMBO_TYPE_LIST,
 							      OBS_COMBO_FORMAT_STRING);
 	obs_property_list_add_string(prop_output, "Write to captions output", "none");
-	// TODO add file output option
-	// obs_property_list_add_string(...
 	obs_enum_sources(add_sources_to_list, prop_output);
 
 	// add callback to enable/disable translation group
