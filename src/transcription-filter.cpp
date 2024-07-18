@@ -565,7 +565,7 @@ void transcription_filter_defaults(obs_data_t *s)
 {
 	obs_log(LOG_DEBUG, "filter defaults");
 
-	obs_data_set_default_bool(s, "buffered_output", false);
+	obs_data_set_default_bool(s, "buffered_output", true);
 	obs_data_set_default_int(s, "buffer_num_lines", 2);
 	obs_data_set_default_int(s, "buffer_num_chars_per_line", 8);
 	obs_data_set_default_int(s, "buffer_output_type",
@@ -588,12 +588,13 @@ void transcription_filter_defaults(obs_data_t *s)
 	obs_data_set_default_bool(s, "advanced_settings", false);
 	obs_data_set_default_bool(s, "translate", false);
 	obs_data_set_default_string(s, "translate_target_language", "__es__");
-	obs_data_set_default_string(s, "translate_source_language", "__en__");
 	obs_data_set_default_bool(s, "translate_add_context", true);
 	obs_data_set_default_string(s, "translate_model", "whisper-based-translation");
 	obs_data_set_default_string(s, "translation_model_path_external", "");
 	obs_data_set_default_int(s, "translate_input_tokenization_style", INPUT_TOKENIZAION_M2M100);
 	obs_data_set_default_double(s, "sentence_psum_accept_thresh", 0.4);
+	obs_data_set_default_string(s, "filter_words_replace",
+				    serialize_filter_words_replace({{"MBC.*", ""}}).c_str());
 
 	// translation options
 	obs_data_set_default_double(s, "translation_sampling_temperature", 0.1);

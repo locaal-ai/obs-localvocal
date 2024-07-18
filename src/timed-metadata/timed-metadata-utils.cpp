@@ -127,9 +127,10 @@ void send_timed_metadata_to_ivs_endpoint(struct transcription_filter_data *gf,
 	if (mode == NON_WHISPER_TRANSLATE) {
 		obs_log(gf->log_level,
 			"send_timed_metadata_to_ivs_endpoint - source text not empty");
-		inner_meta_data = {{"captions",
-				    {{{"language", gf->source_lang}, {"text", source_text}},
-				     {{"language", gf->target_lang}, {"text", target_text}}}}};
+		inner_meta_data = {
+			{"captions",
+			 {{{"language", gf->whisper_params.language}, {"text", source_text}},
+			  {{"language", gf->target_lang}, {"text", target_text}}}}};
 	} else if (mode == WHISPER_TRANSLATE) {
 		obs_log(gf->log_level, "send_timed_metadata_to_ivs_endpoint - source text empty");
 		inner_meta_data = {
@@ -137,7 +138,8 @@ void send_timed_metadata_to_ivs_endpoint(struct transcription_filter_data *gf,
 	} else {
 		obs_log(gf->log_level, "send_timed_metadata_to_ivs_endpoint - transcription mode");
 		inner_meta_data = {
-			{"captions", {{{"language", gf->source_lang}, {"text", source_text}}}}};
+			{"captions",
+			 {{{"language", gf->whisper_params.language}, {"text", source_text}}}}};
 	}
 
 	// Construct the outer JSON string
@@ -148,8 +150,6 @@ void send_timed_metadata_to_ivs_endpoint(struct transcription_filter_data *gf,
         "metadata": )" + inner_meta_data_as_string.dump() +
 			       R"(
     })";
-
-	obs_log(LOG_INFO, METADATA.c_str());
 
 	std::string DATE = getCurrentDate();
 	std::string TIMESTAMP = getCurrentTimestamp();
