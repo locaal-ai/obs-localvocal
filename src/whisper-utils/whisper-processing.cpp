@@ -132,12 +132,12 @@ struct DetectionResultWithText run_whisper_inference(struct transcription_filter
 {
 	if (gf == nullptr) {
 		obs_log(LOG_ERROR, "run_whisper_inference: gf is null");
-		return {DETECTION_RESULT_UNKNOWN, "", start_offset_ms, end_offset_ms, {}};
+		return {DETECTION_RESULT_UNKNOWN, "", start_offset_ms, end_offset_ms, {}, ""};
 	}
 
 	if (pcm32f_data_ == nullptr || pcm32f_num_samples == 0) {
 		obs_log(LOG_ERROR, "run_whisper_inference: pcm32f_data is null or size is 0");
-		return {DETECTION_RESULT_UNKNOWN, "", start_offset_ms, end_offset_ms, {}};
+		return {DETECTION_RESULT_UNKNOWN, "", start_offset_ms, end_offset_ms, {}, ""};
 	}
 
 	obs_log(gf->log_level, "%s: processing %d samples, %.3f sec, %d threads", __func__,
@@ -169,7 +169,7 @@ struct DetectionResultWithText run_whisper_inference(struct transcription_filter
 	std::lock_guard<std::mutex> lock(gf->whisper_ctx_mutex);
 	if (gf->whisper_context == nullptr) {
 		obs_log(LOG_WARNING, "whisper context is null");
-		return {DETECTION_RESULT_UNKNOWN, "", t0, t1, {}};
+		return {DETECTION_RESULT_UNKNOWN, "", t0, t1, {}, ""};
 	}
 
 	// run the inference
@@ -185,15 +185,23 @@ struct DetectionResultWithText run_whisper_inference(struct transcription_filter
 		if (should_free_buffer) {
 			bfree(pcm32f_data);
 		}
-		return {DETECTION_RESULT_UNKNOWN, "", t0, t1, {}};
+		return {DETECTION_RESULT_UNKNOWN, "", t0, t1, {}, ""};
 	}
 	if (should_free_buffer) {
 		bfree(pcm32f_data);
 	}
 
+	std::string language = gf->whisper_params.language;
+	if (gf->whisper_params.language == nullptr || strlen(gf->whisper_params.language) == 0 ||
+	    strcmp(gf->whisper_params.language, "auto") == 0) {
+		int lang_id = whisper_lang_auto_detect(gf->whisper_context, 0, 1, nullptr);
+		language = whisper_lang_str(lang_id);
+		obs_log(gf->log_level, "Detected language: %s", language.c_str());
+	}
+
 	if (whisper_full_result != 0) {
 		obs_log(LOG_WARNING, "failed to process audio, error %d", whisper_full_result);
-		return {DETECTION_RESULT_UNKNOWN, "", t0, t1, {}};
+		return {DETECTION_RESULT_UNKNOWN, "", t0, t1, {}, ""};
 	} else {
 		float sentence_p = 0.0f;
 		std::string text = "";
@@ -235,7 +243,12 @@ struct DetectionResultWithText run_whisper_inference(struct transcription_filter
 						// ratio is too high, skip this detection
 						obs_log(gf->log_level,
 							"Time token ratio too high, skipping");
-						return {DETECTION_RESULT_SILENCE, "", t0, t1, {}};
+						return {DETECTION_RESULT_SILENCE,
+							"",
+							t0,
+							t1,
+							{},
+							language};
 					}
 					keep = false;
 				}
@@ -253,7 +266,7 @@ struct DetectionResultWithText run_whisper_inference(struct transcription_filter
 		if (sentence_p < gf->sentence_psum_accept_thresh) {
 			obs_log(gf->log_level, "Sentence psum %.3f below threshold %.3f, skipping",
 				sentence_p, gf->sentence_psum_accept_thresh);
-			return {DETECTION_RESULT_SILENCE, "", t0, t1, {}};
+			return {DETECTION_RESULT_SILENCE, "", t0, t1, {}, language};
 		}
 
 		obs_log(gf->log_level, "Decoded sentence: '%s'", text.c_str());
@@ -264,10 +277,10 @@ struct DetectionResultWithText run_whisper_inference(struct transcription_filter
 		}
 
 		if (text.empty() || text == "." || text == " " || text == "\n") {
-			return {DETECTION_RESULT_SILENCE, "", t0, t1, {}};
+			return {DETECTION_RESULT_SILENCE, "", t0, t1, {}, language};
 		}
 
-		return {DETECTION_RESULT_SPEECH, text, t0, t1, tokens};
+		return {DETECTION_RESULT_SPEECH, text, t0, t1, tokens, language};
 	}
 }
 
@@ -509,7 +522,7 @@ void whisper_loop(void *data)
 			uint64_t now = now_ms();
 			if ((now - gf->last_sub_render_time) > gf->min_sub_duration) {
 				// clear the current sub, call the callback with an empty string
-				obs_log(LOG_INFO,
+				obs_log(gf->log_level,
 					"Clearing current subtitle. now: %lu ms, last: %lu ms", now,
 					gf->last_sub_render_time);
 				set_text_callback(gf, {DETECTION_RESULT_UNKNOWN, "", 0, 0, {}});
