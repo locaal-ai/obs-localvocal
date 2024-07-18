@@ -111,7 +111,9 @@ size_t WriteCallback(void *ptr, size_t size, size_t nmemb, std::string *data)
 
 void send_timed_metadata_to_ivs_endpoint(struct transcription_filter_data *gf,
 					 Translation_Mode mode, const std::string &source_text,
-					 const std::string &target_text)
+					 const std::string &source_lang,
+					 const std::string &target_text,
+					 const std::string &target_lang)
 {
 	// below 4 should be from a configuration
 	std::string AWS_ACCESS_KEY = gf->aws_access_key;
@@ -126,20 +128,38 @@ void send_timed_metadata_to_ivs_endpoint(struct transcription_filter_data *gf,
 	nlohmann::json inner_meta_data;
 	if (mode == NON_WHISPER_TRANSLATE) {
 		obs_log(gf->log_level,
-			"send_timed_metadata_to_ivs_endpoint - source text not empty");
-		inner_meta_data = {
-			{"captions",
-			 {{{"language", gf->whisper_params.language}, {"text", source_text}},
-			  {{"language", gf->target_lang}, {"text", target_text}}}}};
+			"send_timed_metadata_to_ivs_endpoint - NON_WHISPER_TRANSLATE");
+		nlohmann::json array;
+		if (!source_text.empty()) {
+			array.push_back({{"language", source_lang}, {"text", source_text}});
+		}
+		if (!target_text.empty()) {
+			array.push_back({{"language", target_lang}, {"text", target_text}});
+		}
+		if (array.empty()) {
+			obs_log(gf->log_level,
+				"send_timed_metadata_to_ivs_endpoint - source and target text empty");
+			return;
+		}
+		inner_meta_data = {{"captions", array}};
 	} else if (mode == WHISPER_TRANSLATE) {
-		obs_log(gf->log_level, "send_timed_metadata_to_ivs_endpoint - source text empty");
+		if (target_text.empty()) {
+			obs_log(gf->log_level,
+				"send_timed_metadata_to_ivs_endpoint - target text empty");
+			return;
+		}
+		obs_log(gf->log_level, "send_timed_metadata_to_ivs_endpoint - WHISPER_TRANSLATE");
 		inner_meta_data = {
-			{"captions", {{{"language", gf->target_lang}, {"text", target_text}}}}};
+			{"captions", {{{"language", target_lang}, {"text", target_text}}}}};
 	} else {
+		if (source_text.empty()) {
+			obs_log(gf->log_level,
+				"send_timed_metadata_to_ivs_endpoint - source text empty");
+			return;
+		}
 		obs_log(gf->log_level, "send_timed_metadata_to_ivs_endpoint - transcription mode");
 		inner_meta_data = {
-			{"captions",
-			 {{{"language", gf->whisper_params.language}, {"text", source_text}}}}};
+			{"captions", {{{"language", source_lang}, {"text", source_text}}}}};
 	}
 
 	// Construct the outer JSON string
@@ -234,7 +254,8 @@ void send_timed_metadata_to_ivs_endpoint(struct transcription_filter_data *gf,
 
 // source: transcription text, target: translation text
 void send_timed_metadata_to_server(struct transcription_filter_data *gf, Translation_Mode mode,
-				   const std::string &source_text, const std::string &target_text)
+				   const std::string &source_text, const std::string &source_lang,
+				   const std::string &target_text, const std::string &target_lang)
 {
 	if (gf->aws_access_key.empty() || gf->aws_secret_key.empty() ||
 	    gf->ivs_channel_arn.empty() || gf->aws_region.empty()) {
@@ -243,8 +264,9 @@ void send_timed_metadata_to_server(struct transcription_filter_data *gf, Transla
 		return;
 	}
 
-	std::thread send_timed_metadata_thread([gf, mode, source_text, target_text]() {
-		send_timed_metadata_to_ivs_endpoint(gf, mode, source_text, target_text);
+	std::thread send_timed_metadata_thread([=]() {
+		send_timed_metadata_to_ivs_endpoint(gf, mode, source_text, source_lang, target_text,
+						    target_lang);
 	});
 	send_timed_metadata_thread.detach();
 }

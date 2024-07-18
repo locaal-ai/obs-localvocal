@@ -228,10 +228,10 @@ void set_text_callback(struct transcription_filter_data *gf,
 
 	// Timed metadata request
 	if (!gf->translate) {
-		send_timed_metadata_to_server(gf, TRANSCRIBE, str_copy, "");
+		send_timed_metadata_to_server(gf, TRANSCRIBE, str_copy, result.language, "", "");
 	} else {
-		send_timed_metadata_to_server(gf, NON_WHISPER_TRANSLATE, str_copy,
-					      translated_sentence);
+		send_timed_metadata_to_server(gf, NON_WHISPER_TRANSLATE, str_copy, result.language,
+					      translated_sentence, gf->target_lang);
 	}
 
 	if (gf->translate) {
