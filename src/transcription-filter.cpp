@@ -571,7 +571,7 @@ void transcription_filter_defaults(obs_data_t *s)
 				 (int)TokenBufferSegmentation::SEGMENTATION_WORD);
 
 	obs_data_set_default_bool(s, "vad_enabled", true);
-	obs_data_set_default_double(s, "vad_threshold", 0.65);
+	obs_data_set_default_double(s, "vad_threshold", 0.95);
 	obs_data_set_default_int(s, "log_level", LOG_DEBUG);
 	obs_data_set_default_bool(s, "log_words", false);
 	obs_data_set_default_bool(s, "caption_to_stream", false);

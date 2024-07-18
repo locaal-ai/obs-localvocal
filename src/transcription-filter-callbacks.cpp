@@ -190,6 +190,7 @@ void set_text_callback(struct transcription_filter_data *gf,
 {
 	DetectionResultWithText result = resultIn;
 	if (!result.text.empty() && result.result == DETECTION_RESULT_SPEECH) {
+		// this sub should be rendered - update the last sub render time
 		gf->last_sub_render_time = now_ms();
 		gf->cleared_last_sub = false;
 	}
@@ -222,19 +223,22 @@ void set_text_callback(struct transcription_filter_data *gf,
 		}
 	}
 
+	// time the translation
+	uint64_t start_time = now_ms();
+
 	// send the sentence to translation (if enabled)
 	std::string translated_sentence =
 		send_sentence_to_translation(str_copy, gf, result.language);
 
-	// Timed metadata request
-	if (!gf->translate) {
-		send_timed_metadata_to_server(gf, TRANSCRIBE, str_copy, result.language, "", "");
-	} else {
+	if (gf->translate) {
+		// log the translation time
+		obs_log(gf->log_level, "Translation time: %llu ms", now_ms() - start_time);
+
+		// send the translated sentence to the server
 		send_timed_metadata_to_server(gf, NON_WHISPER_TRANSLATE, str_copy, result.language,
 					      translated_sentence, gf->target_lang);
-	}
 
-	if (gf->translate) {
+		// send the translated sentence to the selected output
 		if (gf->translation_output == "none") {
 			// overwrite the original text with the translated text
 			str_copy = translated_sentence;
@@ -247,6 +251,8 @@ void set_text_callback(struct transcription_filter_data *gf,
 						       gf);
 			}
 		}
+	} else {
+		send_timed_metadata_to_server(gf, TRANSCRIBE, str_copy, result.language, "", "");
 	}
 
 	if (gf->buffered_output) {
