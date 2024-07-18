@@ -18,6 +18,7 @@
 #include "transcription-utils.h"
 #include "whisper-utils/whisper-utils.h"
 #include "audio-file-utils.h"
+#include "translation/language_codes.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -145,7 +146,6 @@ create_context(int sample_rate, int channels, const std::string &whisper_model_p
 	gf->last_sub_render_time = 0;
 	gf->buffered_output = false;
 
-	gf->source_lang = "";
 	gf->target_lang = "";
 	gf->translation_ctx.add_context = true;
 	gf->translation_output = "";
@@ -266,10 +266,10 @@ void set_text_callback(struct transcription_filter_data *gf,
 		}
 
 		if (gf->translate) {
-			obs_log(gf->log_level, "Translating text. %s -> %s",
-				gf->source_lang.c_str(), gf->target_lang.c_str());
+			obs_log(gf->log_level, "Translating text to %s", gf->target_lang.c_str());
 			std::string translated_text;
-			if (translate(gf->translation_ctx, str_copy, gf->source_lang,
+			if (translate(gf->translation_ctx, str_copy,
+				      language_codes_from_whisper[gf->whisper_params.language],
 				      gf->target_lang,
 				      translated_text) == OBS_POLYGLOT_TRANSLATION_SUCCESS) {
 				if (gf->log_words) {
@@ -365,7 +365,6 @@ int wmain(int argc, wchar_t *argv[])
 					"Source or target translation language are empty or disabled");
 			} else {
 				obs_log(LOG_INFO, "Setting translation languages");
-				gf->source_lang = sourceLanguageStr;
 				gf->target_lang = targetLanguageStr;
 				build_and_enable_translation(gf, ct2ModelFolderStr.c_str());
 			}

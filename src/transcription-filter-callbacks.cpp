@@ -20,6 +20,7 @@
 #include "whisper-utils/whisper-utils.h"
 #include "whisper-utils/whisper-model-utils.h"
 #include "timed-metadata/timed-metadata-utils.h"
+#include "translation/language_codes.h"
 
 void send_caption_to_source(const std::string &target_source_name, const std::string &caption,
 			    struct transcription_filter_data *gf)
@@ -50,15 +51,17 @@ void audio_chunk_callback(struct transcription_filter_data *gf, const float *pcm
 }
 
 std::string send_sentence_to_translation(const std::string &sentence,
-					 struct transcription_filter_data *gf)
+					 struct transcription_filter_data *gf,
+					 const std::string &source_language)
 {
 	const std::string last_text = gf->last_text;
 	gf->last_text = sentence;
 	if (gf->translate && !sentence.empty() && sentence != last_text) {
-		obs_log(gf->log_level, "Translating text. %s -> %s", gf->source_lang.c_str(),
+		obs_log(gf->log_level, "Translating text. %s -> %s", source_language.c_str(),
 			gf->target_lang.c_str());
 		std::string translated_text;
-		if (translate(gf->translation_ctx, sentence, gf->source_lang, gf->target_lang,
+		if (translate(gf->translation_ctx, sentence,
+			      language_codes_from_whisper[source_language], gf->target_lang,
 			      translated_text) == OBS_POLYGLOT_TRANSLATION_SUCCESS) {
 			if (gf->log_words) {
 				obs_log(LOG_INFO, "Translation: '%s' -> '%s'", sentence.c_str(),
@@ -220,7 +223,8 @@ void set_text_callback(struct transcription_filter_data *gf,
 	}
 
 	// send the sentence to translation (if enabled)
-	std::string translated_sentence = send_sentence_to_translation(str_copy, gf);
+	std::string translated_sentence =
+		send_sentence_to_translation(str_copy, gf, result.language);
 
 	// Timed metadata request
 	if (!gf->translate) {

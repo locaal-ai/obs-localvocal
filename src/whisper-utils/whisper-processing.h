@@ -25,6 +25,7 @@ struct DetectionResultWithText {
 	uint64_t start_timestamp_ms;
 	uint64_t end_timestamp_ms;
 	std::vector<whisper_token_data> tokens;
+	std::string language;
 };
 
 enum VadState { VAD_STATE_WAS_ON = 0, VAD_STATE_WAS_OFF, VAD_STATE_IS_OFF };

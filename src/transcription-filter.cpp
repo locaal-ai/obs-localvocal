@@ -288,7 +288,6 @@ void transcription_filter_update(void *data, obs_data_t *s)
 
 	// translation settings
 	bool new_translate = obs_data_get_bool(s, "translate");
-	gf->source_lang = obs_data_get_string(s, "translate_source_language");
 	gf->target_lang = obs_data_get_string(s, "translate_target_language");
 	gf->translation_ctx.add_context = obs_data_get_bool(s, "translate_add_context");
 	gf->translation_ctx.input_tokenization_style =
@@ -366,9 +365,9 @@ void transcription_filter_update(void *data, obs_data_t *s)
 							      : "auto";
 		} else {
 			// take the language from gf->target_lang
-			if (language_codes_2_reverse.count(gf->target_lang) > 0) {
+			if (language_codes_to_whisper.count(gf->target_lang) > 0) {
 				gf->whisper_params.language =
-					language_codes_2_reverse[gf->target_lang].c_str();
+					language_codes_to_whisper[gf->target_lang].c_str();
 			} else {
 				gf->whisper_params.language = "auto";
 			}
