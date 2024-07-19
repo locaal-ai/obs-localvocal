@@ -17,6 +17,7 @@ enum DetectionResult {
 	DETECTION_RESULT_SPEECH = 2,
 	DETECTION_RESULT_SUPPRESSED = 3,
 	DETECTION_RESULT_NO_INFERENCE = 4,
+	DETECTION_RESULT_PARTIAL = 5,
 };
 
 struct DetectionResultWithText {
@@ -28,7 +29,7 @@ struct DetectionResultWithText {
 	std::string language;
 };
 
-enum VadState { VAD_STATE_WAS_ON = 0, VAD_STATE_WAS_OFF, VAD_STATE_IS_OFF };
+enum VadState { VAD_STATE_WAS_ON = 0, VAD_STATE_WAS_OFF, VAD_STATE_IS_OFF, VAD_STATE_PARTIAL };
 
 void whisper_loop(void *data);
 struct whisper_context *init_whisper_context(const std::string &model_path,

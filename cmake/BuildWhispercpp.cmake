@@ -80,7 +80,8 @@ elseif(WIN32)
   FetchContent_Declare(
     whispercpp_fetch
     URL ${WHISPER_CPP_URL}
-    URL_HASH SHA256=${WHISPER_CPP_HASH})
+    URL_HASH SHA256=${WHISPER_CPP_HASH}
+    DOWNLOAD_EXTRACT_TIMESTAMP TRUE)
   FetchContent_MakeAvailable(whispercpp_fetch)
 
   add_library(Whispercpp::Whisper SHARED IMPORTED)
@@ -104,8 +105,20 @@ elseif(WIN32)
 
   # glob all dlls in the bin directory and install them
   file(GLOB WHISPER_DLLS ${whispercpp_fetch_SOURCE_DIR}/bin/*.dll)
-  install(FILES ${WHISPER_DLLS} DESTINATION "obs-plugins/64bit")
+  foreach(FILE ${WHISPER_DLLS})
+    file(RELATIVE_PATH REL_FILE ${whispercpp_fetch_SOURCE_DIR}/bin ${FILE})
+    set(DEST_DIR "${CMAKE_SOURCE_DIR}/release/${CMAKE_BUILD_TYPE}/obs-plugins/64bit")
+    set(DEST_FILE "${DEST_DIR}/${REL_FILE}")
 
+    if(NOT EXISTS ${DEST_DIR})
+      file(MAKE_DIRECTORY ${DEST_DIR})
+    endif()
+
+    if(NOT EXISTS ${DEST_FILE} OR ${FILE} IS_NEWER_THAN ${DEST_FILE})
+      message(STATUS "Copying ${FILE} to ${DEST_FILE}")
+      file(COPY ${FILE} DESTINATION ${DEST_DIR})
+    endif()
+  endforeach()
 else()
   set(Whispercpp_Build_GIT_TAG "v1.6.2")
   set(WHISPER_EXTRA_CXX_FLAGS "-fPIC")

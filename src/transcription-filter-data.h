@@ -81,6 +81,8 @@ struct transcription_filter_data {
 	bool enable_audio_chunks_callback = false;
 	bool source_signals_set = false;
 	bool initial_creation = true;
+	bool partial_transcription = false;
+	int partial_latency = 1000;
 
 	// Last transcription result
 	std::string last_text;
