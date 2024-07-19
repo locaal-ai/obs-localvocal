@@ -515,7 +515,7 @@ vad_state vad_based_segmentation(transcription_filter_data *gf, vad_state last_v
 		obs_log(gf->log_level, "current buffer length after last partial (%lu): %lu ms",
 			current_vad_state.last_partial_segment_end_ts, current_length_ms);
 
-		if (current_length_ms > gf->partial_latency) {
+		if (current_length_ms > (uint64_t)gf->partial_latency) {
 			current_vad_state.last_partial_segment_end_ts =
 				current_vad_state.end_ts_offset_ms;
 			// send partial segment to inference

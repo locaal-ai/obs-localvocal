@@ -26,9 +26,8 @@
         "rhs": "Darwin"
       },
       "generator": "Xcode",
-      "warnings": { "dev": true, "deprecated": true },
+      "warnings": {"dev": true, "deprecated": true},
       "cacheVariables": {
-        "QT_VERSION": "6",
         "CMAKE_OSX_DEPLOYMENT_TARGET": "11.0",
         "CODESIGN_IDENTITY": "$penv{CODESIGN_IDENT}",
         "CODESIGN_TEAM": "$penv{CODESIGN_TEAM}"
@@ -57,9 +56,8 @@
       },
       "generator": "Visual Studio 17 2022",
       "architecture": "x64",
-      "warnings": { "dev": true, "deprecated": true },
+      "warnings": {"dev": true, "deprecated": true},
       "cacheVariables": {
-        "QT_VERSION": "6",
         "CMAKE_SYSTEM_VERSION": "10.0.18363.657"
       }
     },
@@ -84,9 +82,8 @@
         "rhs": "Linux"
       },
       "generator": "Ninja",
-      "warnings": { "dev": true, "deprecated": true },
+      "warnings": {"dev": true, "deprecated": true},
       "cacheVariables": {
-        "QT_VERSION": "6",
         "CMAKE_BUILD_TYPE": "RelWithDebInfo"
       }
     },
@@ -112,9 +109,8 @@
         "rhs": "Linux"
       },
       "generator": "Ninja",
-      "warnings": { "dev": true, "deprecated": true },
+      "warnings": {"dev": true, "deprecated": true},
       "cacheVariables": {
-        "QT_VERSION": "6",
         "CMAKE_BUILD_TYPE": "RelWithDebInfo"
       }
     },
