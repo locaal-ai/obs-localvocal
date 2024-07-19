@@ -46,8 +46,9 @@ bool advanced_settings_callback(obs_properties_t *props, obs_property_t *propert
 	UNUSED_PARAMETER(property);
 	// If advanced settings is enabled, show the advanced settings group
 	const bool show_hide = obs_data_get_int(settings, "advanced_settings_mode") == 1;
-	for (const std::string &prop_name : {"whisper_params_group", "buffered_output_group",
-					     "log_group", "advanced_group", "file_output_enable"}) {
+	for (const std::string &prop_name :
+	     {"whisper_params_group", "buffered_output_group", "log_group", "advanced_group",
+	      "file_output_enable", "partial_group"}) {
 		obs_property_set_visible(obs_properties_get(props, prop_name.c_str()), show_hide);
 	}
 	translation_options_callback(props, NULL, settings);
@@ -457,6 +458,22 @@ void add_general_group_properties(obs_properties_t *ppts)
 	}
 }
 
+void add_partial_group_properties(obs_properties_t *ppts)
+{
+	// add a group for partial transcription
+	obs_properties_t *partial_group = obs_properties_create();
+	obs_properties_add_group(ppts, "partial_group", MT_("partial_transcription"),
+				 OBS_GROUP_CHECKABLE, partial_group);
+
+	// add text info
+	obs_properties_add_text(partial_group, "partial_info", MT_("partial_transcription_info"),
+				OBS_TEXT_INFO);
+
+	// add slider for partial latecy
+	obs_properties_add_int_slider(partial_group, "partial_latency", MT_("partial_latency"), 500,
+				      3000, 50);
+}
+
 obs_properties_t *transcription_filter_properties(void *data)
 {
 	struct transcription_filter_data *gf =
@@ -480,6 +497,7 @@ obs_properties_t *transcription_filter_properties(void *data)
 	add_buffered_output_group_properties(ppts);
 	add_advanced_group_properties(ppts, gf);
 	add_logging_group_properties(ppts);
+	add_partial_group_properties(ppts);
 	add_whisper_params_group_properties(ppts);
 
 	// Add a informative text about the plugin

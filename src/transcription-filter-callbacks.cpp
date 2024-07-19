@@ -188,7 +188,8 @@ void set_text_callback(struct transcription_filter_data *gf,
 		       const DetectionResultWithText &resultIn)
 {
 	DetectionResultWithText result = resultIn;
-	if (!result.text.empty() && result.result == DETECTION_RESULT_SPEECH) {
+	if (!result.text.empty() && (result.result == DETECTION_RESULT_SPEECH ||
+				     result.result == DETECTION_RESULT_PARTIAL)) {
 		gf->last_sub_render_time = now_ms();
 		gf->cleared_last_sub = false;
 	}
@@ -231,7 +232,10 @@ void set_text_callback(struct transcription_filter_data *gf,
 			str_copy = translated_sentence;
 		} else {
 			if (gf->buffered_output) {
-				gf->translation_monitor.addSentence(translated_sentence);
+				if (result.result == DETECTION_RESULT_SPEECH) {
+					// buffered output - add the sentence to the monitor
+					gf->translation_monitor.addSentence(translated_sentence);
+				}
 			} else {
 				// non-buffered output - send the sentence to the selected source
 				send_caption_to_source(gf->translation_output, translated_sentence,
@@ -241,17 +245,20 @@ void set_text_callback(struct transcription_filter_data *gf,
 	}
 
 	if (gf->buffered_output) {
-		gf->captions_monitor.addSentence(str_copy);
+		if (result.result == DETECTION_RESULT_SPEECH) {
+			gf->captions_monitor.addSentence(str_copy);
+		}
 	} else {
 		// non-buffered output - send the sentence to the selected source
 		send_caption_to_source(gf->text_source_name, str_copy, gf);
 	}
 
-	if (gf->caption_to_stream) {
+	if (gf->caption_to_stream && result.result == DETECTION_RESULT_SPEECH) {
 		send_caption_to_stream(result, str_copy, gf);
 	}
 
-	if (gf->save_to_file && gf->output_file_path != "") {
+	if (gf->save_to_file && gf->output_file_path != "" &&
+	    result.result == DETECTION_RESULT_SPEECH) {
 		send_sentence_to_file(gf, result, str_copy, translated_sentence);
 	}
 };
@@ -291,8 +298,10 @@ void reset_caption_state(transcription_filter_data *gf_)
 {
 	if (gf_->captions_monitor.isEnabled()) {
 		gf_->captions_monitor.clear();
+		gf_->translation_monitor.clear();
 	}
 	send_caption_to_source(gf_->text_source_name, "", gf_);
+	send_caption_to_source(gf_->translation_output, "", gf_);
 	// flush the buffer
 	{
 		std::lock_guard<std::mutex> lock(gf_->whisper_buf_mutex);
@@ -326,6 +335,7 @@ void media_started_callback(void *data_, calldata_t *cd)
 	gf_->active = true;
 	reset_caption_state(gf_);
 }
+
 void media_pause_callback(void *data_, calldata_t *cd)
 {
 	UNUSED_PARAMETER(cd);
@@ -333,6 +343,7 @@ void media_pause_callback(void *data_, calldata_t *cd)
 	obs_log(gf_->log_level, "media_pause");
 	gf_->active = false;
 }
+
 void media_restart_callback(void *data_, calldata_t *cd)
 {
 	UNUSED_PARAMETER(cd);
@@ -341,6 +352,7 @@ void media_restart_callback(void *data_, calldata_t *cd)
 	gf_->active = true;
 	reset_caption_state(gf_);
 }
+
 void media_stopped_callback(void *data_, calldata_t *cd)
 {
 	UNUSED_PARAMETER(cd);

@@ -105,13 +105,8 @@ struct obs_audio_data *transcription_filter_filter_audio(void *data, struct obs_
 		// push audio packet info (timestamp/frame count) to info circlebuf
 		struct transcription_filter_audio_info info = {0};
 		info.frames = audio->frames; // number of frames in this packet
-		// check if the timestamp is a false "negative" value for uint64_t
-		if (audio->timestamp > (std::numeric_limits<uint64_t>::max() - 100000000)) {
-			// set the timestamp to the current time
-			info.timestamp_offset_ns = 0;
-		} else {
-			info.timestamp_offset_ns = audio->timestamp; // timestamp of this packet
-		}
+		// calculate timestamp offset from the start of the stream
+		info.timestamp_offset_ns = now_ns() - gf->start_timestamp_ms * 1000000;
 		circlebuf_push_back(&gf->info_buffer, &info, sizeof(info));
 	}
 
@@ -190,6 +185,8 @@ void transcription_filter_update(void *data, obs_data_t *s)
 	gf->process_while_muted = obs_data_get_bool(s, "process_while_muted");
 	gf->min_sub_duration = (int)obs_data_get_int(s, "min_sub_duration");
 	gf->last_sub_render_time = now_ms();
+	gf->partial_transcription = obs_data_get_bool(s, "partial_group");
+	gf->partial_latency = (int)obs_data_get_int(s, "partial_latency");
 	bool new_buffered_output = obs_data_get_bool(s, "buffered_output");
 	int new_buffer_num_lines = (int)obs_data_get_int(s, "buffer_num_lines");
 	int new_buffer_num_chars_per_line = (int)obs_data_get_int(s, "buffer_num_chars_per_line");
@@ -584,6 +581,8 @@ void transcription_filter_defaults(obs_data_t *s)
 	obs_data_set_default_string(s, "translation_model_path_external", "");
 	obs_data_set_default_int(s, "translate_input_tokenization_style", INPUT_TOKENIZAION_M2M100);
 	obs_data_set_default_double(s, "sentence_psum_accept_thresh", 0.4);
+	obs_data_set_default_bool(s, "partial_group", false);
+	obs_data_set_default_int(s, "partial_latency", 1100);
 
 	// translation options
 	obs_data_set_default_double(s, "translation_sampling_temperature", 0.1);

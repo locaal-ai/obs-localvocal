@@ -63,7 +63,8 @@ void update_whisper_model(struct transcription_filter_data *gf)
 			obs_log(gf->log_level, "model path changed from %s to %s",
 				gf->whisper_model_path.c_str(), new_model_path.c_str());
 
-			gf->whisper_model_loaded_new = true;
+			// check if this is loading the initial model or a switch
+			gf->whisper_model_loaded_new = !gf->whisper_model_path.empty();
 		}
 
 		// check if the new model is external file
