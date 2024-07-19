@@ -55,4 +55,4 @@ else()
 endif()
 
 add_compile_definitions($<$<CONFIG:DEBUG>:DEBUG> $<$<CONFIG:DEBUG>:_DEBUG> SIMDE_ENABLE_OPENMP)
-add_compile_options(-Wno-error=newline-eof)
+add_compile_options(-Wno-error=newline-eof -Wno-error=deprecated-declarations -Wno-deprecated-declarations)
