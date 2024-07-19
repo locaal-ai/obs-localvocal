@@ -12,12 +12,13 @@
 
 ## Introduction
 
-LocalVocal live-streaming AI assistant plugin allows you to transcribe, locally on your machine, audio speech into text and perform various language processing functions on the text using AI / LLMs (Large Language Models). ✅ No GPU required, ✅ no cloud costs, ✅ no network and ✅ no downtime! Privacy first - all data stays on your machine.
+LocalVocal lets you transcribe, locally on your machine, speech into text and simultaneously translate to any language. ✅ No GPU required, ✅ no cloud costs, ✅ no network and ✅ no downtime! Privacy first - all data stays on your machine.
 
-If this free plugin has been valuable to you consider adding a ⭐ to this GH repo, rating it [on OBS](https://obsproject.com/forum/resources/localvocal-live-stream-ai-assistant.1769/), subscribing to [my YouTube channel](https://www.youtube.com/@royshilk) where I post updates, and supporting my work on [GitHub](https://github.com/sponsors/royshil) or [Patreon](https://www.patreon.com/RoyShilkrot) 🙏
+If this free plugin has been valuable consider adding a ⭐ to this GH repo, rating it [on OBS](https://obsproject.com/forum/resources/localvocal-live-stream-ai-assistant.1769/), subscribing to [my YouTube channel](https://www.youtube.com/@royshilk) where I post updates, and supporting my work on [GitHub](https://github.com/sponsors/royshil), [Patreon](https://www.patreon.com/RoyShilkrot) or [OpenCollective](https://opencollective.com/occ-ai) 🙏
 
-Internally the plugin is running a neural network ([OpenAI Whisper](https://github.com/openai/whisper)) locally to predict in real time the speech and provide captions.
+Internally the plugin is running [OpenAI's Whisper](https://github.com/openai/whisper) to process real-time the speech and predict a transcription.
 It's using the [Whisper.cpp](https://github.com/ggerganov/whisper.cpp) project from [ggerganov](https://github.com/ggerganov) to run the Whisper network efficiently on CPUs and GPUs.
+Translation is done with [CTranslate2](https://github.com/OpenNMT/CTranslate2).
 
 ## Usage
 
@@ -45,9 +46,10 @@ Current Features:
 - Sync'ed captions with OBS recording timestamps
 - Send captions on a RTMP stream to e.g. YouTube, Twitch
 - Bring your own Whisper model (any GGML)
-- Translate captions in real time to major languages (both Whisper built-in translation as well as NMT models with [CTranslate2](https://github.com/OpenNMT/CTranslate2))
+- Translate captions in real time to major languages (both Whisper built-in translation as well as NMT models)
 - CUDA, OpenCL, Apple Arm64, AVX & SSE acceleration support
 - Filter out or replace any part of the produced captions
+- Partial transcriptions for a streaming-captions experience
 
 Roadmap:
 - More robust built-in translation options
@@ -57,22 +59,22 @@ Roadmap:
 Check out our other plugins:
 - [Background Removal](https://github.com/occ-ai/obs-backgroundremoval) removes background from webcam without a green screen.
 - [Detect](https://github.com/occ-ai/obs-detect) will detect and track >80 types of objects in real-time inside OBS
-- [CleanStream](https://github.com/occ-ai/obs-cleanstream) for real-time filler word (uh,um) and profanity removal from live audio stream
+- [CleanStream](https://github.com/occ-ai/obs-cleanstream) for real-time filler word (uh,um) and profanity removal from a live audio stream
 - [URL/API Source](https://github.com/occ-ai/obs-urlsource) that allows fetching live data from an API and displaying it in OBS.
-- [Polyglot](https://github.com/occ-ai/obs-polyglot) translation AI plugin for real-time, local translation to hunderds of languages
+- [Squawk](https://github.com/occ-ai/obs-squawk) adds lifelike local text-to-speech capabilities built-in OBS
 
 ## Download
 Check out the [latest releases](https://github.com/occ-ai/obs-localvocal/releases) for downloads and install instructions.
 
 ### Models
-The plugin ships with the Tiny.en model, and will autonomoously download other bigger Whisper models through a dropdown.
-However there's an option to select an external model file if you have it on disk.
+The plugin ships with the Tiny.en model, and will autonomously download other Whisper models through a dropdown.
+There's also an option to select an external GGML Whisper model file if you have it on disk.
 
-Get more models from https://ggml.ggerganov.com/ and follow [the instructions on whisper.cpp](https://github.com/ggerganov/whisper.cpp/tree/master/models) to create your own models or download others such as distilled models.
+Get more models from https://ggml.ggerganov.com/ and [HuggingFace](https://huggingface.co/ggerganov/whisper.cpp/tree/main), follow [the instructions on whisper.cpp](https://github.com/ggerganov/whisper.cpp/tree/master/models) to create your own models or download others such as distilled models.
 
 ## Building
 
-The plugin was built and tested on Mac OSX  (Intel & Apple silicon), Windows (with and without Nvidia CUDA) and Linux.
+The plugin was built and tested on Mac OSX (Intel & Apple silicon), Windows (with and without Nvidia CUDA) and Linux.
 
 Start by cloning this repo to a directory of your choice.
 
@@ -172,7 +174,7 @@ The build should exist in the `./release` folder off the root. You can manually 
 
 LocalVocal will now build with CUDA support automatically through a prebuilt binary of Whisper.cpp from https://github.com/occ-ai/occ-ai-dep-whispercpp. The CMake scripts will download all necessary files.
 
-To build with cuda add `CPU_OR_CUDA` as an environment variable (with `cpu`, `12.2.0` or `11.8.0`) and build regularly
+To build with cuda add `CPU_OR_CUDA` as an environment variable (with `cpu`, `clblast`, `12.2.0` or `11.8.0`) and build regularly
 
 ```powershell
 > $env:CPU_OR_CUDA="12.2.0"
