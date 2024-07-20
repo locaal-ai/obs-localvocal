@@ -18,7 +18,7 @@ void create_obs_text_source_if_needed()
 	obs_source_t *scene_as_source = obs_frontend_get_current_scene();
 	obs_scene_t *scene = obs_scene_from_source(scene_as_source);
 #ifdef _WIN32
-	source = obs_source_create("text_gdiplus_v2", "LocalVocal Subtitles", nullptr, nullptr);
+	source = obs_source_create("text_gdiplus_v3", "LocalVocal Subtitles", nullptr, nullptr);
 #else
 	source = obs_source_create("text_ft2_source_v2", "LocalVocal Subtitles", nullptr, nullptr);
 #endif
@@ -64,6 +64,7 @@ bool add_sources_to_list(void *list_property, obs_source_t *source)
 {
 	auto source_id = obs_source_get_id(source);
 	if (strcmp(source_id, "text_ft2_source_v2") != 0 &&
+	    strcmp(source_id, "text_gdiplus_v3") != 0 &&
 	    strcmp(source_id, "text_gdiplus_v2") != 0) {
 		return true;
 	}
