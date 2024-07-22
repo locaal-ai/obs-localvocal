@@ -24,10 +24,14 @@ Translation is done with [CTranslate2](https://github.com/OpenNMT/CTranslate2).
 
 <p align="center">
   <a href="https://youtu.be/vHQ5HGvbRGQ" target="_blank">
-    <img width="50%" src="docs/thumbnail.png" />
+    <img width="30%" src="docs/thumbnail.png" />
+  </a>&nbsp;
+  <a href="https://youtu.be/4llyfNi9FGs" target="_blank">
+    <img width="30%" src="https://github.com/user-attachments/assets/d50f8c8f-da7a-4054-a68b-6f7e3712b6c4" />
   </a>
   <br/>
   <a href="https://youtu.be/vHQ5HGvbRGQ">https://youtu.be/vHQ5HGvbRGQ</a>
+  <a href="https://youtu.be/4llyfNi9FGs">https://youtu.be/4llyfNi9FGs</a>
 </p>
 
 Do more with LocalVocal:
