@@ -86,6 +86,7 @@ struct transcription_filter_data {
 
 	// Last transcription result
 	std::string last_text;
+	std::string last_text_translation;
 
 	// Text source to output the subtitles
 	std::string text_source_name;

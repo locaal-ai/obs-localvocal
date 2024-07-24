@@ -55,10 +55,14 @@ std::string send_sentence_to_translation(const std::string &sentence,
 {
 	const std::string last_text = gf->last_text;
 	gf->last_text = sentence;
-	if (gf->translate && !sentence.empty() && sentence != last_text) {
+	if (gf->translate && !sentence.empty()) {
 		obs_log(gf->log_level, "Translating text. %s -> %s", source_language.c_str(),
 			gf->target_lang.c_str());
 		std::string translated_text;
+		if (sentence == last_text) {
+			// do not translate the same sentence twice
+			return gf->last_text_translation;
+		}
 		if (translate(gf->translation_ctx, sentence,
 			      language_codes_from_whisper[source_language], gf->target_lang,
 			      translated_text) == OBS_POLYGLOT_TRANSLATION_SUCCESS) {
@@ -66,6 +70,7 @@ std::string send_sentence_to_translation(const std::string &sentence,
 				obs_log(LOG_INFO, "Translation: '%s' -> '%s'", sentence.c_str(),
 					translated_text.c_str());
 			}
+			gf->last_text_translation = translated_text;
 			return translated_text;
 		} else {
 			obs_log(gf->log_level, "Failed to translate text");
