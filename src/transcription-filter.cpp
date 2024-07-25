@@ -108,6 +108,7 @@ struct obs_audio_data *transcription_filter_filter_audio(void *data, struct obs_
 		// calculate timestamp offset from the start of the stream
 		info.timestamp_offset_ns = now_ns() - gf->start_timestamp_ms * 1000000;
 		circlebuf_push_back(&gf->info_buffer, &info, sizeof(info));
+		gf->wshiper_thread_cv.notify_one();
 	}
 
 	return audio;
