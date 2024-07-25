@@ -48,6 +48,7 @@ struct transcription_filter_data {
 
 	/* Resampler */
 	audio_resampler_t *resampler_to_whisper;
+	struct circlebuf resampled_buffer;
 
 	/* whisper */
 	std::string whisper_model_path;

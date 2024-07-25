@@ -2,6 +2,8 @@
 
 #include <obs-module.h>
 
+#include <util/profiler.hpp>
+
 #include "plugin-support.h"
 #include "transcription-filter-data.h"
 #include "whisper-processing.h"
@@ -389,22 +391,43 @@ vad_state vad_based_segmentation(transcription_filter_data *gf, vad_state last_v
 		num_frames_from_infos, overlap_size);
 	gf->last_num_frames = num_frames_from_infos + overlap_size;
 
-	// resample to 16kHz
-	float *resampled_16khz[MAX_PREPROC_CHANNELS];
-	uint32_t resampled_16khz_frames;
-	uint64_t ts_offset;
-	audio_resampler_resample(gf->resampler_to_whisper, (uint8_t **)resampled_16khz,
-				 &resampled_16khz_frames, &ts_offset,
-				 (const uint8_t **)gf->copy_buffers,
-				 (uint32_t)num_frames_from_infos);
+	{
+		// resample to 16kHz
+		float *resampled_16khz[MAX_PREPROC_CHANNELS];
+		uint32_t resampled_16khz_frames;
+		uint64_t ts_offset;
+		{
+			ProfileScope("resample");
+			audio_resampler_resample(gf->resampler_to_whisper,
+						 (uint8_t **)resampled_16khz,
+						 &resampled_16khz_frames, &ts_offset,
+						 (const uint8_t **)gf->copy_buffers,
+						 (uint32_t)num_frames_from_infos);
+		}
 
-	obs_log(gf->log_level, "resampled: %d channels, %d frames, %f ms", (int)gf->channels,
-		(int)resampled_16khz_frames,
-		(float)resampled_16khz_frames / WHISPER_SAMPLE_RATE * 1000.0f);
+		obs_log(gf->log_level, "resampled: %d channels, %d frames, %f ms",
+			(int)gf->channels, (int)resampled_16khz_frames,
+			(float)resampled_16khz_frames / WHISPER_SAMPLE_RATE * 1000.0f);
+		circlebuf_push_back(&gf->resampled_buffer, resampled_16khz[0],
+				    resampled_16khz_frames * sizeof(float));
+	}
 
-	std::vector<float> vad_input(resampled_16khz[0],
-				     resampled_16khz[0] + resampled_16khz_frames);
-	gf->vad->process(vad_input, false);
+	if (gf->resampled_buffer.size < (gf->vad->get_window_size_samples() * sizeof(float)))
+		return last_vad_state;
+
+	size_t len =
+		gf->resampled_buffer.size / (gf->vad->get_window_size_samples() * sizeof(float));
+
+	std::vector<float> vad_input;
+	vad_input.resize(len * gf->vad->get_window_size_samples());
+	circlebuf_pop_front(&gf->resampled_buffer, vad_input.data(),
+			    vad_input.size() * sizeof(float));
+
+	obs_log(gf->log_level, "sending %d frames to vad", vad_input.size());
+	{
+		ProfileScope("vad->process");
+		gf->vad->process(vad_input, false);
+	}
 
 	const uint64_t start_ts_offset_ms = start_timestamp_offset_ns / 1000000;
 	const uint64_t end_ts_offset_ms = end_timestamp_offset_ns / 1000000;
@@ -414,8 +437,7 @@ vad_state vad_based_segmentation(transcription_filter_data *gf, vad_state last_v
 
 	std::vector<timestamp_t> stamps = gf->vad->get_speech_timestamps();
 	if (stamps.size() == 0) {
-		obs_log(gf->log_level, "VAD detected no speech in %d frames",
-			resampled_16khz_frames);
+		obs_log(gf->log_level, "VAD detected no speech in %u frames", vad_input.size());
 		if (last_vad_state.vad_on) {
 			obs_log(gf->log_level, "Last VAD was ON: segment end -> send to inference");
 			run_inference_and_callbacks(gf, last_vad_state.start_ts_offest_ms,
@@ -425,7 +447,7 @@ vad_state vad_based_segmentation(transcription_filter_data *gf, vad_state last_v
 		}
 
 		if (gf->enable_audio_chunks_callback) {
-			audio_chunk_callback(gf, resampled_16khz[0], resampled_16khz_frames,
+			audio_chunk_callback(gf, vad_input.data(), vad_input.size(),
 					     VAD_STATE_IS_OFF,
 					     {DETECTION_RESULT_SILENCE,
 					      "[silence]",
@@ -449,16 +471,16 @@ vad_state vad_based_segmentation(transcription_filter_data *gf, vad_state last_v
 		}
 
 		int end_frame = stamps[i].end;
-		if (i == stamps.size() - 1 && stamps[i].end < (int)resampled_16khz_frames) {
+		if (i == stamps.size() - 1 && stamps[i].end < (int)vad_input.size()) {
 			// take at least 100ms of audio after the last speech segment, if available
 			end_frame = std::min(end_frame + WHISPER_SAMPLE_RATE / 10,
-					     (int)resampled_16khz_frames);
+					     (int)vad_input.size());
 		}
 
 		const int number_of_frames = end_frame - start_frame;
 
 		// push the data into gf-whisper_buffer
-		circlebuf_push_back(&gf->whisper_buffer, resampled_16khz[0] + start_frame,
+		circlebuf_push_back(&gf->whisper_buffer, vad_input.data() + start_frame,
 				    number_of_frames * sizeof(float));
 
 		obs_log(gf->log_level,
@@ -469,7 +491,7 @@ vad_state vad_based_segmentation(transcription_filter_data *gf, vad_state last_v
 			gf->whisper_buffer.size / sizeof(float) * 1000 / WHISPER_SAMPLE_RATE);
 
 		// segment "end" is in the middle of the buffer, send it to inference
-		if (stamps[i].end < (int)resampled_16khz_frames) {
+		if (stamps[i].end < (int)vad_input.size()) {
 			// new "ending" segment (not up to the end of the buffer)
 			obs_log(gf->log_level, "VAD segment end -> send to inference");
 			// find the end timestamp of the segment
@@ -542,30 +564,24 @@ void whisper_loop(void *data)
 	obs_log(gf->log_level, "Starting whisper thread");
 
 	vad_state current_vad_state = {false, 0, 0, 0};
-	// 500 ms worth of audio is needed for VAD segmentation
-	uint32_t min_num_bytes_for_vad = (gf->sample_rate / 2) * sizeof(float);
+
+	const char *whisper_loop_name = "Whisper loop";
+	profile_register_root(whisper_loop_name, 50 * 1000 * 1000);
 
 	// Thread main loop
 	while (true) {
+		ProfileScope(whisper_loop_name);
 		{
+			ProfileScope("lock whisper ctx");
 			std::lock_guard<std::mutex> lock(gf->whisper_ctx_mutex);
+			ProfileScope("locked whisper ctx");
 			if (gf->whisper_context == nullptr) {
 				obs_log(LOG_WARNING, "Whisper context is null, exiting thread");
 				break;
 			}
 		}
 
-		uint32_t num_bytes_on_input = 0;
-		{
-			// scoped lock the buffer mutex
-			std::lock_guard<std::mutex> lock(gf->whisper_buf_mutex);
-			num_bytes_on_input = (uint32_t)gf->input_buffers[0].size;
-		}
-
-		// only run vad segmentation if there are at least 500 ms of audio in the buffer
-		if (num_bytes_on_input > min_num_bytes_for_vad) {
-			current_vad_state = vad_based_segmentation(gf, current_vad_state);
-		}
+		current_vad_state = vad_based_segmentation(gf, current_vad_state);
 
 		if (!gf->cleared_last_sub) {
 			// check if we should clear the current sub depending on the minimum subtitle duration
