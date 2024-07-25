@@ -55,6 +55,8 @@ public:
 	void drop_chunks(const std::vector<float> &input_wav, std::vector<float> &output_wav);
 	void set_threshold(float threshold_) { this->threshold = threshold_; }
 
+	int64_t get_window_size_samples() const { return window_size_samples; }
+
 private:
 	// model config
 	int64_t window_size_samples; // Assign when init, support 256 512 768 for 8k; 512 1024 1536 for 16k.
