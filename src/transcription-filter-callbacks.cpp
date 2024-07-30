@@ -181,10 +181,16 @@ void send_caption_to_stream(DetectionResultWithText result, const std::string &s
 	obs_output_t *streaming_output = obs_frontend_get_streaming_output();
 	if (streaming_output) {
 		// calculate the duration in seconds
-		const uint64_t duration = result.end_timestamp_ms - result.start_timestamp_ms;
-		obs_log(gf->log_level, "Sending caption to streaming output: %s", str_copy.c_str());
+		const double duration =
+			(double)(result.end_timestamp_ms - result.start_timestamp_ms) / 1000.0;
+		// prevent the duration from being too short or too long
+		const double effective_duration = std::min(std::max(2.0, duration), 7.0);
+		obs_log(gf->log_level,
+			"Sending caption to streaming output: %s (raw duration %.3f, effective duration %.3f)",
+			str_copy.c_str(), duration, effective_duration);
+		// TODO: find out why setting short duration does not work
 		obs_output_output_caption_text2(streaming_output, str_copy.c_str(),
-						(double)duration / 1000.0);
+						effective_duration);
 		obs_output_release(streaming_output);
 	}
 }
@@ -259,6 +265,7 @@ void set_text_callback(struct transcription_filter_data *gf,
 	}
 
 	if (gf->caption_to_stream && result.result == DETECTION_RESULT_SPEECH) {
+		// TODO: add support for partial transcriptions
 		send_caption_to_stream(result, str_copy, gf);
 	}
 
