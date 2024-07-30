@@ -37,9 +37,15 @@ if(APPLE)
     Whispercpp::Whisper
     PROPERTIES
       IMPORTED_LOCATION
-      ${whispercpp_fetch_SOURCE_DIR}/lib/static/${CMAKE_STATIC_LIBRARY_PREFIX}whisper${CMAKE_STATIC_LIBRARY_SUFFIX})
+      ${whispercpp_fetch_SOURCE_DIR}/release/lib/${CMAKE_STATIC_LIBRARY_PREFIX}whisper${CMAKE_STATIC_LIBRARY_SUFFIX})
   set_target_properties(Whispercpp::Whisper PROPERTIES INTERFACE_INCLUDE_DIRECTORIES
                                                        ${whispercpp_fetch_SOURCE_DIR}/include)
+  add_library(Whispercpp::GGML STATIC IMPORTED)
+  set_target_properties(
+    Whispercpp::GGML
+    PROPERTIES
+      IMPORTED_LOCATION
+      ${whispercpp_fetch_SOURCE_DIR}/release/lib/${CMAKE_STATIC_LIBRARY_PREFIX}ggml${CMAKE_STATIC_LIBRARY_SUFFIX})
 
 elseif(WIN32)
   if(NOT DEFINED ENV{ACCELERATION})
@@ -83,12 +89,14 @@ elseif(WIN32)
   add_library(Whispercpp::Whisper SHARED IMPORTED)
   set_target_properties(
     Whispercpp::Whisper
-    PROPERTIES IMPORTED_LOCATION
-               ${whispercpp_fetch_SOURCE_DIR}/bin/${CMAKE_SHARED_LIBRARY_PREFIX}whisper${CMAKE_SHARED_LIBRARY_SUFFIX})
+    PROPERTIES
+      IMPORTED_LOCATION
+      ${whispercpp_fetch_SOURCE_DIR}/release/bin/${CMAKE_SHARED_LIBRARY_PREFIX}whisper${CMAKE_SHARED_LIBRARY_SUFFIX})
   set_target_properties(
     Whispercpp::Whisper
-    PROPERTIES IMPORTED_IMPLIB
-               ${whispercpp_fetch_SOURCE_DIR}/lib/${CMAKE_STATIC_LIBRARY_PREFIX}whisper${CMAKE_STATIC_LIBRARY_SUFFIX})
+    PROPERTIES
+      IMPORTED_IMPLIB
+      ${whispercpp_fetch_SOURCE_DIR}/release/lib/${CMAKE_STATIC_LIBRARY_PREFIX}whisper${CMAKE_STATIC_LIBRARY_SUFFIX})
   set_target_properties(Whispercpp::Whisper PROPERTIES INTERFACE_INCLUDE_DIRECTORIES
                                                        ${whispercpp_fetch_SOURCE_DIR}/include)
 
@@ -96,11 +104,11 @@ elseif(WIN32)
     # add openblas to the link line
     add_library(Whispercpp::OpenBLAS STATIC IMPORTED)
     set_target_properties(Whispercpp::OpenBLAS PROPERTIES IMPORTED_LOCATION
-                                                          ${whispercpp_fetch_SOURCE_DIR}/lib/libopenblas.dll.a)
+                                                          ${whispercpp_fetch_SOURCE_DIR}/release/lib/libopenblas.dll.a)
   endif()
 
   # glob all dlls in the bin directory and install them
-  file(GLOB WHISPER_DLLS ${whispercpp_fetch_SOURCE_DIR}/bin/*.dll)
+  file(GLOB WHISPER_DLLS ${whispercpp_fetch_SOURCE_DIR}/release/bin/*.dll)
   install(FILES ${WHISPER_DLLS} DESTINATION "obs-plugins/64bit")
 else()
   set(Whispercpp_Build_GIT_TAG "v1.6.2")
@@ -145,4 +153,5 @@ if(WIN32 AND "$ENV{ACCELERATION}" STREQUAL "cpu")
 endif()
 if(APPLE)
   target_link_libraries(Whispercpp INTERFACE "-framework Accelerate -framework CoreML -framework Metal")
+  target_link_libraries(Whispercpp INTERFACE Whispercpp::GGML)
 endif(APPLE)
