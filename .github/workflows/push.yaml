@@ -76,9 +76,8 @@ jobs:
 
           variants=(
             'windows-x64-cpu;zip|exe'
-            'windows-x64-clblast;zip|exe'
-            'windows-x64-11.8.0;zip|exe'
-            'windows-x64-12.2.0;zip|exe'
+            'windows-x64-hipblas;zip|exe'
+            'windows-x64-cuda;zip|exe'
             'macos-arm64;tar.xz|pkg'
             'macos-x86_64;tar.xz|pkg'
             'ubuntu-22.04-x86_64;tar.xz|deb|ddeb'

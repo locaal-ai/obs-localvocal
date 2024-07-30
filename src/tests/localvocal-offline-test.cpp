@@ -172,7 +172,6 @@ create_context(int sample_rate, int channels, const std::string &whisper_model_p
 	gf->whisper_params.max_len = 0;
 	gf->whisper_params.split_on_word = false;
 	gf->whisper_params.max_tokens = 0;
-	gf->whisper_params.speed_up = false;
 	gf->whisper_params.suppress_blank = true;
 	gf->whisper_params.suppress_non_speech_tokens = true;
 	gf->whisper_params.temperature = 0.0;

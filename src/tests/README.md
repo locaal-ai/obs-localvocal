@@ -13,7 +13,7 @@ Start by cloning the repo.
 
 Proceed to build the plugin regularly, e.g.
 ```powershell
-obs-localvocal> $env:CPU_OR_CUDA="12.2.0"
+obs-localvocal> $env:ACCELERATION="cuda"
 obs-localvocal> .\.github\scripts\Build-Windows.ps1 -Configuration Release
 ```
 

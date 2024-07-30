@@ -411,8 +411,6 @@ void add_whisper_params_group_properties(obs_properties_t *ppts)
 	// int   max_tokens;       // max tokens per segment (0 = no limit)
 	obs_properties_add_int_slider(whisper_params_group, "max_tokens", MT_("max_tokens"), 0, 100,
 				      1);
-	// bool speed_up;          // speed-up the audio by 2x using Phase Vocoder
-	obs_properties_add_bool(whisper_params_group, "speed_up", MT_("speed_up"));
 	// const char * initial_prompt;
 	obs_properties_add_text(whisper_params_group, "initial_prompt", MT_("initial_prompt"),
 				OBS_TEXT_DEFAULT);

@@ -380,7 +380,6 @@ void transcription_filter_update(void *data, obs_data_t *s)
 		gf->whisper_params.max_len = (int)obs_data_get_int(s, "max_len");
 		gf->whisper_params.split_on_word = obs_data_get_bool(s, "split_on_word");
 		gf->whisper_params.max_tokens = (int)obs_data_get_int(s, "max_tokens");
-		gf->whisper_params.speed_up = obs_data_get_bool(s, "speed_up");
 		gf->whisper_params.suppress_blank = obs_data_get_bool(s, "suppress_blank");
 		gf->whisper_params.suppress_non_speech_tokens =
 			obs_data_get_bool(s, "suppress_non_speech_tokens");
@@ -611,7 +610,6 @@ void transcription_filter_defaults(obs_data_t *s)
 	obs_data_set_default_int(s, "max_len", 0);
 	obs_data_set_default_bool(s, "split_on_word", true);
 	obs_data_set_default_int(s, "max_tokens", 0);
-	obs_data_set_default_bool(s, "speed_up", false);
 	obs_data_set_default_bool(s, "suppress_blank", false);
 	obs_data_set_default_bool(s, "suppress_non_speech_tokens", true);
 	obs_data_set_default_double(s, "temperature", 0.1);

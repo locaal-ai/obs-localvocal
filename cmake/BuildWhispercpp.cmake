@@ -14,12 +14,12 @@ if(APPLE)
   endif(NOT DEFINED ENV{MACOS_ARCH})
 
   set(WHISPER_CPP_URL
-      "https://github.com/occ-ai/occ-ai-dep-whispercpp/releases/download/0.0.3/whispercpp-macos-$ENV{MACOS_ARCH}-0.0.3.tar.gz"
+      "https://github.com/occ-ai/occ-ai-dep-whispercpp/releases/download/0.0.4/whispercpp-macos-$ENV{MACOS_ARCH}-0.0.4.tar.gz"
   )
   if($ENV{MACOS_ARCH} STREQUAL "x86_64")
-    set(WHISPER_CPP_HASH "94DB35C69E958C8A59F0F331734F4F4F45F4BB13D2F54D3C838457E8590874C4")
+    set(WHISPER_CPP_HASH "44ebaa26a2f9883b461f86875cdf00b9c538c604acc856dd968eba5bb2f18fa4")
   elseif($ENV{MACOS_ARCH} STREQUAL "arm64")
-    set(WHISPER_CPP_HASH "ACA1DF8F34F4946B56FEED89B7548C9AD56D1DD89615C96BDEB6E4734A946451")
+    set(WHISPER_CPP_HASH "0075aab303eb5ddc46fa8dca29ec88626710146fd0bcf03e07ac0a88c71ac197")
   else()
     message(
       FATAL_ERROR
@@ -42,38 +42,34 @@ if(APPLE)
                                                        ${whispercpp_fetch_SOURCE_DIR}/include)
 
 elseif(WIN32)
-  if(NOT DEFINED ENV{CPU_OR_CUDA})
+  if(NOT DEFINED ENV{ACCELERATION})
     message(
-      FATAL_ERROR
-        "The CPU_OR_CUDA environment variable is not set. Please set it to either `cpu`, `clblast` or `11.8.0` or `12.2.0`"
+      FATAL_ERROR "The ACCELERATION environment variable is not set. Please set it to either `cpu`, `cuda` or `hipblas`"
     )
-  endif(NOT DEFINED ENV{CPU_OR_CUDA})
+  endif(NOT DEFINED ENV{ACCELERATION})
 
-  set(ARCH_PREFIX $ENV{CPU_OR_CUDA})
-  if(NOT $ENV{CPU_OR_CUDA} STREQUAL "cpu" AND NOT $ENV{CPU_OR_CUDA} STREQUAL "clblast")
-    set(ARCH_PREFIX "cuda$ENV{CPU_OR_CUDA}")
+  set(ARCH_PREFIX $ENV{ACCELERATION})
+  if(NOT $ENV{ACCELERATION} STREQUAL "cpu" AND NOT $ENV{ACCELERATION} STREQUAL "hipblas")
     add_compile_definitions("LOCALVOCAL_WITH_CUDA")
-  elseif($ENV{CPU_OR_CUDA} STREQUAL "cpu")
+  elseif($ENV{ACCELERATION} STREQUAL "cpu")
     add_compile_definitions("LOCALVOCAL_WITH_CPU")
   else()
-    add_compile_definitions("LOCALVOCAL_WITH_CLBLAST")
+    add_compile_definitions("LOCALVOCAL_WITH_HIPBLAS")
   endif()
 
   set(WHISPER_CPP_URL
-      "https://github.com/occ-ai/occ-ai-dep-whispercpp/releases/download/0.0.3/whispercpp-windows-${ARCH_PREFIX}-0.0.3.zip"
+      "https://github.com/occ-ai/occ-ai-dep-whispercpp/releases/download/0.0.4/whispercpp-windows-${ARCH_PREFIX}-0.0.4.zip"
   )
-  if($ENV{CPU_OR_CUDA} STREQUAL "cpu")
-    set(WHISPER_CPP_HASH "A7243E649E0B6D080AA6D2210DB0AC08C597FA11B88C3068B8A60083AD9E62EF")
-  elseif($ENV{CPU_OR_CUDA} STREQUAL "clblast")
-    set(WHISPER_CPP_HASH "7957AC76A0E6517C95951B3BECCB554CD992E30DAF8716681B40F375590F69F1")
-  elseif($ENV{CPU_OR_CUDA} STREQUAL "12.2.0")
-    set(WHISPER_CPP_HASH "0F6BC1F91C573A867D6972554FC29C3D8EAFD7994FA0FEBBEAFCF945DC8A9F41")
-  elseif($ENV{CPU_OR_CUDA} STREQUAL "11.8.0")
-    set(WHISPER_CPP_HASH "51CB6750ADDF96F38106E4E88212FCC06500999E568E5A4EDC6D42CA6D7CA99D")
+  if($ENV{ACCELERATION} STREQUAL "cpu")
+    set(WHISPER_CPP_HASH "82ca775c1de5b27aff892fb5e3ca7589218e3be1ecdbd35fc899b3f87cfa6c68")
+  elseif($ENV{ACCELERATION} STREQUAL "cuda")
+    set(WHISPER_CPP_HASH "27ced6279f333953207b0c4dc2dc7bb9721790d3252f4fa8cc304fb8e4126f3e")
+  elseif($ENV{ACCELERATION} STREQUAL "hipblas")
+    set(WHISPER_CPP_HASH "af4372e9ef497a60b98de009dbae5d83ca20d10baa49f187ed7cff2a0b24110e")
   else()
     message(
       FATAL_ERROR
-        "The CPU_OR_CUDA environment variable is not set to a valid value. Please set it to either `cpu` or `11.8.0` or `12.2.0`"
+        "The ACCELERATION environment variable is not set to a valid value. Please set it to either `cpu` or `cuda` or `hipblas`"
     )
   endif()
 
@@ -96,7 +92,7 @@ elseif(WIN32)
   set_target_properties(Whispercpp::Whisper PROPERTIES INTERFACE_INCLUDE_DIRECTORIES
                                                        ${whispercpp_fetch_SOURCE_DIR}/include)
 
-  if($ENV{CPU_OR_CUDA} STREQUAL "cpu")
+  if($ENV{ACCELERATION} STREQUAL "cpu")
     # add openblas to the link line
     add_library(Whispercpp::OpenBLAS STATIC IMPORTED)
     set_target_properties(Whispercpp::OpenBLAS PROPERTIES IMPORTED_LOCATION
@@ -144,9 +140,9 @@ endif()
 add_library(Whispercpp INTERFACE)
 add_dependencies(Whispercpp Whispercpp_Build)
 target_link_libraries(Whispercpp INTERFACE Whispercpp::Whisper)
-if(WIN32 AND "$ENV{CPU_OR_CUDA}" STREQUAL "cpu")
+if(WIN32 AND "$ENV{ACCELERATION}" STREQUAL "cpu")
   target_link_libraries(Whispercpp INTERFACE Whispercpp::OpenBLAS)
 endif()
 if(APPLE)
-  target_link_libraries(Whispercpp INTERFACE "-framework Accelerate")
+  target_link_libraries(Whispercpp INTERFACE "-framework Accelerate -framework CoreML -framework Metal")
 endif(APPLE)

@@ -8,8 +8,8 @@ inputs:
     description: 'Build configuration'
     required: false
     default: 'RelWithDebInfo'
-  cublas:
-    description: 'Enable cuBLAS'
+  acceleration:
+    description: 'Enable acceleration'
     required: false
     default: 'cpu'
   codesign:
@@ -86,7 +86,7 @@ runs:
 
         .github/scripts/Build-Windows.ps1 @BuildArgs
       env:
-        CPU_OR_CUDA: ${{ inputs.cublas }}
+        ACCELERATION: ${{ inputs.acceleration }}
 
     - name: Create Summary 📊
       if: contains(fromJSON('["Linux", "macOS"]'),runner.os)
