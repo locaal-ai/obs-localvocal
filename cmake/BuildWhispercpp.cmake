@@ -35,17 +35,15 @@ if(APPLE)
   add_library(Whispercpp::Whisper STATIC IMPORTED)
   set_target_properties(
     Whispercpp::Whisper
-    PROPERTIES
-      IMPORTED_LOCATION
-      ${whispercpp_fetch_SOURCE_DIR}/release/lib/${CMAKE_STATIC_LIBRARY_PREFIX}whisper${CMAKE_STATIC_LIBRARY_SUFFIX})
+    PROPERTIES IMPORTED_LOCATION
+               ${whispercpp_fetch_SOURCE_DIR}/lib/${CMAKE_STATIC_LIBRARY_PREFIX}whisper${CMAKE_STATIC_LIBRARY_SUFFIX})
   set_target_properties(Whispercpp::Whisper PROPERTIES INTERFACE_INCLUDE_DIRECTORIES
                                                        ${whispercpp_fetch_SOURCE_DIR}/include)
   add_library(Whispercpp::GGML STATIC IMPORTED)
   set_target_properties(
     Whispercpp::GGML
-    PROPERTIES
-      IMPORTED_LOCATION
-      ${whispercpp_fetch_SOURCE_DIR}/release/lib/${CMAKE_STATIC_LIBRARY_PREFIX}ggml${CMAKE_STATIC_LIBRARY_SUFFIX})
+    PROPERTIES IMPORTED_LOCATION
+               ${whispercpp_fetch_SOURCE_DIR}/lib/${CMAKE_STATIC_LIBRARY_PREFIX}ggml${CMAKE_STATIC_LIBRARY_SUFFIX})
 
 elseif(WIN32)
   if(NOT DEFINED ENV{ACCELERATION})
@@ -55,23 +53,18 @@ elseif(WIN32)
   endif(NOT DEFINED ENV{ACCELERATION})
 
   set(ARCH_PREFIX $ENV{ACCELERATION})
-  if(NOT $ENV{ACCELERATION} STREQUAL "cpu" AND NOT $ENV{ACCELERATION} STREQUAL "hipblas")
-    add_compile_definitions("LOCALVOCAL_WITH_CUDA")
-  elseif($ENV{ACCELERATION} STREQUAL "cpu")
-    add_compile_definitions("LOCALVOCAL_WITH_CPU")
-  else()
-    add_compile_definitions("LOCALVOCAL_WITH_HIPBLAS")
-  endif()
-
   set(WHISPER_CPP_URL
       "https://github.com/occ-ai/occ-ai-dep-whispercpp/releases/download/0.0.4/whispercpp-windows-${ARCH_PREFIX}-0.0.4.zip"
   )
   if($ENV{ACCELERATION} STREQUAL "cpu")
     set(WHISPER_CPP_HASH "82ca775c1de5b27aff892fb5e3ca7589218e3be1ecdbd35fc899b3f87cfa6c68")
+    add_compile_definitions("LOCALVOCAL_WITH_CPU")
   elseif($ENV{ACCELERATION} STREQUAL "cuda")
     set(WHISPER_CPP_HASH "27ced6279f333953207b0c4dc2dc7bb9721790d3252f4fa8cc304fb8e4126f3e")
+    add_compile_definitions("LOCALVOCAL_WITH_CUDA")
   elseif($ENV{ACCELERATION} STREQUAL "hipblas")
     set(WHISPER_CPP_HASH "af4372e9ef497a60b98de009dbae5d83ca20d10baa49f187ed7cff2a0b24110e")
+    add_compile_definitions("LOCALVOCAL_WITH_HIPBLAS")
   else()
     message(
       FATAL_ERROR
@@ -89,14 +82,12 @@ elseif(WIN32)
   add_library(Whispercpp::Whisper SHARED IMPORTED)
   set_target_properties(
     Whispercpp::Whisper
-    PROPERTIES
-      IMPORTED_LOCATION
-      ${whispercpp_fetch_SOURCE_DIR}/release/bin/${CMAKE_SHARED_LIBRARY_PREFIX}whisper${CMAKE_SHARED_LIBRARY_SUFFIX})
+    PROPERTIES IMPORTED_LOCATION
+               ${whispercpp_fetch_SOURCE_DIR}/bin/${CMAKE_SHARED_LIBRARY_PREFIX}whisper${CMAKE_SHARED_LIBRARY_SUFFIX})
   set_target_properties(
     Whispercpp::Whisper
-    PROPERTIES
-      IMPORTED_IMPLIB
-      ${whispercpp_fetch_SOURCE_DIR}/release/lib/${CMAKE_STATIC_LIBRARY_PREFIX}whisper${CMAKE_STATIC_LIBRARY_SUFFIX})
+    PROPERTIES IMPORTED_IMPLIB
+               ${whispercpp_fetch_SOURCE_DIR}/lib/${CMAKE_STATIC_LIBRARY_PREFIX}whisper${CMAKE_STATIC_LIBRARY_SUFFIX})
   set_target_properties(Whispercpp::Whisper PROPERTIES INTERFACE_INCLUDE_DIRECTORIES
                                                        ${whispercpp_fetch_SOURCE_DIR}/include)
 
@@ -104,11 +95,11 @@ elseif(WIN32)
     # add openblas to the link line
     add_library(Whispercpp::OpenBLAS STATIC IMPORTED)
     set_target_properties(Whispercpp::OpenBLAS PROPERTIES IMPORTED_LOCATION
-                                                          ${whispercpp_fetch_SOURCE_DIR}/release/lib/libopenblas.dll.a)
+                                                          ${whispercpp_fetch_SOURCE_DIR}/lib/libopenblas.dll.a)
   endif()
 
   # glob all dlls in the bin directory and install them
-  file(GLOB WHISPER_DLLS ${whispercpp_fetch_SOURCE_DIR}/release/bin/*.dll)
+  file(GLOB WHISPER_DLLS ${whispercpp_fetch_SOURCE_DIR}/bin/*.dll)
   install(FILES ${WHISPER_DLLS} DESTINATION "obs-plugins/64bit")
 else()
   set(Whispercpp_Build_GIT_TAG "v1.6.2")
