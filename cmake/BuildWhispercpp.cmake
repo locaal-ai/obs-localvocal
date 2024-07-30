@@ -1,21 +1,12 @@
 include(ExternalProject)
 include(FetchContent)
 
-if(${CMAKE_BUILD_TYPE} STREQUAL Release OR ${CMAKE_BUILD_TYPE} STREQUAL RelWithDebInfo)
-  set(Whispercpp_BUILD_TYPE Release)
-else()
-  set(Whispercpp_BUILD_TYPE Debug)
-endif()
+set(PREBUILT_WHISPERCPP_VERSION "0.0.4")
+set(PREBUILT_WHISPERCPP_URL_BASE
+    "https://github.com/occ-ai/occ-ai-dep-whispercpp/releases/download/${PREBUILT_WHISPERCPP_VERSION}")
 
 if(APPLE)
   # check the "MACOS_ARCH" env var to figure out if this is x86 or arm64
-  if(NOT DEFINED ENV{MACOS_ARCH})
-    message(FATAL_ERROR "The MACOS_ARCH environment variable is not set. Please set it to either `x86_64` or `arm64`")
-  endif(NOT DEFINED ENV{MACOS_ARCH})
-
-  set(WHISPER_CPP_URL
-      "https://github.com/occ-ai/occ-ai-dep-whispercpp/releases/download/0.0.4/whispercpp-macos-$ENV{MACOS_ARCH}-0.0.4.tar.gz"
-  )
   if($ENV{MACOS_ARCH} STREQUAL "x86_64")
     set(WHISPER_CPP_HASH "44ebaa26a2f9883b461f86875cdf00b9c538c604acc856dd968eba5bb2f18fa4")
   elseif($ENV{MACOS_ARCH} STREQUAL "arm64")
@@ -25,6 +16,8 @@ if(APPLE)
       FATAL_ERROR
         "The MACOS_ARCH environment variable is not set to a valid value. Please set it to either `x86_64` or `arm64`")
   endif()
+  set(WHISPER_CPP_URL
+      "${PREBUILT_WHISPERCPP_URL_BASE}/whispercpp-macos-$ENV{MACOS_ARCH}-${PREBUILT_WHISPERCPP_VERSION}.tar.gz")
 
   FetchContent_Declare(
     whispercpp_fetch
@@ -54,8 +47,7 @@ elseif(WIN32)
 
   set(ARCH_PREFIX $ENV{ACCELERATION})
   set(WHISPER_CPP_URL
-      "https://github.com/occ-ai/occ-ai-dep-whispercpp/releases/download/0.0.4/whispercpp-windows-${ARCH_PREFIX}-0.0.4.zip"
-  )
+      "${PREBUILT_WHISPERCPP_URL_BASE}/whispercpp-windows-${ARCH_PREFIX}-${PREBUILT_WHISPERCPP_VERSION}.zip")
   if($ENV{ACCELERATION} STREQUAL "cpu")
     set(WHISPER_CPP_HASH "82ca775c1de5b27aff892fb5e3ca7589218e3be1ecdbd35fc899b3f87cfa6c68")
     add_compile_definitions("LOCALVOCAL_WITH_CPU")
@@ -102,6 +94,11 @@ elseif(WIN32)
   file(GLOB WHISPER_DLLS ${whispercpp_fetch_SOURCE_DIR}/bin/*.dll)
   install(FILES ${WHISPER_DLLS} DESTINATION "obs-plugins/64bit")
 else()
+  if(${CMAKE_BUILD_TYPE} STREQUAL Release OR ${CMAKE_BUILD_TYPE} STREQUAL RelWithDebInfo)
+    set(Whispercpp_BUILD_TYPE Release)
+  else()
+    set(Whispercpp_BUILD_TYPE Debug)
+  endif()
   set(Whispercpp_Build_GIT_TAG "v1.6.2")
   set(WHISPER_EXTRA_CXX_FLAGS "-fPIC")
   set(WHISPER_ADDITIONAL_CMAKE_ARGS -DWHISPER_BLAS=OFF -DWHISPER_CUBLAS=OFF -DWHISPER_OPENBLAS=OFF)
