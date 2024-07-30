@@ -43,12 +43,12 @@ private:
 private:
 	void init_engine_threads(int inter_threads, int intra_threads);
 	void init_onnx_model(const SileroString &model_path);
-	void reset_states();
+	void reset_states(bool reset_state);
 	float predict_one(const std::vector<float> &data);
 	void predict(const std::vector<float> &data);
 
 public:
-	void process(const std::vector<float> &input_wav);
+	void process(const std::vector<float> &input_wav, bool reset_state = true);
 	void process(const std::vector<float> &input_wav, std::vector<float> &output_wav);
 	void collect_chunks(const std::vector<float> &input_wav, std::vector<float> &output_wav);
 	const std::vector<timestamp_t> get_speech_timestamps() const;

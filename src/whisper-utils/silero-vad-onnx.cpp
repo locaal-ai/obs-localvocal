@@ -92,11 +92,13 @@ void VadIterator::init_onnx_model(const SileroString &model_path)
 	session = std::make_shared<Ort::Session>(env, model_path.c_str(), session_options);
 };
 
-void VadIterator::reset_states()
+void VadIterator::reset_states(bool reset_state)
 {
-	// Call reset before each audio start
-	std::memset(_state.data(), 0.0f, _state.size() * sizeof(float));
-	triggered = false;
+	if (reset_state) {
+		// Call reset before each audio start
+		std::memset(_state.data(), 0.0f, _state.size() * sizeof(float));
+		triggered = false;
+	}
 	temp_end = 0;
 	current_sample = 0;
 
@@ -257,9 +259,9 @@ void VadIterator::predict(const std::vector<float> &data)
 	}
 };
 
-void VadIterator::process(const std::vector<float> &input_wav)
+void VadIterator::process(const std::vector<float> &input_wav, bool reset_state)
 {
-	reset_states();
+	reset_states(reset_state);
 
 	audio_length_samples = (int)input_wav.size();
 

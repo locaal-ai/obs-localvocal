@@ -426,7 +426,7 @@ vad_state vad_based_segmentation(transcription_filter_data *gf, vad_state last_v
 	obs_log(gf->log_level, "sending %d frames to vad", vad_input.size());
 	{
 		ProfileScope("vad->process");
-		gf->vad->process(vad_input);
+		gf->vad->process(vad_input, !last_vad_state.vad_on);
 	}
 
 	const uint64_t start_ts_offset_ms = start_timestamp_offset_ns / 1000000;
