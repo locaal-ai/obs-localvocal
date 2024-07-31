@@ -38,6 +38,13 @@ if(APPLE)
     PROPERTIES IMPORTED_LOCATION
                ${whispercpp_fetch_SOURCE_DIR}/lib/${CMAKE_STATIC_LIBRARY_PREFIX}ggml${CMAKE_STATIC_LIBRARY_SUFFIX})
 
+  add_library(Whispercpp::CoreML STATIC IMPORTED)
+  set_target_properties(
+    Whispercpp::CoreML
+    PROPERTIES
+      IMPORTED_LOCATION
+      ${whispercpp_fetch_SOURCE_DIR}/lib/${CMAKE_STATIC_LIBRARY_PREFIX}whisper.coreml${CMAKE_STATIC_LIBRARY_SUFFIX})
+
 elseif(WIN32)
   if(NOT DEFINED ENV{ACCELERATION})
     message(
@@ -141,5 +148,5 @@ if(WIN32 AND "$ENV{ACCELERATION}" STREQUAL "cpu")
 endif()
 if(APPLE)
   target_link_libraries(Whispercpp INTERFACE "-framework Accelerate -framework CoreML -framework Metal")
-  target_link_libraries(Whispercpp INTERFACE Whispercpp::GGML)
+  target_link_libraries(Whispercpp INTERFACE Whispercpp::GGML Whispercpp::CoreML)
 endif(APPLE)
