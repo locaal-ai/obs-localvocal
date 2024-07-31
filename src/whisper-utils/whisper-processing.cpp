@@ -67,6 +67,9 @@ struct whisper_context *init_whisper_context(const std::string &model_path_in,
 #elif defined(LOCALVOCAL_WITH_HIPBLAS)
 	cparams.use_gpu = true;
 	obs_log(LOG_INFO, "Using hipBLAS for inference");
+#elif defined(__APPLE__)
+	cparams.use_gpu = true;
+	obs_log(LOG_INFO, "Using Metal/CoreML for inference");
 #else
 	cparams.use_gpu = false;
 	obs_log(LOG_INFO, "Using CPU for inference");
