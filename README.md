@@ -51,7 +51,7 @@ Current Features:
 - Send captions on a RTMP stream to e.g. YouTube, Twitch
 - Bring your own Whisper model (any GGML)
 - Translate captions in real time to major languages (both Whisper built-in translation as well as NMT models)
-- CUDA, OpenCL, Apple Arm64, AVX & SSE acceleration support
+- CUDA, hipBLAS (AMD ROCm), Apple Arm64, AVX & SSE acceleration support
 - Filter out or replace any part of the produced captions
 - Partial transcriptions for a streaming-captions experience
 
@@ -178,10 +178,10 @@ The build should exist in the `./release` folder off the root. You can manually 
 
 LocalVocal will now build with CUDA support automatically through a prebuilt binary of Whisper.cpp from https://github.com/occ-ai/occ-ai-dep-whispercpp. The CMake scripts will download all necessary files.
 
-To build with cuda add `CPU_OR_CUDA` as an environment variable (with `cpu`, `clblast`, `12.2.0` or `11.8.0`) and build regularly
+To build with cuda add `ACCELERATION` as an environment variable (with `cpu`, `hipblas`, or `cuda`) and build regularly
 
 ```powershell
-> $env:CPU_OR_CUDA="12.2.0"
+> $env:ACCELERATION="cuda"
 > .github/scripts/Build-Windows.ps1 -Configuration Release
 ```
 

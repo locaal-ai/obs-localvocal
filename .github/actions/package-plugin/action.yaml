@@ -8,8 +8,8 @@ inputs:
     description: 'Build configuration'
     required: false
     default: 'RelWithDebInfo'
-  cublas:
-    description: 'Enable cuBLAS'
+  acceleration:
+    description: 'Enable acceleration'
     required: false
     default: 'cpu'
   codesign:
@@ -112,7 +112,7 @@ runs:
         $PackageArgs = @{
           Target = '${{ inputs.target }}'
           Configuration = '${{ inputs.config }}'
-          Cublas = '${{ inputs.cublas }}'
+          Acceleration = '${{ inputs.acceleration }}'
         }
 
         if ( '${{ inputs.package }}' -eq 'true' ) {

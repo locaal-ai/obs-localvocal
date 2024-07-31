@@ -19,13 +19,12 @@ if(APPLE)
 
 elseif(WIN32)
 
-  # check CPU_OR_CUDA environment variable
-  if(NOT DEFINED ENV{CPU_OR_CUDA})
-    message(
-      FATAL_ERROR "Please set the CPU_OR_CUDA environment variable to either `cpu`, `clblast`, `12.2.0` or `11.8.0`")
+  # check ACCELERATION environment variable
+  if(NOT DEFINED ENV{ACCELERATION})
+    message(FATAL_ERROR "Please set the ACCELERATION environment variable to either `cpu`, `hipblas`, or `cuda`")
   endif()
 
-  if($ENV{CPU_OR_CUDA} STREQUAL "cpu" OR $ENV{CPU_OR_CUDA} STREQUAL "clblast")
+  if($ENV{ACCELERATION} STREQUAL "cpu" OR $ENV{ACCELERATION} STREQUAL "hipblas")
     FetchContent_Declare(
       ctranslate2_fetch
       URL https://github.com/occ-ai/obs-ai-ctranslate2-dep/releases/download/1.2.0/libctranslate2-windows-4.1.1-Release-cpu.zip
@@ -33,21 +32,12 @@ elseif(WIN32)
   else()
     # add compile definitions for CUDA
     add_compile_definitions(POLYGLOT_WITH_CUDA)
-    add_compile_definitions(POLYGLOT_CUDA_VERSION=$ENV{CPU_OR_CUDA})
+    add_compile_definitions(POLYGLOT_CUDA_VERSION="12.2.0")
 
-    if($ENV{CPU_OR_CUDA} STREQUAL "12.2.0")
-      FetchContent_Declare(
-        ctranslate2_fetch
-        URL https://github.com/occ-ai/obs-ai-ctranslate2-dep/releases/download/1.2.0/libctranslate2-windows-4.1.1-Release-cuda12.2.0.zip
-        URL_HASH SHA256=131724d510f9f2829970953a1bc9e4e8fb7b4cbc8218e32270dcfe6172a51558)
-    elseif($ENV{CPU_OR_CUDA} STREQUAL "11.8.0")
-      FetchContent_Declare(
-        ctranslate2_fetch
-        URL https://github.com/occ-ai/obs-ai-ctranslate2-dep/releases/download/1.2.0/libctranslate2-windows-4.1.1-Release-cuda11.8.0.zip
-        URL_HASH SHA256=a120bee82f821df35a4646add30ac18b5c23e4e16b56fa7ba338eeae336e0d81)
-    else()
-      message(FATAL_ERROR "Unsupported CUDA version: $ENV{CPU_OR_CUDA}")
-    endif()
+    FetchContent_Declare(
+      ctranslate2_fetch
+      URL https://github.com/occ-ai/obs-ai-ctranslate2-dep/releases/download/1.2.0/libctranslate2-windows-4.1.1-Release-cuda12.2.0.zip
+      URL_HASH SHA256=131724d510f9f2829970953a1bc9e4e8fb7b4cbc8218e32270dcfe6172a51558)
   endif()
 
   FetchContent_MakeAvailable(ctranslate2_fetch)

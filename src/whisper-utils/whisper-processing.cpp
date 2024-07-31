@@ -64,9 +64,9 @@ struct whisper_context *init_whisper_context(const std::string &model_path_in,
 #ifdef LOCALVOCAL_WITH_CUDA
 	cparams.use_gpu = true;
 	obs_log(LOG_INFO, "Using CUDA GPU for inference, device %d", cparams.gpu_device);
-#elif defined(LOCALVOCAL_WITH_CLBLAST)
+#elif defined(LOCALVOCAL_WITH_HIPBLAS)
 	cparams.use_gpu = true;
-	obs_log(LOG_INFO, "Using OpenCL for inference");
+	obs_log(LOG_INFO, "Using hipBLAS for inference");
 #else
 	cparams.use_gpu = false;
 	obs_log(LOG_INFO, "Using CPU for inference");

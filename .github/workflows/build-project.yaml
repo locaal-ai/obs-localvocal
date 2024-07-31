@@ -246,7 +246,7 @@ jobs:
     needs: check-event
     strategy:
       matrix:
-        cublas: [cpu, clblast, 12.2.0, 11.8.0]
+        acceleration: [cpu, cuda, hipblas]
     defaults:
       run:
         shell: pwsh
@@ -276,7 +276,7 @@ jobs:
         with:
           target: x64
           config: ${{ needs.check-event.outputs.config }}
-          cublas: ${{ matrix.cublas }}
+          acceleration: ${{ matrix.acceleration }}
 
       - name: Package Plugin 📀
         uses: ./.github/actions/package-plugin
@@ -284,10 +284,10 @@ jobs:
           target: x64
           config: ${{ needs.check-event.outputs.config }}
           package: ${{ fromJSON(needs.check-event.outputs.package) }}
-          cublas: ${{ matrix.cublas }}
+          acceleration: ${{ matrix.acceleration }}
 
       - name: Upload Artifacts 📡
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ steps.setup.outputs.pluginName }}-${{ steps.setup.outputs.pluginVersion }}-windows-x64-${{ matrix.cublas }}-${{ needs.check-event.outputs.commitHash }}
+          name: ${{ steps.setup.outputs.pluginName }}-${{ steps.setup.outputs.pluginVersion }}-windows-x64-${{ matrix.acceleration }}-${{ needs.check-event.outputs.commitHash }}
           path: ${{ github.workspace }}/release/${{ steps.setup.outputs.pluginName }}-${{ steps.setup.outputs.pluginVersion }}-windows-x64*.*
