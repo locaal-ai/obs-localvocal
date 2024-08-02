@@ -108,6 +108,7 @@ struct obs_audio_data *transcription_filter_filter_audio(void *data, struct obs_
 		// calculate timestamp offset from the start of the stream
 		info.timestamp_offset_ns = now_ns() - gf->start_timestamp_ms * 1000000;
 		circlebuf_push_back(&gf->info_buffer, &info, sizeof(info));
+		gf->wshiper_thread_cv.notify_one();
 	}
 
 	return audio;
@@ -153,6 +154,8 @@ void transcription_filter_destroy(void *data)
 		}
 	}
 	circlebuf_free(&gf->info_buffer);
+
+	circlebuf_free(&gf->resampled_buffer);
 
 	if (gf->captions_monitor.isEnabled()) {
 		gf->captions_monitor.stopThread();
@@ -443,6 +446,7 @@ void *transcription_filter_create(obs_data_t *settings, obs_source_t *filter)
 	}
 	circlebuf_init(&gf->info_buffer);
 	circlebuf_init(&gf->whisper_buffer);
+	circlebuf_init(&gf->resampled_buffer);
 
 	// allocate copy buffers
 	gf->copy_buffers[0] =

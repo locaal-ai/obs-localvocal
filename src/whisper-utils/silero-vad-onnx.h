@@ -43,17 +43,19 @@ private:
 private:
 	void init_engine_threads(int inter_threads, int intra_threads);
 	void init_onnx_model(const SileroString &model_path);
-	void reset_states(bool reset_hc);
+	void reset_states(bool reset_state);
 	float predict_one(const std::vector<float> &data);
 	void predict(const std::vector<float> &data);
 
 public:
-	void process(const std::vector<float> &input_wav, bool reset_hc = true);
+	void process(const std::vector<float> &input_wav, bool reset_state = true);
 	void process(const std::vector<float> &input_wav, std::vector<float> &output_wav);
 	void collect_chunks(const std::vector<float> &input_wav, std::vector<float> &output_wav);
 	const std::vector<timestamp_t> get_speech_timestamps() const;
 	void drop_chunks(const std::vector<float> &input_wav, std::vector<float> &output_wav);
 	void set_threshold(float threshold_) { this->threshold = threshold_; }
+
+	int64_t get_window_size_samples() const { return window_size_samples; }
 
 private:
 	// model config
@@ -84,27 +86,26 @@ private:
 	// Inputs
 	std::vector<Ort::Value> ort_inputs;
 
-	std::vector<const char *> input_node_names = {"input", "sr", "h", "c"};
+	std::vector<const char *> input_node_names = {"input", "state", "sr"};
 	std::vector<float> input;
+	unsigned int size_state = 2 * 1 * 128; // It's FIXED.
+	std::vector<float> _state;
 	std::vector<int64_t> sr;
-	unsigned int size_hc = 2 * 1 * 64; // It's FIXED.
-	std::vector<float> _h;
-	std::vector<float> _c;
 
 	int64_t input_node_dims[2] = {};
+	const int64_t state_node_dims[3] = {2, 1, 128};
 	const int64_t sr_node_dims[1] = {1};
-	const int64_t hc_node_dims[3] = {2, 1, 64};
 
 	// Outputs
 	std::vector<Ort::Value> ort_outputs;
-	std::vector<const char *> output_node_names = {"output", "hn", "cn"};
+	std::vector<const char *> output_node_names = {"output", "stateN"};
 
 public:
 	// Construction
 	VadIterator(const SileroString &ModelPath, int Sample_rate = 16000,
-		    int windows_frame_size = 64, float Threshold = 0.5,
-		    int min_silence_duration_ms = 0, int speech_pad_ms = 64,
-		    int min_speech_duration_ms = 64,
+		    int windows_frame_size = 32, float Threshold = 0.5,
+		    int min_silence_duration_ms = 0, int speech_pad_ms = 32,
+		    int min_speech_duration_ms = 32,
 		    float max_speech_duration_s = std::numeric_limits<float>::infinity());
 
 	// Default constructor
