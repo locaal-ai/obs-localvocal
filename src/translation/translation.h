@@ -20,6 +20,7 @@ class SentencePieceProcessor;
 struct translation_context {
 	std::string local_model_folder_path;
 	std::unique_ptr<sentencepiece::SentencePieceProcessor> processor;
+	std::unique_ptr<sentencepiece::SentencePieceProcessor> target_processor;
 	std::unique_ptr<ctranslate2::Translator> translator;
 	std::unique_ptr<ctranslate2::TranslationOptions> options;
 	std::function<std::vector<std::string>(const std::string &)> tokenizer;
