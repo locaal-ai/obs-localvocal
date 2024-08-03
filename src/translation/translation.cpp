@@ -48,10 +48,11 @@ int build_translation_context(struct translation_context &translation_ctx)
 			obs_log(LOG_INFO, "Loading target SPM from %s", target_spm_path.c_str());
 			translation_ctx.target_processor.reset(
 				new sentencepiece::SentencePieceProcessor());
-			const auto status = translation_ctx.target_processor->Load(target_spm_path);
-			if (!status.ok()) {
+			const auto target_status =
+				translation_ctx.target_processor->Load(target_spm_path);
+			if (!target_status.ok()) {
 				obs_log(LOG_ERROR, "Failed to load target SPM: %s",
-					status.ToString().c_str());
+					target_status.ToString().c_str());
 				return OBS_POLYGLOT_TRANSLATION_INIT_FAIL;
 			}
 		} else {
