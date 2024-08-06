@@ -467,7 +467,7 @@ int wmain(int argc, wchar_t *argv[])
 
 					// sleep up to window size in case whisper is processing, so the buffer builds up similar to OBS
 					auto now = std::chrono::system_clock::now();
-					if (now > max_wait)
+					if (false && now > max_wait)
 						break;
 
 					auto wait_start = now + std::chrono::milliseconds(1);
