@@ -428,19 +428,23 @@ int wmain(int argc, wchar_t *argv[])
 		std::remove("segments.json");
 	}
 
+	const auto window_size_in_ms = std::chrono::milliseconds(25);
+
 	// fill up the whisper buffer
 	{
 		gf->start_timestamp_ms = now_ms();
 
 		obs_log(LOG_INFO, "Sending samples to whisper buffer");
 		// 25 ms worth of frames
-		int frames = gf->sample_rate * 25 / 1000;
+		int frames = gf->sample_rate * window_size_in_ms.count() / 1000;
 		const int frame_size_bytes = sizeof(float);
 		int frames_size_bytes = frames * frame_size_bytes;
 		int frames_count = 0;
 		int64_t start_time = std::chrono::duration_cast<std::chrono::nanoseconds>(
 					     std::chrono::system_clock::now().time_since_epoch())
 					     .count();
+		auto start_time_time = std::chrono::system_clock::now();
+		uint64_t window_number = 0;
 		while (true) {
 			// check if there are enough frames left in the audio buffer
 			if ((frames_count + frames) > (audio[0].size() / frame_size_bytes)) {
@@ -449,31 +453,63 @@ int wmain(int argc, wchar_t *argv[])
 				frames_size_bytes = frames * frame_size_bytes;
 			}
 			{
-				std::lock_guard<std::mutex> lock(gf->whisper_buf_mutex);
+				bool wait = false;
+				auto max_wait =
+					start_time_time + (window_number * window_size_in_ms);
+				for (;;) {
+					{
+						std::lock_guard<std::mutex> lock(
+							gf->whisper_buf_mutex);
+						wait = gf->input_buffers->size != 0;
+					}
+					if (!wait)
+						break;
 
-				// push back current audio data to input circlebuf
-				for (size_t c = 0; c < gf->channels; c++) {
-					circlebuf_push_back(&gf->input_buffers[c],
-							    audio[c].data() +
-								    frames_count * frame_size_bytes,
-							    frames_size_bytes);
+					// sleep up to window size in case whisper is processing, so the buffer builds up similar to OBS
+					auto now = std::chrono::system_clock::now();
+					if (now > max_wait)
+						break;
+
+					auto wait_start = now + std::chrono::milliseconds(1);
+					auto wait_until = max_wait > wait_start ? wait_start
+										: max_wait;
+#if 0
+					obs_log(LOG_INFO, "sleeping %lld ms",
+						std::chrono::duration_cast<std::chrono::milliseconds>(
+							(wait_until -
+							 std::chrono::system_clock::now()))
+							.count());
+#endif
+					std::this_thread::sleep_until(wait_until);
 				}
-				// push audio packet info (timestamp/frame count) to info circlebuf
-				struct transcription_filter_audio_info info = {0};
-				info.frames = frames; // number of frames in this packet
-				// make a timestamp from the current position in the audio buffer
-				info.timestamp_offset_ns =
-					start_time +
-					(int64_t)(((float)frames_count / (float)gf->sample_rate) *
-						  1e9);
-				circlebuf_push_back(&gf->info_buffer, &info, sizeof(info));
+
+				{
+					std::lock_guard<std::mutex> lock(gf->whisper_buf_mutex);
+					// push back current audio data to input circlebuf
+					for (size_t c = 0; c < gf->channels; c++) {
+						circlebuf_push_back(
+							&gf->input_buffers[c],
+							audio[c].data() +
+								frames_count * frame_size_bytes,
+							frames_size_bytes);
+					}
+					// push audio packet info (timestamp/frame count) to info circlebuf
+					struct transcription_filter_audio_info info = {0};
+					info.frames = frames; // number of frames in this packet
+					// make a timestamp from the current position in the audio buffer
+					info.timestamp_offset_ns =
+						start_time + (int64_t)(((float)frames_count /
+									(float)gf->sample_rate) *
+								       1e9);
+					circlebuf_push_back(&gf->info_buffer, &info, sizeof(info));
+				}
+				gf->wshiper_thread_cv.notify_one();
 			}
 			frames_count += frames;
+			window_number += 1;
 			if (frames_count >= audio[0].size() / frame_size_bytes) {
 				break;
 			}
-			// sleep for 25 ms
-			std::this_thread::sleep_for(std::chrono::milliseconds(25));
 		}
 		// push a second of silence to the input circlebuf
 		frames = 2 * gf->sample_rate;
