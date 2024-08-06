@@ -2,10 +2,10 @@
 
 <div align="center">
 
-[![GitHub](https://img.shields.io/github/license/occ-ai/obs-localvocal)](https://github.com/occ-ai/obs-localvocal/blob/main/LICENSE)
-[![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/occ-ai/obs-localvocal/push.yaml)](https://github.com/occ-ai/obs-localvocal/actions/workflows/push.yaml)
-[![Total downloads](https://img.shields.io/github/downloads/occ-ai/obs-localvocal/total)](https://github.com/occ-ai/obs-localvocal/releases)
-[![GitHub release (latest by date)](https://img.shields.io/github/v/release/occ-ai/obs-localvocal)](https://github.com/occ-ai/obs-localvocal/releases)
+[![GitHub](https://img.shields.io/github/license/locaal-ai/obs-localvocal)](https://github.com/locaal-ai/obs-localvocal/blob/main/LICENSE)
+[![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/locaal-ai/obs-localvocal/push.yaml)](https://github.com/locaal-ai/obs-localvocal/actions/workflows/push.yaml)
+[![Total downloads](https://img.shields.io/github/downloads/locaal-ai/obs-localvocal/total)](https://github.com/locaal-ai/obs-localvocal/releases)
+[![GitHub release (latest by date)](https://img.shields.io/github/v/release/locaal-ai/obs-localvocal)](https://github.com/locaal-ai/obs-localvocal/releases)
 [![Discord](https://img.shields.io/discord/1200229425141252116)](https://discord.gg/KbjGU2vvUz)
 
 </div>
@@ -14,7 +14,7 @@
 
 LocalVocal lets you transcribe, locally on your machine, speech into text and simultaneously translate to any language. ✅ No GPU required, ✅ no cloud costs, ✅ no network and ✅ no downtime! Privacy first - all data stays on your machine.
 
-If this free plugin has been valuable consider adding a ⭐ to this GH repo, rating it [on OBS](https://obsproject.com/forum/resources/localvocal-live-stream-ai-assistant.1769/), subscribing to [my YouTube channel](https://www.youtube.com/@royshilk) where I post updates, and supporting my work on [GitHub](https://github.com/sponsors/royshil), [Patreon](https://www.patreon.com/RoyShilkrot) or [OpenCollective](https://opencollective.com/occ-ai) 🙏
+If this free plugin has been valuable consider adding a ⭐ to this GH repo, rating it [on OBS](https://obsproject.com/forum/resources/localvocal-live-stream-ai-assistant.1769/), subscribing to [my YouTube channel](https://www.youtube.com/@royshilk) where I post updates, and supporting my work on [GitHub](https://github.com/sponsors/royshil), [Patreon](https://www.patreon.com/RoyShilkrot) or [OpenCollective](https://opencollective.com/locaal-ai) 🙏
 
 Internally the plugin is running [OpenAI's Whisper](https://github.com/openai/whisper) to process real-time the speech and predict a transcription.
 It's using the [Whisper.cpp](https://github.com/ggerganov/whisper.cpp) project from [ggerganov](https://github.com/ggerganov) to run the Whisper network efficiently on CPUs and GPUs.
@@ -61,14 +61,14 @@ Roadmap:
 - Speaker diarization (detecting speakers in a multi-person audio stream)
 
 Check out our other plugins:
-- [Background Removal](https://github.com/occ-ai/obs-backgroundremoval) removes background from webcam without a green screen.
-- [Detect](https://github.com/occ-ai/obs-detect) will detect and track >80 types of objects in real-time inside OBS
-- [CleanStream](https://github.com/occ-ai/obs-cleanstream) for real-time filler word (uh,um) and profanity removal from a live audio stream
-- [URL/API Source](https://github.com/occ-ai/obs-urlsource) that allows fetching live data from an API and displaying it in OBS.
-- [Squawk](https://github.com/occ-ai/obs-squawk) adds lifelike local text-to-speech capabilities built-in OBS
+- [Background Removal](https://github.com/locaal-ai/obs-backgroundremoval) removes background from webcam without a green screen.
+- [Detect](https://github.com/locaal-ai/obs-detect) will detect and track >80 types of objects in real-time inside OBS
+- [CleanStream](https://github.com/locaal-ai/obs-cleanstream) for real-time filler word (uh,um) and profanity removal from a live audio stream
+- [URL/API Source](https://github.com/locaal-ai/obs-urlsource) that allows fetching live data from an API and displaying it in OBS.
+- [Squawk](https://github.com/locaal-ai/obs-squawk) adds lifelike local text-to-speech capabilities built-in OBS
 
 ## Download
-Check out the [latest releases](https://github.com/occ-ai/obs-localvocal/releases) for downloads and install instructions.
+Check out the [latest releases](https://github.com/locaal-ai/obs-localvocal/releases) for downloads and install instructions.
 
 ### Models
 The plugin ships with the Tiny.en model, and will autonomously download other Whisper models through a dropdown.
@@ -176,7 +176,7 @@ The build should exist in the `./release` folder off the root. You can manually 
 
 #### Building with CUDA support on Windows
 
-LocalVocal will now build with CUDA support automatically through a prebuilt binary of Whisper.cpp from https://github.com/occ-ai/occ-ai-dep-whispercpp. The CMake scripts will download all necessary files.
+LocalVocal will now build with CUDA support automatically through a prebuilt binary of Whisper.cpp from https://github.com/locaal-ai/locaal-ai-dep-whispercpp. The CMake scripts will download all necessary files.
 
 To build with cuda add `ACCELERATION` as an environment variable (with `cpu`, `hipblas`, or `cuda`) and build regularly
 
@@ -187,7 +187,7 @@ To build with cuda add `ACCELERATION` as an environment variable (with `cpu`, `h
 
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=occ-ai/obs-localvocal&type=Date&theme=dark" />
-  <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=occ-ai/obs-localvocal&type=Date" />
-  <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=occ-ai/obs-localvocal&type=Date" />
+  <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=locaal-ai/obs-localvocal&type=Date&theme=dark" />
+  <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=locaal-ai/obs-localvocal&type=Date" />
+  <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=locaal-ai/obs-localvocal&type=Date" />
 </picture>
