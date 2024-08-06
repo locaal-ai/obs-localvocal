@@ -101,6 +101,7 @@ create_context(int sample_rate, int channels, const std::string &whisper_model_p
 	}
 	circlebuf_init(&gf->info_buffer);
 	circlebuf_init(&gf->whisper_buffer);
+	circlebuf_init(&gf->resampled_buffer);
 
 	// allocate copy buffers
 	gf->copy_buffers[0] =
@@ -307,6 +308,7 @@ void release_context(transcription_filter_data *gf)
 	}
 	circlebuf_free(&gf->info_buffer);
 	circlebuf_free(&gf->whisper_buffer);
+	circlebuf_free(&gf->resampled_buffer);
 
 	delete gf;
 }
