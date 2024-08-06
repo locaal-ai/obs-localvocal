@@ -31,6 +31,7 @@
 
 void obs_log(int log_level, const char *format, ...)
 {
+	static auto start = std::chrono::system_clock::now();
 	if (log_level == LOG_DEBUG) {
 		return;
 	}
@@ -43,9 +44,14 @@ void obs_log(int log_level, const char *format, ...)
 	std::time_t now_time_t = std::chrono::system_clock::to_time_t(now);
 	std::tm now_tm = *std::localtime(&now_time_t);
 
+	auto diff = now - start;
+
 	// print timestamp
-	printf("[%02d:%02d:%02d.%03d] ", now_tm.tm_hour, now_tm.tm_min, now_tm.tm_sec,
-	       (int)(epoch.count() % 1000));
+	printf("[%02d:%02d:%02d.%03d] [%02d:%02lld.%03lld] ", now_tm.tm_hour, now_tm.tm_min,
+	       now_tm.tm_sec, (int)(epoch.count() % 1000),
+	       std::chrono::duration_cast<std::chrono::minutes>(diff).count(),
+	       std::chrono::duration_cast<std::chrono::seconds>(diff).count() % 60,
+	       std::chrono::duration_cast<std::chrono::milliseconds>(diff).count() % 1000);
 
 	// print log level
 	switch (log_level) {
