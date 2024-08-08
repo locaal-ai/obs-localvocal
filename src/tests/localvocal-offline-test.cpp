@@ -101,6 +101,7 @@ create_context(int sample_rate, int channels, const std::string &whisper_model_p
 	gf->process_while_muted = false;
 	gf->buffered_output = false;
 	gf->fix_utf8 = true;
+	gf->input_cv.emplace();
 
 	for (size_t i = 0; i < gf->channels; i++) {
 		circlebuf_init(&gf->input_buffers[i]);
@@ -453,38 +454,23 @@ int wmain(int argc, wchar_t *argv[])
 				frames_size_bytes = frames * frame_size_bytes;
 			}
 			{
-				bool wait = false;
-				auto max_wait =
-					start_time_time + (window_number * window_size_in_ms);
-				for (;;) {
-					{
-						std::lock_guard<std::mutex> lock(
-							gf->whisper_buf_mutex);
-						wait = gf->input_buffers->size != 0;
-					}
-					if (!wait)
-						break;
-
-					// sleep up to window size in case whisper is processing, so the buffer builds up similar to OBS
-					auto now = std::chrono::system_clock::now();
-					if (false && now > max_wait)
-						break;
-
-					auto wait_start = now + std::chrono::milliseconds(1);
-					auto wait_until = max_wait > wait_start ? wait_start
-										: max_wait;
-#if 0
-					obs_log(LOG_INFO, "sleeping %lld ms",
-						std::chrono::duration_cast<std::chrono::milliseconds>(
-							(wait_until -
-							 std::chrono::system_clock::now()))
-							.count());
-#endif
-					std::this_thread::sleep_until(wait_until);
-				}
-
 				{
-					std::lock_guard<std::mutex> lock(gf->whisper_buf_mutex);
+					auto max_wait = start_time_time +
+							(window_number * window_size_in_ms);
+					std::unique_lock<std::mutex> lock(gf->whisper_buf_mutex);
+					for (;;) {
+						// sleep up to window size in case whisper is processing, so the buffer builds up similar to OBS
+						auto now = std::chrono::system_clock::now();
+						if (false && now > max_wait)
+							break;
+
+						gf->input_cv->wait_for(
+							lock, std::chrono::milliseconds(10), [&] {
+								return gf->input_buffers->size == 0;
+							});
+						if (gf->input_buffers->size == 0)
+							break;
+					}
 					// push back current audio data to input circlebuf
 					for (size_t c = 0; c < gf->channels; c++) {
 						circlebuf_push_back(

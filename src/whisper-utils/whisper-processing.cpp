@@ -599,6 +599,9 @@ void whisper_loop(void *data)
 			}
 		}
 
+		if (gf->input_cv.has_value())
+			gf->input_cv->notify_one();
+
 		// Sleep using the condition variable wshiper_thread_cv
 		// This will wake up the thread if there is new data in the input buffer
 		// or if the whisper context is null
