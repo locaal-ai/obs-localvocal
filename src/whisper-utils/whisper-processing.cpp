@@ -606,7 +606,9 @@ void whisper_loop(void *data)
 		// This will wake up the thread if there is new data in the input buffer
 		// or if the whisper context is null
 		std::unique_lock<std::mutex> lock(gf->whisper_ctx_mutex);
-		gf->wshiper_thread_cv.wait_for(lock, std::chrono::milliseconds(50));
+		if (gf->input_buffers->size == 0) {
+			gf->wshiper_thread_cv.wait_for(lock, std::chrono::milliseconds(50));
+		}
 	}
 
 	obs_log(gf->log_level, "Exiting whisper thread");
