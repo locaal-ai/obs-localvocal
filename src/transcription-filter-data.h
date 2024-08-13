@@ -19,6 +19,7 @@
 #include "whisper-utils/silero-vad-onnx.h"
 #include "whisper-utils/whisper-processing.h"
 #include "whisper-utils/token-buffer-thread.h"
+#include "cloud-transcription/CloudTranscription.h"
 
 #define MAX_PREPROC_CHANNELS 10
 
@@ -118,6 +119,10 @@ struct transcription_filter_data {
 	int buffered_output_num_chars = 30;
 	TokenBufferSegmentation buffered_output_output_type =
 		TokenBufferSegmentation::SEGMENTATION_TOKEN;
+
+	// Cloud transcription and translation
+	bool cloud_transcription = false;
+	CloudTranscription cloudTranscription;
 
 	// ctor
 	transcription_filter_data() : whisper_buf_mutex(), whisper_ctx_mutex(), wshiper_thread_cv()

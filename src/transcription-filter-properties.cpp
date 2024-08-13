@@ -472,6 +472,17 @@ void add_partial_group_properties(obs_properties_t *ppts)
 				      3000, 50);
 }
 
+void add_cloud_transcription_group_properties(obs_properties_t *ppts)
+{
+	// add a group for cloud transcription
+	obs_properties_t *partial_group = obs_properties_create();
+	obs_properties_add_group(ppts, "cloud_transcription_group",
+				 MT_("cloud_transcription_enable"), OBS_GROUP_CHECKABLE,
+				 partial_group);
+
+	// TODO: add cloud transcription options
+}
+
 obs_properties_t *transcription_filter_properties(void *data)
 {
 	struct transcription_filter_data *gf =
@@ -490,6 +501,7 @@ obs_properties_t *transcription_filter_properties(void *data)
 
 	add_general_group_properties(ppts);
 	add_transcription_group_properties(ppts, gf);
+	add_cloud_transcription_group_properties(ppts);
 	add_translation_group_properties(ppts);
 	add_file_output_group_properties(ppts);
 	add_buffered_output_group_properties(ppts);

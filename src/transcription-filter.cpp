@@ -416,6 +416,15 @@ void transcription_filter_update(void *data, obs_data_t *s)
 			}
 		}
 	}
+
+	// Update cloud transcription and translation options
+	gf->cloud_transcription = obs_data_get_bool(s, "cloud_transcription_enable");
+	if (gf->cloud_transcription) {
+		gf->cloudTranscription.setLanguage(gf->whisper_params.language);
+		gf->cloudTranscription.startTranscription();
+	} else {
+		gf->cloudTranscription.shutdown();
+	}
 }
 
 void *transcription_filter_create(obs_data_t *settings, obs_source_t *filter)
