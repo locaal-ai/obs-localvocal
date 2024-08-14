@@ -46,6 +46,8 @@ void obs_log(int log_level, const char *format, ...)
 
 	auto diff = now - start;
 
+	static std::mutex log_mutex;
+	auto lock = std::lock_guard(log_mutex);
 	// print timestamp
 	printf("[%02d:%02d:%02d.%03d] [%02d:%02lld.%03lld] ", now_tm.tm_hour, now_tm.tm_min,
 	       now_tm.tm_sec, (int)(epoch.count() % 1000),
