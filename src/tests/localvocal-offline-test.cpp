@@ -196,6 +196,11 @@ create_context(int sample_rate, int channels, const std::string &whisper_model_p
 	return gf;
 }
 
+std::mutex json_segments_input_mutex;
+std::condition_variable json_segments_input_cv;
+std::vector<nlohmann::json> json_segments_input;
+bool json_segments_input_finished = false;
+
 void audio_chunk_callback(struct transcription_filter_data *gf, const float *pcm32f_data,
 			  size_t frames, int vad_state, const DetectionResultWithText &result)
 {
@@ -216,33 +221,56 @@ void audio_chunk_callback(struct transcription_filter_data *gf, const float *pcm
 	// obs_log(gf->log_level, "Saving %lu frames to %s", frames, filename.c_str());
 	// write_audio_wav_file(filename.c_str(), pcm32f_data, frames);
 
-	// append a row to the array in the segments.json file
-	std::string segments_filename = "segments.json";
-	nlohmann::json segments_json;
-
-	// Read existing segments from file
-	std::ifstream segments_file(segments_filename);
-	if (segments_file.is_open()) {
-		segments_file >> segments_json;
-		segments_file.close();
-	}
-
 	// Create a new segment object
 	nlohmann::json segment;
 	segment["start_time"] = result.start_timestamp_ms / 1000.0;
 	segment["end_time"] = result.end_timestamp_ms / 1000.0;
 	segment["segment_label"] = result.text;
 
-	// Add the new segment to the segments array
-	segments_json.push_back(segment);
+	{
+		auto lock = std::lock_guard(json_segments_input_mutex);
 
-	// Write the updated segments back to the file
-	std::ofstream segments_file_out(segments_filename);
-	if (segments_file_out.is_open()) {
-		segments_file_out << std::setw(4) << segments_json << std::endl;
-		segments_file_out.close();
-	} else {
-		obs_log(gf->log_level, "Failed to open %s", segments_filename.c_str());
+		// Add the new segment to the segments array
+		json_segments_input.push_back(segment);
+	}
+	json_segments_input_cv.notify_one();
+}
+
+void json_segments_saver_thread_function()
+{
+	std::string segments_filename = "segments.json";
+	nlohmann::json segments_json;
+
+	decltype(json_segments_input) json_segments_input_local;
+
+	for (;;) {
+		{
+			auto lock = std::unique_lock(json_segments_input_mutex);
+			while (json_segments_input.empty()) {
+				if (json_segments_input_finished)
+					return;
+				json_segments_input_cv.wait(lock, [&] {
+					return json_segments_input_finished ||
+					       !json_segments_input.empty();
+				});
+			}
+
+			std::swap(json_segments_input, json_segments_input_local);
+			json_segments_input.clear();
+		}
+
+		for (auto &elem : json_segments_input_local) {
+			segments_json.push_back(std::move(elem));
+		}
+
+		// Write the updated segments back to the file
+		std::ofstream segments_file_out(segments_filename);
+		if (segments_file_out.is_open()) {
+			segments_file_out << std::setw(4) << segments_json << std::endl;
+			segments_file_out.close();
+		} else {
+			obs_log(LOG_INFO, "Failed to open %s", segments_filename.c_str());
+		}
 	}
 }
 
@@ -363,6 +391,7 @@ int wmain(int argc, wchar_t *argv[])
 
 	std::cout << "LocalVocal Offline Test" << std::endl;
 	transcription_filter_data *gf = nullptr;
+	std::optional<std::thread> audio_chunk_saver_thread;
 
 	std::vector<std::vector<uint8_t>> audio =
 		read_audio_file(filenameStr.c_str(), [&](int sample_rate, int channels) {
@@ -419,6 +448,10 @@ int wmain(int argc, wchar_t *argv[])
 	if (audio.empty()) {
 		std::cout << "Failed to read audio file" << std::endl;
 		return 1;
+	}
+
+	if (gf->enable_audio_chunks_callback) {
+		audio_chunk_saver_thread.emplace(json_segments_saver_thread_function);
 	}
 
 	// truncate the output file
@@ -533,6 +566,15 @@ int wmain(int argc, wchar_t *argv[])
 		if (input_buf_size < gf->sample_rate / 2 * sizeof(float)) {
 			break;
 		}
+	}
+
+	if (audio_chunk_saver_thread.has_value()) {
+		{
+			auto lock = std::lock_guard(json_segments_input_mutex);
+			json_segments_input_finished = true;
+		}
+		json_segments_input_cv.notify_one();
+		audio_chunk_saver_thread->join();
 	}
 
 	release_context(gf);
