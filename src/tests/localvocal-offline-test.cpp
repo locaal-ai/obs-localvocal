@@ -499,12 +499,13 @@ int wmain(int argc, wchar_t *argv[])
 						if (false && now > max_wait)
 							break;
 
-						gf->input_cv->wait_for(
-							lock, std::chrono::milliseconds(10), [&] {
-								return gf->input_buffers->size == 0;
-							});
 						if (gf->input_buffers->size == 0)
 							break;
+
+						gf->input_cv->wait_for(
+							lock, std::chrono::milliseconds(1), [&] {
+								return gf->input_buffers->size == 0;
+							});
 					}
 					// push back current audio data to input circlebuf
 					for (size_t c = 0; c < gf->channels; c++) {
