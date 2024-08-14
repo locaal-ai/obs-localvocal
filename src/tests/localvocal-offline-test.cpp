@@ -472,10 +472,10 @@ int wmain(int argc, wchar_t *argv[])
 
 		obs_log(LOG_INFO, "Sending samples to whisper buffer");
 		// 25 ms worth of frames
-		int frames = gf->sample_rate * window_size_in_ms.count() / 1000;
+		size_t frames = gf->sample_rate * window_size_in_ms.count() / 1000;
 		const int frame_size_bytes = sizeof(float);
-		int frames_size_bytes = frames * frame_size_bytes;
-		int frames_count = 0;
+		size_t frames_size_bytes = frames * frame_size_bytes;
+		size_t frames_count = 0;
 		int64_t start_time = std::chrono::duration_cast<std::chrono::nanoseconds>(
 					     std::chrono::system_clock::now().time_since_epoch())
 					     .count();
