@@ -117,7 +117,8 @@ target_sources(
           src/translation/language_codes.cpp
           src/translation/translation.cpp
           src/translation/translation-utils.cpp
-          src/ui/filter-replace-dialog.cpp)
+          src/ui/filter-replace-dialog.cpp
+          src/ui/filter-replace-utils.cpp)
 
 set_target_properties_plugin(${CMAKE_PROJECT_NAME} PROPERTIES OUTPUT_NAME ${_name})
 
@@ -138,7 +139,8 @@ if(ENABLE_TESTS)
             src/whisper-utils/silero-vad-onnx.cpp
             src/whisper-utils/token-buffer-thread.cpp
             src/translation/language_codes.cpp
-            src/translation/translation.cpp)
+            src/translation/translation.cpp
+            src/ui/filter-replace-utils.cpp)
 
   find_libav(${CMAKE_PROJECT_NAME}-tests)
 

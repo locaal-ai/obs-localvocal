@@ -19,6 +19,7 @@
 #include "whisper-utils/whisper-utils.h"
 #include "audio-file-utils.h"
 #include "translation/language_codes.h"
+#include "ui/filter-replace-utils.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -428,6 +429,12 @@ int wmain(int argc, wchar_t *argv[])
 				obs_log(LOG_INFO, "Setting no_context to %s",
 					config["no_context"] ? "true" : "false");
 				gf->whisper_params.no_context = config["no_context"];
+			}
+			if (config.contains("filter_words_replace")) {
+				obs_log(LOG_INFO, "Setting filter_words_replace to %s",
+					config["filter_words_replace"]);
+				gf->filter_words_replace = deserialize_filter_words_replace(
+					config["filter_words_replace"]);
 			}
 			// set log level
 			if (logLevelStr == "debug") {
