@@ -66,8 +66,10 @@ void ModelDownloader::closeEvent(QCloseEvent *e)
 {
 	if (!this->mPrepareToClose)
 		e->ignore();
-	else
+	else {
 		QDialog::closeEvent(e);
+		deleteLater();
+	}
 }
 
 void ModelDownloader::close()
