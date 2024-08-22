@@ -114,6 +114,7 @@ target_sources(
           src/whisper-utils/whisper-model-utils.cpp
           src/whisper-utils/silero-vad-onnx.cpp
           src/whisper-utils/token-buffer-thread.cpp
+          src/whisper-utils/vad-processing.cpp
           src/translation/language_codes.cpp
           src/translation/translation.cpp
           src/translation/translation-utils.cpp
@@ -137,6 +138,7 @@ if(ENABLE_TESTS)
             src/whisper-utils/whisper-utils.cpp
             src/whisper-utils/silero-vad-onnx.cpp
             src/whisper-utils/token-buffer-thread.cpp
+            src/whisper-utils/vad-processing.cpp
             src/translation/language_codes.cpp
             src/translation/translation.cpp)
 

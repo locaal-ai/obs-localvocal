@@ -188,6 +188,7 @@ void transcription_filter_update(void *data, obs_data_t *s)
 	gf->process_while_muted = obs_data_get_bool(s, "process_while_muted");
 	gf->min_sub_duration = (int)obs_data_get_int(s, "min_sub_duration");
 	gf->last_sub_render_time = now_ms();
+	gf->duration_filter_threshold = (float)obs_data_get_double(s, "duration_filter_threshold");
 	gf->partial_transcription = obs_data_get_bool(s, "partial_group");
 	gf->partial_latency = (int)obs_data_get_int(s, "partial_latency");
 	bool new_buffered_output = obs_data_get_bool(s, "buffered_output");
@@ -550,73 +551,4 @@ void transcription_filter_hide(void *data)
 	struct transcription_filter_data *gf =
 		static_cast<struct transcription_filter_data *>(data);
 	obs_log(gf->log_level, "filter hide");
-}
-
-void transcription_filter_defaults(obs_data_t *s)
-{
-	obs_log(LOG_DEBUG, "filter defaults");
-
-	obs_data_set_default_bool(s, "buffered_output", false);
-	obs_data_set_default_int(s, "buffer_num_lines", 2);
-	obs_data_set_default_int(s, "buffer_num_chars_per_line", 30);
-	obs_data_set_default_int(s, "buffer_output_type",
-				 (int)TokenBufferSegmentation::SEGMENTATION_TOKEN);
-
-	obs_data_set_default_bool(s, "vad_enabled", true);
-	obs_data_set_default_double(s, "vad_threshold", 0.65);
-	obs_data_set_default_int(s, "log_level", LOG_DEBUG);
-	obs_data_set_default_bool(s, "log_words", false);
-	obs_data_set_default_bool(s, "caption_to_stream", false);
-	obs_data_set_default_string(s, "whisper_model_path", "Whisper Tiny English (74Mb)");
-	obs_data_set_default_string(s, "whisper_language_select", "en");
-	obs_data_set_default_string(s, "subtitle_sources", "none");
-	obs_data_set_default_bool(s, "process_while_muted", false);
-	obs_data_set_default_bool(s, "subtitle_save_srt", false);
-	obs_data_set_default_bool(s, "truncate_output_file", false);
-	obs_data_set_default_bool(s, "only_while_recording", false);
-	obs_data_set_default_bool(s, "rename_file_to_match_recording", true);
-	obs_data_set_default_int(s, "min_sub_duration", 3000);
-	obs_data_set_default_bool(s, "advanced_settings", false);
-	obs_data_set_default_bool(s, "translate", false);
-	obs_data_set_default_string(s, "translate_target_language", "__es__");
-	obs_data_set_default_bool(s, "translate_add_context", true);
-	obs_data_set_default_string(s, "translate_model", "whisper-based-translation");
-	obs_data_set_default_string(s, "translation_model_path_external", "");
-	obs_data_set_default_int(s, "translate_input_tokenization_style", INPUT_TOKENIZAION_M2M100);
-	obs_data_set_default_double(s, "sentence_psum_accept_thresh", 0.4);
-	obs_data_set_default_bool(s, "partial_group", false);
-	obs_data_set_default_int(s, "partial_latency", 1100);
-
-	// translation options
-	obs_data_set_default_double(s, "translation_sampling_temperature", 0.1);
-	obs_data_set_default_double(s, "translation_repetition_penalty", 2.0);
-	obs_data_set_default_int(s, "translation_beam_size", 1);
-	obs_data_set_default_int(s, "translation_max_decoding_length", 65);
-	obs_data_set_default_int(s, "translation_no_repeat_ngram_size", 1);
-	obs_data_set_default_int(s, "translation_max_input_length", 65);
-
-	// Whisper parameters
-	obs_data_set_default_int(s, "whisper_sampling_method", WHISPER_SAMPLING_BEAM_SEARCH);
-	obs_data_set_default_string(s, "initial_prompt", "");
-	obs_data_set_default_int(s, "n_threads", 4);
-	obs_data_set_default_int(s, "n_max_text_ctx", 16384);
-	obs_data_set_default_bool(s, "whisper_translate", false);
-	obs_data_set_default_bool(s, "no_context", true);
-	obs_data_set_default_bool(s, "single_segment", true);
-	obs_data_set_default_bool(s, "print_special", false);
-	obs_data_set_default_bool(s, "print_progress", false);
-	obs_data_set_default_bool(s, "print_realtime", false);
-	obs_data_set_default_bool(s, "print_timestamps", false);
-	obs_data_set_default_bool(s, "token_timestamps", false);
-	obs_data_set_default_bool(s, "dtw_token_timestamps", false);
-	obs_data_set_default_double(s, "thold_pt", 0.01);
-	obs_data_set_default_double(s, "thold_ptsum", 0.01);
-	obs_data_set_default_int(s, "max_len", 0);
-	obs_data_set_default_bool(s, "split_on_word", true);
-	obs_data_set_default_int(s, "max_tokens", 0);
-	obs_data_set_default_bool(s, "suppress_blank", false);
-	obs_data_set_default_bool(s, "suppress_non_speech_tokens", true);
-	obs_data_set_default_double(s, "temperature", 0.1);
-	obs_data_set_default_double(s, "max_initial_ts", 1.0);
-	obs_data_set_default_double(s, "length_penalty", -1.0);
 }
