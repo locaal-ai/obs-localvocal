@@ -87,6 +87,7 @@ struct transcription_filter_data {
 	bool partial_transcription = false;
 	int partial_latency = 1000;
 	float duration_filter_threshold = 2.25f;
+	int segment_duration = 7000;
 
 	// Last transcription result
 	std::string last_text;

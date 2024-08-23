@@ -297,7 +297,7 @@ void add_buffered_output_group_properties(obs_properties_t *ppts)
 								obs_data_t *settings) {
 		UNUSED_PARAMETER(property);
 		UNUSED_PARAMETER(props);
-		const int segmentation_type = obs_data_get_int(settings, "buffer_output_type");
+		const int segmentation_type = (int)obs_data_get_int(settings, "buffer_output_type");
 		// set default values for the number of lines and characters per line
 		switch (segmentation_type) {
 		case SEGMENTATION_TOKEN:
@@ -350,6 +350,9 @@ void add_advanced_group_properties(obs_properties_t *ppts, struct transcription_
 	// add duration filter threshold slider
 	obs_properties_add_float_slider(advanced_config_group, "duration_filter_threshold",
 					MT_("duration_filter_threshold"), 0.1, 3.0, 0.05);
+	// add segment duration slider
+	obs_properties_add_int_slider(advanced_config_group, "segment_duration",
+				      MT_("segment_duration"), 3000, 15000, 100);
 
 	// add button to open filter and replace UI dialog
 	obs_properties_add_button2(
@@ -549,8 +552,9 @@ void transcription_filter_defaults(obs_data_t *s)
 				 (int)TokenBufferSegmentation::SEGMENTATION_TOKEN);
 
 	obs_data_set_default_bool(s, "vad_enabled", true);
-	obs_data_set_default_double(s, "vad_threshold", 0.65);
+	obs_data_set_default_double(s, "vad_threshold", 0.2);
 	obs_data_set_default_double(s, "duration_filter_threshold", 2.25);
+	obs_data_set_default_int(s, "segment_duration", 7000);
 	obs_data_set_default_int(s, "log_level", LOG_DEBUG);
 	obs_data_set_default_bool(s, "log_words", false);
 	obs_data_set_default_bool(s, "caption_to_stream", false);

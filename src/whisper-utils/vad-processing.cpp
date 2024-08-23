@@ -10,22 +10,22 @@
 #include <Windows.h>
 #endif
 
-vad_state vad_based_segmentation(transcription_filter_data *gf, vad_state last_vad_state)
+int get_data_from_buf_and_resample(transcription_filter_data *gf,
+				   uint64_t &start_timestamp_offset_ns,
+				   uint64_t &end_timestamp_offset_ns)
 {
 	uint32_t num_frames_from_infos = 0;
-	uint64_t start_timestamp_offset_ns = 0;
-	uint64_t end_timestamp_offset_ns = 0;
 
 	{
 		// scoped lock the buffer mutex
 		std::lock_guard<std::mutex> lock(gf->whisper_buf_mutex);
 
 		if (gf->input_buffers[0].size == 0) {
-			return last_vad_state;
+			return 1;
 		}
 
 		obs_log(gf->log_level,
-			"vad based segmentation. currently %lu bytes in the audio input buffer",
+			"segmentation: currently %lu bytes in the audio input buffer",
 			gf->input_buffers[0].size);
 
 		// max number of frames is 10 seconds worth of audio
@@ -93,11 +93,28 @@ vad_state vad_based_segmentation(transcription_filter_data *gf, vad_state last_v
 						 (uint32_t)num_frames_from_infos);
 		}
 
-		obs_log(gf->log_level, "resampled: %d channels, %d frames, %f ms",
-			(int)gf->channels, (int)resampled_16khz_frames,
-			(float)resampled_16khz_frames / WHISPER_SAMPLE_RATE * 1000.0f);
 		circlebuf_push_back(&gf->resampled_buffer, resampled_16khz[0],
 				    resampled_16khz_frames * sizeof(float));
+		obs_log(gf->log_level,
+			"resampled: %d channels, %d frames, %f ms, current size: %lu bytes",
+			(int)gf->channels, (int)resampled_16khz_frames,
+			(float)resampled_16khz_frames / WHISPER_SAMPLE_RATE * 1000.0f,
+			gf->resampled_buffer.size);
+	}
+
+	return 0;
+}
+
+vad_state vad_based_segmentation(transcription_filter_data *gf, vad_state last_vad_state)
+{
+	// get data from buffer and resample
+	uint64_t start_timestamp_offset_ns = 0;
+	uint64_t end_timestamp_offset_ns = 0;
+
+	const int ret = get_data_from_buf_and_resample(gf, start_timestamp_offset_ns,
+						       end_timestamp_offset_ns);
+	if (ret != 0) {
+		return last_vad_state;
 	}
 
 	const size_t vad_window_size_samples = gf->vad->get_window_size_samples() * sizeof(float);
@@ -249,6 +266,93 @@ vad_state vad_based_segmentation(transcription_filter_data *gf, vad_state last_v
 	}
 
 	return current_vad_state;
+}
+
+vad_state hybrid_vad_segmentation(transcription_filter_data *gf, vad_state last_vad_state)
+{
+	// get data from buffer and resample
+	uint64_t start_timestamp_offset_ns = 0;
+	uint64_t end_timestamp_offset_ns = 0;
+
+	if (get_data_from_buf_and_resample(gf, start_timestamp_offset_ns,
+					   end_timestamp_offset_ns) != 0) {
+		return last_vad_state;
+	}
+
+	last_vad_state.end_ts_offset_ms = end_timestamp_offset_ns / 1000000;
+
+	// extract the data from the resampled buffer with circlebuf_pop_front into a temp buffer
+	// and then push it into the whisper buffer
+	const size_t resampled_buffer_size = gf->resampled_buffer.size;
+	uint8_t *temp_buffer = new uint8_t[resampled_buffer_size];
+	circlebuf_pop_front(&gf->resampled_buffer, temp_buffer, resampled_buffer_size);
+	circlebuf_push_back(&gf->whisper_buffer, temp_buffer, resampled_buffer_size);
+	delete[] temp_buffer;
+
+	obs_log(gf->log_level, "whisper buffer size: %lu bytes", gf->whisper_buffer.size);
+
+	// use last_vad_state timestamps to calculate the duration of the current segment
+	if (last_vad_state.end_ts_offset_ms - last_vad_state.start_ts_offest_ms >=
+	    gf->segment_duration) {
+		obs_log(gf->log_level, "%d seconds worth of audio -> send to inference",
+			gf->segment_duration);
+		run_inference_and_callbacks(gf, last_vad_state.start_ts_offest_ms,
+					    last_vad_state.end_ts_offset_ms, VAD_STATE_WAS_ON);
+		last_vad_state.start_ts_offest_ms = end_timestamp_offset_ns / 1000000;
+		last_vad_state.last_partial_segment_end_ts = 0;
+		return last_vad_state;
+	}
+
+	// if partial transcription is enabled, check if we should send a partial segment
+	if (gf->partial_transcription) {
+		// current length of audio in buffer
+		const uint64_t current_length_ms =
+			(last_vad_state.end_ts_offset_ms > 0 ? last_vad_state.end_ts_offset_ms
+							     : last_vad_state.start_ts_offest_ms) -
+			(last_vad_state.last_partial_segment_end_ts > 0
+				 ? last_vad_state.last_partial_segment_end_ts
+				 : last_vad_state.start_ts_offest_ms);
+		obs_log(gf->log_level, "current buffer length after last partial (%lu): %lu ms",
+			last_vad_state.last_partial_segment_end_ts, current_length_ms);
+
+		if (current_length_ms > (uint64_t)gf->partial_latency) {
+			// send partial segment to inference
+			obs_log(gf->log_level, "Partial segment -> send to inference");
+			last_vad_state.last_partial_segment_end_ts =
+				last_vad_state.end_ts_offset_ms;
+
+			// run vad on the current buffer
+			std::vector<float> vad_input;
+			vad_input.resize(gf->whisper_buffer.size / sizeof(float));
+			circlebuf_peek_front(&gf->whisper_buffer, vad_input.data(),
+					     vad_input.size() * sizeof(float));
+
+			obs_log(gf->log_level, "sending %d frames to vad, %.1f ms",
+				vad_input.size(),
+				(float)vad_input.size() * 1000.0f / (float)WHISPER_SAMPLE_RATE);
+			{
+				ProfileScope("vad->process");
+				gf->vad->process(vad_input, true);
+			}
+
+			if (gf->vad->get_speech_timestamps().size() > 0) {
+				// VAD detected speech in the partial segment
+				run_inference_and_callbacks(gf, last_vad_state.start_ts_offest_ms,
+							    last_vad_state.end_ts_offset_ms,
+							    VAD_STATE_PARTIAL);
+			} else {
+				// VAD detected silence in the partial segment
+				obs_log(gf->log_level, "VAD detected silence in partial segment");
+				// pop the partial segment from the whisper buffer, save some audio for the next segment
+				const size_t num_bytes_to_keep =
+					(WHISPER_SAMPLE_RATE / 4) * sizeof(float);
+				circlebuf_pop_front(&gf->whisper_buffer, nullptr,
+						    gf->whisper_buffer.size - num_bytes_to_keep);
+			}
+		}
+	}
+
+	return last_vad_state;
 }
 
 void initialize_vad(transcription_filter_data *gf, const char *silero_vad_model_file)

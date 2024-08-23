@@ -242,8 +242,7 @@ struct DetectionResultWithText run_whisper_inference(struct transcription_filter
 			if (token.id > 50365 && token.id <= 51865) {
 				const float time = ((float)token.id - 50365.0f) * 0.02f;
 				const float duration_s = (float)incoming_duration_ms / 1000.0f;
-				const float ratio =
-					std::max(time, duration_s) / std::min(time, duration_s);
+				const float ratio = time / duration_s;
 				obs_log(gf->log_level,
 					"Time token found %d -> %.3f. Duration: %.3f. Ratio: %.3f. Threshold %.2f",
 					token.id, time, duration_s, ratio,
@@ -338,7 +337,7 @@ void whisper_loop(void *data)
 
 	obs_log(gf->log_level, "Starting whisper thread");
 
-	vad_state current_vad_state = {false, 0, 0, 0};
+	vad_state current_vad_state = {false, now_ms(), 0, 0};
 
 	const char *whisper_loop_name = "Whisper loop";
 	profile_register_root(whisper_loop_name, 50 * 1000 * 1000);
@@ -356,7 +355,7 @@ void whisper_loop(void *data)
 			}
 		}
 
-		current_vad_state = vad_based_segmentation(gf, current_vad_state);
+		current_vad_state = hybrid_vad_segmentation(gf, current_vad_state);
 
 		if (!gf->cleared_last_sub) {
 			// check if we should clear the current sub depending on the minimum subtitle duration
