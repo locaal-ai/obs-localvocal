@@ -296,6 +296,7 @@ void add_buffered_output_group_properties(obs_properties_t *ppts)
 								obs_property_t *property,
 								obs_data_t *settings) {
 		UNUSED_PARAMETER(property);
+		UNUSED_PARAMETER(props);
 		const int segmentation_type = obs_data_get_int(settings, "buffer_output_type");
 		// set default values for the number of lines and characters per line
 		switch (segmentation_type) {

@@ -268,6 +268,6 @@ void initialize_vad(transcription_filter_data *gf, const char *silero_vad_model_
 #endif
 	// roughly following https://github.com/SYSTRAN/faster-whisper/blob/master/faster_whisper/vad.py
 	// for silero vad parameters
-	gf->vad.reset(new VadIterator(silero_vad_model_path, WHISPER_SAMPLE_RATE, 32, 0.5f, 200,
+	gf->vad.reset(new VadIterator(silero_vad_model_path, WHISPER_SAMPLE_RATE, 32, 0.5f, 100,
 				      100, 100));
 }
