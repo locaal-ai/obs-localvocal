@@ -16,8 +16,10 @@
 
 #ifdef _WIN32
 typedef std::wstring TokenBufferString;
+typedef wchar_t TokenBufferChar;
 #else
 typedef std::string TokenBufferString;
+typedef char TokenBufferChar;
 #endif
 
 struct transcription_filter_data;
@@ -26,6 +28,22 @@ enum TokenBufferSegmentation { SEGMENTATION_WORD = 0, SEGMENTATION_TOKEN, SEGMEN
 enum TokenBufferSpeed { SPEED_SLOW = 0, SPEED_NORMAL, SPEED_FAST };
 
 typedef std::chrono::time_point<std::chrono::steady_clock> TokenBufferTimePoint;
+
+inline std::chrono::time_point<std::chrono::steady_clock> get_time_point_from_ms(uint64_t ms)
+{
+	return std::chrono::time_point<std::chrono::steady_clock>(std::chrono::milliseconds(ms));
+}
+
+struct TokenBufferToken {
+	TokenBufferString token;
+	bool is_partial;
+};
+
+struct TokenBufferSentence {
+	std::vector<TokenBufferToken> tokens;
+	TokenBufferTimePoint start_time;
+	TokenBufferTimePoint end_time;
+};
 
 class TokenBufferThread {
 public:
@@ -40,7 +58,9 @@ public:
 			std::chrono::seconds maxTime_,
 			TokenBufferSegmentation segmentation_ = SEGMENTATION_TOKEN);
 
-	void addSentence(const std::string &sentence);
+	void addSentenceFromStdString(const std::string &sentence, TokenBufferTimePoint start_time,
+				      TokenBufferTimePoint end_time, bool is_partial = false);
+	void addSentence(const TokenBufferSentence &sentence);
 	void clear();
 	void stopThread();
 
@@ -59,9 +79,9 @@ private:
 	void log_token_vector(const std::vector<std::string> &tokens);
 	int getWaitTime(TokenBufferSpeed speed) const;
 	struct transcription_filter_data *gf;
-	std::deque<TokenBufferString> inputQueue;
-	std::deque<TokenBufferString> presentationQueue;
-	std::deque<TokenBufferString> contributionQueue;
+	std::deque<TokenBufferToken> inputQueue;
+	std::deque<TokenBufferToken> presentationQueue;
+	std::deque<TokenBufferToken> contributionQueue;
 	std::thread workerThread;
 	std::mutex inputQueueMutex;
 	std::mutex presentationQueueMutex;

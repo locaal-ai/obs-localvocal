@@ -5,6 +5,11 @@
 
 #include "vad-processing.h"
 
+#ifdef _WIN32
+#define NOMINMAX
+#include <Windows.h>
+#endif
+
 vad_state vad_based_segmentation(transcription_filter_data *gf, vad_state last_vad_state)
 {
 	uint32_t num_frames_from_infos = 0;
@@ -96,7 +101,7 @@ vad_state vad_based_segmentation(transcription_filter_data *gf, vad_state last_v
 	}
 
 	const size_t vad_window_size_samples = gf->vad->get_window_size_samples() * sizeof(float);
-	const size_t min_vad_buffer_size = vad_window_size_samples * 15;
+	const size_t min_vad_buffer_size = vad_window_size_samples * 8;
 	if (gf->resampled_buffer.size < min_vad_buffer_size)
 		return last_vad_state;
 
@@ -156,11 +161,11 @@ vad_state vad_based_segmentation(transcription_filter_data *gf, vad_state last_v
 		}
 
 		int end_frame = stamps[i].end;
-		if (i == stamps.size() - 1 && stamps[i].end < (int)vad_input.size()) {
-			// take at least 100ms of audio after the last speech segment, if available
-			end_frame = std::min(end_frame + WHISPER_SAMPLE_RATE / 10,
-					     (int)vad_input.size());
-		}
+		// if (i == stamps.size() - 1 && stamps[i].end < (int)vad_input.size()) {
+		// 	// take at least 100ms of audio after the last speech segment, if available
+		// 	end_frame = std::min(end_frame + WHISPER_SAMPLE_RATE / 10,
+		// 			     (int)vad_input.size());
+		// }
 
 		const int number_of_frames = end_frame - start_frame;
 
@@ -196,12 +201,22 @@ vad_state vad_based_segmentation(transcription_filter_data *gf, vad_state last_v
 		// end not reached - speech is ongoing
 		current_vad_state.vad_on = true;
 		if (last_vad_state.vad_on) {
+			obs_log(gf->log_level,
+				"last vad state was: ON, start ts: %llu, end ts: %llu",
+				last_vad_state.start_ts_offest_ms, last_vad_state.end_ts_offset_ms);
 			current_vad_state.start_ts_offest_ms = last_vad_state.start_ts_offest_ms;
 		} else {
+			obs_log(gf->log_level,
+				"last vad state was: OFF, start ts: %llu, end ts: %llu. start_ts_offset_ms: %llu, start_frame: %d",
+				last_vad_state.start_ts_offest_ms, last_vad_state.end_ts_offset_ms,
+				start_ts_offset_ms, start_frame);
 			current_vad_state.start_ts_offest_ms =
 				start_ts_offset_ms + start_frame * 1000 / WHISPER_SAMPLE_RATE;
 		}
-		obs_log(gf->log_level, "end not reached. vad state: start ts: %llu, end ts: %llu",
+		current_vad_state.end_ts_offset_ms =
+			start_ts_offset_ms + end_frame * 1000 / WHISPER_SAMPLE_RATE;
+		obs_log(gf->log_level,
+			"end not reached. vad state: ON, start ts: %llu, end ts: %llu",
 			current_vad_state.start_ts_offest_ms, current_vad_state.end_ts_offset_ms);
 
 		last_vad_state = current_vad_state;
@@ -234,4 +249,25 @@ vad_state vad_based_segmentation(transcription_filter_data *gf, vad_state last_v
 	}
 
 	return current_vad_state;
+}
+
+void initialize_vad(transcription_filter_data *gf, const char *silero_vad_model_file)
+{
+	// initialize Silero VAD
+#ifdef _WIN32
+	// convert mbstring to wstring
+	int count = MultiByteToWideChar(CP_UTF8, 0, silero_vad_model_file,
+					strlen(silero_vad_model_file), NULL, 0);
+	std::wstring silero_vad_model_path(count, 0);
+	MultiByteToWideChar(CP_UTF8, 0, silero_vad_model_file, strlen(silero_vad_model_file),
+			    &silero_vad_model_path[0], count);
+	obs_log(gf->log_level, "Create silero VAD: %S", silero_vad_model_path.c_str());
+#else
+	std::string silero_vad_model_path = silero_vad_model_file;
+	obs_log(gf->log_level, "Create silero VAD: %s", silero_vad_model_path.c_str());
+#endif
+	// roughly following https://github.com/SYSTRAN/faster-whisper/blob/master/faster_whisper/vad.py
+	// for silero vad parameters
+	gf->vad.reset(new VadIterator(silero_vad_model_path, WHISPER_SAMPLE_RATE, 32, 0.5f, 200,
+				      100, 100));
 }

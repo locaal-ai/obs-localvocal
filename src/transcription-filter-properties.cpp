@@ -290,6 +290,30 @@ void add_buffered_output_group_properties(obs_properties_t *ppts)
 		OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_INT);
 	obs_property_list_add_int(buffer_type_list, "Character", SEGMENTATION_TOKEN);
 	obs_property_list_add_int(buffer_type_list, "Word", SEGMENTATION_WORD);
+	obs_property_list_add_int(buffer_type_list, "Sentence", SEGMENTATION_SENTENCE);
+	// add callback to the segmentation selection to set default values
+	obs_property_set_modified_callback(buffer_type_list, [](obs_properties_t *props,
+								obs_property_t *property,
+								obs_data_t *settings) {
+		UNUSED_PARAMETER(property);
+		const int segmentation_type = obs_data_get_int(settings, "buffer_output_type");
+		// set default values for the number of lines and characters per line
+		switch (segmentation_type) {
+		case SEGMENTATION_TOKEN:
+			obs_data_set_int(settings, "buffer_num_lines", 2);
+			obs_data_set_int(settings, "buffer_num_chars_per_line", 30);
+			break;
+		case SEGMENTATION_WORD:
+			obs_data_set_int(settings, "buffer_num_lines", 2);
+			obs_data_set_int(settings, "buffer_num_chars_per_line", 10);
+			break;
+		case SEGMENTATION_SENTENCE:
+			obs_data_set_int(settings, "buffer_num_lines", 2);
+			obs_data_set_int(settings, "buffer_num_chars_per_line", 2);
+			break;
+		}
+		return true;
+	});
 	// add buffer lines parameter
 	obs_properties_add_int_slider(buffered_output_group, "buffer_num_lines",
 				      MT_("buffer_num_lines"), 1, 5, 1);
@@ -310,6 +334,8 @@ void add_advanced_group_properties(obs_properties_t *ppts, struct transcription_
 
 	obs_properties_add_int_slider(advanced_config_group, "min_sub_duration",
 				      MT_("min_sub_duration"), 1000, 5000, 50);
+	obs_properties_add_int_slider(advanced_config_group, "max_sub_duration",
+				      MT_("max_sub_duration"), 1000, 5000, 50);
 	obs_properties_add_float_slider(advanced_config_group, "sentence_psum_accept_thresh",
 					MT_("sentence_psum_accept_thresh"), 0.0, 1.0, 0.05);
 
@@ -535,7 +561,8 @@ void transcription_filter_defaults(obs_data_t *s)
 	obs_data_set_default_bool(s, "truncate_output_file", false);
 	obs_data_set_default_bool(s, "only_while_recording", false);
 	obs_data_set_default_bool(s, "rename_file_to_match_recording", true);
-	obs_data_set_default_int(s, "min_sub_duration", 3000);
+	obs_data_set_default_int(s, "min_sub_duration", 1000);
+	obs_data_set_default_int(s, "max_sub_duration", 3000);
 	obs_data_set_default_bool(s, "advanced_settings", false);
 	obs_data_set_default_bool(s, "translate", false);
 	obs_data_set_default_string(s, "translate_target_language", "__es__");

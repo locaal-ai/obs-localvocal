@@ -187,6 +187,7 @@ void transcription_filter_update(void *data, obs_data_t *s)
 	gf->sentence_number = 1;
 	gf->process_while_muted = obs_data_get_bool(s, "process_while_muted");
 	gf->min_sub_duration = (int)obs_data_get_int(s, "min_sub_duration");
+	gf->max_sub_duration = (int)obs_data_get_int(s, "max_sub_duration");
 	gf->last_sub_render_time = now_ms();
 	gf->duration_filter_threshold = (float)obs_data_get_double(s, "duration_filter_threshold");
 	gf->partial_transcription = obs_data_get_bool(s, "partial_group");
@@ -432,6 +433,7 @@ void *transcription_filter_create(obs_data_t *settings, obs_source_t *filter)
 	gf->frames = (size_t)((float)gf->sample_rate / (1000.0f / MAX_MS_WORK_BUFFER));
 	gf->last_num_frames = 0;
 	gf->min_sub_duration = (int)obs_data_get_int(settings, "min_sub_duration");
+	gf->max_sub_duration = (int)obs_data_get_int(settings, "max_sub_duration");
 	gf->last_sub_render_time = now_ms();
 	gf->log_level = (int)obs_data_get_int(settings, "log_level");
 	gf->save_srt = obs_data_get_bool(settings, "subtitle_save_srt");

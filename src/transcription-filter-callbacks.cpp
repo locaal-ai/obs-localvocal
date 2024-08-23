@@ -199,11 +199,6 @@ void set_text_callback(struct transcription_filter_data *gf,
 		       const DetectionResultWithText &resultIn)
 {
 	DetectionResultWithText result = resultIn;
-	if (!result.text.empty() && (result.result == DETECTION_RESULT_SPEECH ||
-				     result.result == DETECTION_RESULT_PARTIAL)) {
-		gf->last_sub_render_time = now_ms();
-		gf->cleared_last_sub = false;
-	}
 
 	std::string str_copy = result.text;
 
@@ -243,10 +238,12 @@ void set_text_callback(struct transcription_filter_data *gf,
 			str_copy = translated_sentence;
 		} else {
 			if (gf->buffered_output) {
-				if (result.result == DETECTION_RESULT_SPEECH) {
-					// buffered output - add the sentence to the monitor
-					gf->translation_monitor.addSentence(translated_sentence);
-				}
+				// buffered output - add the sentence to the monitor
+				gf->translation_monitor.addSentenceFromStdString(
+					translated_sentence,
+					get_time_point_from_ms(result.start_timestamp_ms),
+					get_time_point_from_ms(result.end_timestamp_ms),
+					result.result == DETECTION_RESULT_PARTIAL);
 			} else {
 				// non-buffered output - send the sentence to the selected source
 				send_caption_to_source(gf->translation_output, translated_sentence,
@@ -256,9 +253,10 @@ void set_text_callback(struct transcription_filter_data *gf,
 	}
 
 	if (gf->buffered_output) {
-		if (result.result == DETECTION_RESULT_SPEECH) {
-			gf->captions_monitor.addSentence(str_copy);
-		}
+		gf->captions_monitor.addSentenceFromStdString(
+			str_copy, get_time_point_from_ms(result.start_timestamp_ms),
+			get_time_point_from_ms(result.end_timestamp_ms),
+			result.result == DETECTION_RESULT_PARTIAL);
 	} else {
 		// non-buffered output - send the sentence to the selected source
 		send_caption_to_source(gf->text_source_name, str_copy, gf);
@@ -272,6 +270,12 @@ void set_text_callback(struct transcription_filter_data *gf,
 	if (gf->save_to_file && gf->output_file_path != "" &&
 	    result.result == DETECTION_RESULT_SPEECH) {
 		send_sentence_to_file(gf, result, str_copy, translated_sentence);
+	}
+
+	if (!result.text.empty() && (result.result == DETECTION_RESULT_SPEECH ||
+				     result.result == DETECTION_RESULT_PARTIAL)) {
+		gf->last_sub_render_time = now_ms();
+		gf->cleared_last_sub = false;
 	}
 };
 

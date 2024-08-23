@@ -361,7 +361,7 @@ void whisper_loop(void *data)
 		if (!gf->cleared_last_sub) {
 			// check if we should clear the current sub depending on the minimum subtitle duration
 			uint64_t now = now_ms();
-			if ((now - gf->last_sub_render_time) > gf->min_sub_duration) {
+			if ((now - gf->last_sub_render_time) > gf->max_sub_duration) {
 				// clear the current sub, call the callback with an empty string
 				obs_log(gf->log_level,
 					"Clearing current subtitle. now: %lu ms, last: %lu ms", now,

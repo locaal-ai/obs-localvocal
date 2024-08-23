@@ -36,6 +36,8 @@ struct transcription_filter_data {
 	size_t sentence_number;
 	// Minimal subtitle duration in ms
 	size_t min_sub_duration;
+	// Maximal subtitle duration in ms
+	size_t max_sub_duration;
 	// Last time a subtitle was rendered
 	uint64_t last_sub_render_time;
 	bool cleared_last_sub;
