@@ -104,9 +104,9 @@ void TokenBufferThread::addSentenceFromStdString(const std::string &sentence,
 		// split the sentence to words
 		std::vector<TokenBufferString> words;
 		std::basic_istringstream<TokenBufferString::value_type> iss(sentence_ws);
-		TokenBufferString word;
-		while (iss >> word) {
-			words.push_back(word);
+		TokenBufferString word_token;
+		while (iss >> word_token) {
+			words.push_back(word_token);
 		}
 		// add the words to a sentence
 		for (const auto &word : words) {

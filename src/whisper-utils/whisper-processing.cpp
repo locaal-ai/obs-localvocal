@@ -261,8 +261,8 @@ struct DetectionResultWithText run_whisper_inference(struct transcription_filter
 				text += token_str;
 				tokens.push_back(token);
 			}
-			obs_log(gf->log_level, "S %d, Token %d: %d\t%s\tp: %.3f [keep: %d]",
-				n_segment, j, token.id, token_str, token.p, keep);
+			obs_log(gf->log_level, "S %d, T %d: %d\t%s\tp: %.3f [keep: %d]", n_segment,
+				j, token.id, token_str, token.p, keep);
 		}
 	}
 	sentence_p /= (float)tokens.size();
