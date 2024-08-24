@@ -284,16 +284,16 @@ vad_state hybrid_vad_segmentation(transcription_filter_data *gf, vad_state last_
 	// extract the data from the resampled buffer with circlebuf_pop_front into a temp buffer
 	// and then push it into the whisper buffer
 	const size_t resampled_buffer_size = gf->resampled_buffer.size;
-	uint8_t *temp_buffer = new uint8_t[resampled_buffer_size];
-	circlebuf_pop_front(&gf->resampled_buffer, temp_buffer, resampled_buffer_size);
-	circlebuf_push_back(&gf->whisper_buffer, temp_buffer, resampled_buffer_size);
-	delete[] temp_buffer;
+	std::vector<uint8_t> temp_buffer;
+	temp_buffer.resize(resampled_buffer_size);
+	circlebuf_pop_front(&gf->resampled_buffer, temp_buffer.data(), resampled_buffer_size);
+	circlebuf_push_back(&gf->whisper_buffer, temp_buffer.data(), resampled_buffer_size);
 
 	obs_log(gf->log_level, "whisper buffer size: %lu bytes", gf->whisper_buffer.size);
 
 	// use last_vad_state timestamps to calculate the duration of the current segment
 	if (last_vad_state.end_ts_offset_ms - last_vad_state.start_ts_offest_ms >=
-	    gf->segment_duration) {
+	    (uint64_t)gf->segment_duration) {
 		obs_log(gf->log_level, "%d seconds worth of audio -> send to inference",
 			gf->segment_duration);
 		run_inference_and_callbacks(gf, last_vad_state.start_ts_offest_ms,
