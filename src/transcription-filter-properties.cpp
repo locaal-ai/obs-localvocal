@@ -7,6 +7,7 @@
 #include "transcription-filter.h"
 #include "transcription-filter-utils.h"
 #include "whisper-utils/whisper-language.h"
+#include "whisper-utils/vad-processing.h"
 #include "model-utils/model-downloader-types.h"
 #include "translation/language_codes.h"
 #include "ui/filter-replace-dialog.h"
@@ -212,8 +213,11 @@ void add_translation_group_properties(obs_properties_t *ppts)
 	obs_property_t *prop_tgt = obs_properties_add_list(
 		translation_group, "translate_target_language", MT_("target_language"),
 		OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_STRING);
+
 	obs_properties_add_bool(translation_group, "translate_add_context",
 				MT_("translate_add_context"));
+	obs_properties_add_bool(translation_group, "translate_only_full_sentences",
+				MT_("translate_only_full_sentences"));
 
 	// Populate the dropdown with the language codes
 	for (const auto &language : language_codes) {
@@ -343,7 +347,12 @@ void add_advanced_group_properties(obs_properties_t *ppts, struct transcription_
 	obs_properties_add_bool(advanced_config_group, "process_while_muted",
 				MT_("process_while_muted"));
 
-	obs_properties_add_bool(advanced_config_group, "vad_enabled", MT_("vad_enabled"));
+	// add selection for Active VAD vs Hybrid VAD
+	obs_property_t *vad_mode_list =
+		obs_properties_add_list(advanced_config_group, "vad_mode", MT_("vad_mode"),
+					OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_INT);
+	obs_property_list_add_int(vad_mode_list, MT_("Active_VAD"), VAD_MODE_ACTIVE);
+	obs_property_list_add_int(vad_mode_list, MT_("Hybrid_VAD"), VAD_MODE_HYBRID);
 	// add vad threshold slider
 	obs_properties_add_float_slider(advanced_config_group, "vad_threshold",
 					MT_("vad_threshold"), 0.0, 1.0, 0.05);
@@ -551,8 +560,8 @@ void transcription_filter_defaults(obs_data_t *s)
 	obs_data_set_default_int(s, "buffer_output_type",
 				 (int)TokenBufferSegmentation::SEGMENTATION_TOKEN);
 
-	obs_data_set_default_bool(s, "vad_enabled", true);
-	obs_data_set_default_double(s, "vad_threshold", 0.2);
+	obs_data_set_default_bool(s, "vad_mode", VAD_MODE_ACTIVE);
+	obs_data_set_default_double(s, "vad_threshold", 0.65);
 	obs_data_set_default_double(s, "duration_filter_threshold", 2.25);
 	obs_data_set_default_int(s, "segment_duration", 7000);
 	obs_data_set_default_int(s, "log_level", LOG_DEBUG);
@@ -572,6 +581,7 @@ void transcription_filter_defaults(obs_data_t *s)
 	obs_data_set_default_bool(s, "translate", false);
 	obs_data_set_default_string(s, "translate_target_language", "__es__");
 	obs_data_set_default_bool(s, "translate_add_context", true);
+	obs_data_set_default_bool(s, "translate_only_full_sentences", true);
 	obs_data_set_default_string(s, "translate_model", "whisper-based-translation");
 	obs_data_set_default_string(s, "translation_model_path_external", "");
 	obs_data_set_default_int(s, "translate_input_tokenization_style", INPUT_TOKENIZAION_M2M100);

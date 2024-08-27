@@ -174,7 +174,7 @@ void transcription_filter_update(void *data, obs_data_t *s)
 	obs_log(gf->log_level, "LocalVocal filter update");
 
 	gf->log_level = (int)obs_data_get_int(s, "log_level");
-	gf->vad_enabled = obs_data_get_bool(s, "vad_enabled");
+	gf->vad_mode = (int)obs_data_get_int(s, "vad_mode");
 	gf->log_words = obs_data_get_bool(s, "log_words");
 	gf->caption_to_stream = obs_data_get_bool(s, "caption_to_stream");
 	gf->save_to_file = obs_data_get_bool(s, "file_output_enable");
@@ -287,6 +287,7 @@ void transcription_filter_update(void *data, obs_data_t *s)
 	gf->translation_ctx.add_context = obs_data_get_bool(s, "translate_add_context");
 	gf->translation_ctx.input_tokenization_style =
 		(InputTokenizationStyle)obs_data_get_int(s, "translate_input_tokenization_style");
+	gf->translate_only_full_sentences = obs_data_get_bool(s, "translate_only_full_sentences");
 	gf->translation_output = obs_data_get_string(s, "translate_output");
 	std::string new_translate_model_index = obs_data_get_string(s, "translate_model");
 	std::string new_translation_model_path_external =
@@ -393,7 +394,7 @@ void transcription_filter_update(void *data, obs_data_t *s)
 		gf->whisper_params.max_initial_ts = (float)obs_data_get_double(s, "max_initial_ts");
 		gf->whisper_params.length_penalty = (float)obs_data_get_double(s, "length_penalty");
 
-		if (gf->vad_enabled && gf->vad) {
+		if (gf->vad) {
 			const float vad_threshold = (float)obs_data_get_double(s, "vad_threshold");
 			gf->vad->set_threshold(vad_threshold);
 		}

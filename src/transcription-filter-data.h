@@ -64,7 +64,7 @@ struct transcription_filter_data {
 	float sentence_psum_accept_thresh;
 
 	bool do_silence;
-	bool vad_enabled;
+	int vad_mode;
 	int log_level = LOG_DEBUG;
 	bool log_words;
 	bool caption_to_stream;
@@ -114,6 +114,7 @@ struct transcription_filter_data {
 	struct translation_context translation_ctx;
 	std::string translation_model_index;
 	std::string translation_model_path_external;
+	bool translate_only_full_sentences;
 
 	bool buffered_output = false;
 	TokenBufferThread captions_monitor;

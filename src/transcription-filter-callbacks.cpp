@@ -228,9 +228,12 @@ void set_text_callback(struct transcription_filter_data *gf,
 		}
 	}
 
+	bool should_translate =
+		gf->translate_only_full_sentences ? result.result == DETECTION_RESULT_SPEECH : true;
+
 	// send the sentence to translation (if enabled)
 	std::string translated_sentence =
-		send_sentence_to_translation(str_copy, gf, result.language);
+		should_translate ? send_sentence_to_translation(str_copy, gf, result.language) : "";
 
 	if (gf->translate) {
 		if (gf->translation_output == "none") {

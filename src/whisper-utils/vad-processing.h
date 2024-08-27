@@ -2,6 +2,7 @@
 #define VAD_PROCESSING_H
 
 enum VadState { VAD_STATE_WAS_ON = 0, VAD_STATE_WAS_OFF, VAD_STATE_IS_OFF, VAD_STATE_PARTIAL };
+enum VadMode { VAD_MODE_ACTIVE = 0, VAD_MODE_HYBRID, VAD_MODE_DISABLED };
 
 struct vad_state {
 	bool vad_on;

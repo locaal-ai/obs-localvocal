@@ -355,7 +355,11 @@ void whisper_loop(void *data)
 			}
 		}
 
-		current_vad_state = hybrid_vad_segmentation(gf, current_vad_state);
+		if (gf->vad_mode == VAD_MODE_HYBRID) {
+			current_vad_state = hybrid_vad_segmentation(gf, current_vad_state);
+		} else if (gf->vad_mode == VAD_MODE_ACTIVE) {
+			current_vad_state = vad_based_segmentation(gf, current_vad_state);
+		}
 
 		if (!gf->cleared_last_sub) {
 			// check if we should clear the current sub depending on the minimum subtitle duration
