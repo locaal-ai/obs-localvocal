@@ -158,7 +158,7 @@ create_context(int sample_rate, int channels, const std::string &whisper_model_p
 	gf->buffered_output = false;
 
 	gf->target_lang = "";
-	gf->translation_ctx.add_context = true;
+	gf->translation_ctx.add_context = 1;
 	gf->translation_output = "";
 	gf->translate = false;
 	gf->sentence_psum_accept_thresh = 0.4;

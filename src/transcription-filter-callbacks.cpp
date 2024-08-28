@@ -321,6 +321,11 @@ void reset_caption_state(transcription_filter_data *gf_)
 	}
 	send_caption_to_source(gf_->text_source_name, "", gf_);
 	send_caption_to_source(gf_->translation_output, "", gf_);
+	// reset translation context
+	gf_->last_text = "";
+	gf_->last_text_translation = "";
+	gf_->translation_ctx.last_input_tokens.clear();
+	gf_->translation_ctx.last_translation_tokens.clear();
 	// flush the buffer
 	{
 		std::lock_guard<std::mutex> lock(gf_->whisper_buf_mutex);

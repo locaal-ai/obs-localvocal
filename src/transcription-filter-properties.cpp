@@ -214,8 +214,9 @@ void add_translation_group_properties(obs_properties_t *ppts)
 		translation_group, "translate_target_language", MT_("target_language"),
 		OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_STRING);
 
-	obs_properties_add_bool(translation_group, "translate_add_context",
-				MT_("translate_add_context"));
+	// add slider for number of context lines to add to the translation
+	obs_properties_add_int_slider(translation_group, "translate_add_context",
+				      MT_("translate_add_context"), 0, 5, 1);
 	obs_properties_add_bool(translation_group, "translate_only_full_sentences",
 				MT_("translate_only_full_sentences"));
 
@@ -580,7 +581,7 @@ void transcription_filter_defaults(obs_data_t *s)
 	obs_data_set_default_bool(s, "advanced_settings", false);
 	obs_data_set_default_bool(s, "translate", false);
 	obs_data_set_default_string(s, "translate_target_language", "__es__");
-	obs_data_set_default_bool(s, "translate_add_context", true);
+	obs_data_set_default_int(s, "translate_add_context", 1);
 	obs_data_set_default_bool(s, "translate_only_full_sentences", true);
 	obs_data_set_default_string(s, "translate_model", "whisper-based-translation");
 	obs_data_set_default_string(s, "translation_model_path_external", "");

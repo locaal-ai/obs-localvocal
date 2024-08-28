@@ -284,7 +284,7 @@ void transcription_filter_update(void *data, obs_data_t *s)
 
 	bool new_translate = obs_data_get_bool(s, "translate");
 	gf->target_lang = obs_data_get_string(s, "translate_target_language");
-	gf->translation_ctx.add_context = obs_data_get_bool(s, "translate_add_context");
+	gf->translation_ctx.add_context = (int)obs_data_get_int(s, "translate_add_context");
 	gf->translation_ctx.input_tokenization_style =
 		(InputTokenizationStyle)obs_data_get_int(s, "translate_input_tokenization_style");
 	gf->translate_only_full_sentences = obs_data_get_bool(s, "translate_only_full_sentences");
