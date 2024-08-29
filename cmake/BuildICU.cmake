@@ -69,19 +69,19 @@ else() # Mac and Linux
   )
   set(ICU_HASH "SHA256=94bb97d88f13bb74ec0168446a845511bd92c1c49ee8e63df646a48c38dfde6d")
 
-  set(ICU_INSTALL_DIR "${CMAKE_BINARY_DIR}/icu-install")
-
   ExternalProject_Add(
     ICU
     URL ${ICU_URL}
     URL_HASH ${ICU_HASH}
-    CONFIGURE_COMMAND <SOURCE_DIR>/source/runConfigureICU Linux --prefix=${ICU_INSTALL_DIR}
+    CONFIGURE_COMMAND <SOURCE_DIR>/source/runConfigureICU Linux --prefix=<INSTALL_DIR>
     BUILD_COMMAND make -j4
     INSTALL_COMMAND make install
     BUILD_IN_SOURCE 1)
 
-  set(ICU_INCLUDE_DIR "${ICU_INSTALL_DIR}/include")
-  set(ICU_LIBRARY_DIR "${ICU_INSTALL_DIR}/lib")
+  ExternalProject_Get_Property(ICU INSTALL_DIR)
+
+  set(ICU_INCLUDE_DIR "${INSTALL_DIR}/include")
+  set(ICU_LIBRARY_DIR "${INSTALL_DIR}/lib")
 
   # Add ICU libraries
   find_library(
@@ -95,7 +95,7 @@ else() # Mac and Linux
     PATHS ${ICU_LIBRARY_DIR}
     NO_DEFAULT_PATH)
   find_library(
-    ICU_I18N_LIBRARY
+    ICU_IN_LIBRARY
     NAMES icui18n
     PATHS ${ICU_LIBRARY_DIR}
     NO_DEFAULT_PATH)
@@ -103,10 +103,6 @@ endif()
 
 # Create an interface target for ICU
 add_library(ICU::ICU INTERFACE IMPORTED GLOBAL)
+add_dependencies(ICU::ICU ICU)
 target_include_directories(ICU::ICU INTERFACE ${ICU_INCLUDE_DIR})
-target_link_libraries(ICU::ICU INTERFACE ${ICU_DATA_LIBRARY} ${ICU_UC_LIBRARY}
-                                         $<IF:$<BOOL:${WIN32}>,${ICU_IN_LIBRARY},${ICU_I18N_LIBRARY}>)
-
-if(NOT WIN32)
-  add_dependencies(ICU::ICU ICU)
-endif()
+target_link_libraries(ICU::ICU INTERFACE ${ICU_DATA_LIBRARY} ${ICU_UC_LIBRARY} ${ICU_IN_LIBRARY})
