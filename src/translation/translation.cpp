@@ -3,6 +3,7 @@
 #include "model-utils/model-find-utils.h"
 #include "transcription-filter-data.h"
 #include "language_codes.h"
+#include "translation-language-utils.h"
 
 #include <ctranslate2/translator.h>
 #include <sentencepiece_processor.h>
@@ -201,7 +202,8 @@ int translate(struct translation_context &translation_ctx, const std::string &te
 			(int)translation_ctx.last_translation_tokens.size());
 
 		// detokenize
-		result = translation_ctx.detokenizer(translation_tokens);
+		const std::string result_ = translation_ctx.detokenizer(translation_tokens);
+		result = remove_start_punctuation(result_);
 	} catch (std::exception &e) {
 		obs_log(LOG_ERROR, "Error: %s", e.what());
 		return OBS_POLYGLOT_TRANSLATION_FAIL;

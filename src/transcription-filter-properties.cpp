@@ -414,6 +414,10 @@ void add_whisper_params_group_properties(obs_properties_t *ppts)
 				  WHISPER_SAMPLING_BEAM_SEARCH);
 	obs_property_list_add_int(whisper_sampling_method_list, "Greedy", WHISPER_SAMPLING_GREEDY);
 
+	// add int slider for context sentences
+	obs_properties_add_int_slider(whisper_params_group, "n_context_sentences",
+				      MT_("n_context_sentences"), 0, 5, 1);
+
 	// int n_threads;
 	obs_properties_add_int_slider(whisper_params_group, "n_threads", MT_("n_threads"), 1, 8, 1);
 	// int n_max_text_ctx;     // max tokens to use from past text as prompt for the decoder
@@ -600,6 +604,7 @@ void transcription_filter_defaults(obs_data_t *s)
 
 	// Whisper parameters
 	obs_data_set_default_int(s, "whisper_sampling_method", WHISPER_SAMPLING_BEAM_SEARCH);
+	obs_data_set_default_int(s, "n_context_sentences", 0);
 	obs_data_set_default_string(s, "initial_prompt", "");
 	obs_data_set_default_int(s, "n_threads", 4);
 	obs_data_set_default_int(s, "n_max_text_ctx", 16384);

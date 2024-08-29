@@ -93,7 +93,9 @@ struct transcription_filter_data {
 	std::string last_text_for_translation;
 	std::string last_text_translation;
 
-	std::string last_transcription_sentence;
+	// Transcription context sentences
+	int n_context_sentences;
+	std::deque<std::string> last_transcription_sentence;
 
 	// Text source to output the subtitles
 	std::string text_source_name;

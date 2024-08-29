@@ -181,8 +181,15 @@ struct DetectionResultWithText run_whisper_inference(struct transcription_filter
 		return {DETECTION_RESULT_UNKNOWN, "", t0, t1, {}, ""};
 	}
 
-	// obs_log(LOG_INFO, "initial prompt: %s", gf->last_transcription_sentence.c_str());
-	// gf->whisper_params.initial_prompt = gf->last_transcription_sentence.c_str();
+	if (gf->n_context_sentences > 0 && !gf->last_transcription_sentence.empty()) {
+		// set the initial prompt to the last transcription sentences (concatenated)
+		std::string initial_prompt = gf->last_transcription_sentence[0];
+		for (int i = 1; i < gf->last_transcription_sentence.size(); ++i) {
+			initial_prompt += " " + gf->last_transcription_sentence[i];
+		}
+		gf->whisper_params.initial_prompt = initial_prompt.c_str();
+		obs_log(gf->log_level, "Initial prompt: %s", gf->whisper_params.initial_prompt);
+	}
 
 	// run the inference
 	int whisper_full_result = -1;

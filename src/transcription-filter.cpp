@@ -346,6 +346,8 @@ void transcription_filter_update(void *data, obs_data_t *s)
 	{
 		std::lock_guard<std::mutex> lock(gf->whisper_ctx_mutex);
 
+		gf->n_context_sentences = (int)obs_data_get_int(s, "n_context_sentences");
+
 		gf->sentence_psum_accept_thresh =
 			(float)obs_data_get_double(s, "sentence_psum_accept_thresh");
 

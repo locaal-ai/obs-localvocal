@@ -281,7 +281,11 @@ void set_text_callback(struct transcription_filter_data *gf,
 		gf->cleared_last_sub = false;
 		if (result.result == DETECTION_RESULT_SPEECH) {
 			// save the last subtitle if it was a full sentence
-			gf->last_transcription_sentence = result.text;
+			gf->last_transcription_sentence.push_back(result.text);
+			// remove the oldest sentence if the buffer is too long
+			while (gf->last_transcription_sentence.size() > gf->n_context_sentences) {
+				gf->last_transcription_sentence.pop_front();
+			}
 		}
 	}
 };
@@ -330,7 +334,7 @@ void reset_caption_state(transcription_filter_data *gf_)
 	gf_->last_text_translation = "";
 	gf_->translation_ctx.last_input_tokens.clear();
 	gf_->translation_ctx.last_translation_tokens.clear();
-	gf_->last_transcription_sentence = "";
+	gf_->last_transcription_sentence.clear();
 	// flush the buffer
 	{
 		std::lock_guard<std::mutex> lock(gf_->whisper_buf_mutex);
