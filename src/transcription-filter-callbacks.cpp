@@ -53,8 +53,8 @@ std::string send_sentence_to_translation(const std::string &sentence,
 					 struct transcription_filter_data *gf,
 					 const std::string &source_language)
 {
-	const std::string last_text = gf->last_text;
-	gf->last_text = sentence;
+	const std::string last_text = gf->last_text_for_translation;
+	gf->last_text_for_translation = sentence;
 	if (gf->translate && !sentence.empty()) {
 		obs_log(gf->log_level, "Translating text. %s -> %s", source_language.c_str(),
 			gf->target_lang.c_str());
@@ -279,6 +279,10 @@ void set_text_callback(struct transcription_filter_data *gf,
 				     result.result == DETECTION_RESULT_PARTIAL)) {
 		gf->last_sub_render_time = now_ms();
 		gf->cleared_last_sub = false;
+		if (result.result == DETECTION_RESULT_SPEECH) {
+			// save the last subtitle if it was a full sentence
+			gf->last_transcription_sentence = result.text;
+		}
 	}
 };
 
@@ -322,10 +326,11 @@ void reset_caption_state(transcription_filter_data *gf_)
 	send_caption_to_source(gf_->text_source_name, "", gf_);
 	send_caption_to_source(gf_->translation_output, "", gf_);
 	// reset translation context
-	gf_->last_text = "";
+	gf_->last_text_for_translation = "";
 	gf_->last_text_translation = "";
 	gf_->translation_ctx.last_input_tokens.clear();
 	gf_->translation_ctx.last_translation_tokens.clear();
+	gf_->last_transcription_sentence = "";
 	// flush the buffer
 	{
 		std::lock_guard<std::mutex> lock(gf_->whisper_buf_mutex);

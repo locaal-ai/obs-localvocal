@@ -181,6 +181,9 @@ struct DetectionResultWithText run_whisper_inference(struct transcription_filter
 		return {DETECTION_RESULT_UNKNOWN, "", t0, t1, {}, ""};
 	}
 
+	// obs_log(LOG_INFO, "initial prompt: %s", gf->last_transcription_sentence.c_str());
+	// gf->whisper_params.initial_prompt = gf->last_transcription_sentence.c_str();
+
 	// run the inference
 	int whisper_full_result = -1;
 	gf->whisper_params.duration_ms = (int)(whisper_duration_ms);

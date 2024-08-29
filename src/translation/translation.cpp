@@ -137,7 +137,7 @@ int translate(struct translation_context &translation_ctx, const std::string &te
 			translation_ctx.last_input_tokens.push_back(new_input_tokens);
 			// remove the oldest input tokens
 			while (translation_ctx.last_input_tokens.size() >
-			       translation_ctx.add_context) {
+			       (size_t)translation_ctx.add_context) {
 				translation_ctx.last_input_tokens.pop_front();
 			}
 
@@ -194,7 +194,7 @@ int translate(struct translation_context &translation_ctx, const std::string &te
 		translation_ctx.last_translation_tokens.push_back(translation_tokens);
 		// remove the oldest translation tokens
 		while (translation_ctx.last_translation_tokens.size() >
-		       translation_ctx.add_context) {
+		       (size_t)translation_ctx.add_context) {
 			translation_ctx.last_translation_tokens.pop_front();
 		}
 		obs_log(LOG_INFO, "Last translation tokens deque size: %d",

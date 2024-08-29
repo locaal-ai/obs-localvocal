@@ -90,8 +90,10 @@ struct transcription_filter_data {
 	int segment_duration = 7000;
 
 	// Last transcription result
-	std::string last_text;
+	std::string last_text_for_translation;
 	std::string last_text_translation;
+
+	std::string last_transcription_sentence;
 
 	// Text source to output the subtitles
 	std::string text_source_name;
