@@ -13,11 +13,11 @@ if(WIN32)
   set(ICU_HASH "SHA256=7ac9c0dc6ccc1ec809c7d5689b8d831c5b8f6b11ecf70fdccc55f7ae8731ac8f")
 
   FetchContent_Declare(
-    ICU
+    ICU_build
     URL ${ICU_URL}
     URL_HASH ${ICU_HASH})
 
-  FetchContent_MakeAvailable(ICU)
+  FetchContent_MakeAvailable(ICU_build)
 
   # Assuming the ZIP structure, adjust paths as necessary
   set(ICU_INCLUDE_DIR "${icu_SOURCE_DIR}/include")
@@ -63,46 +63,69 @@ if(WIN32)
   install(FILES ${ICU_UC_DLL} DESTINATION "obs-plugins/64bit")
   install(FILES ${ICU_IN_DLL} DESTINATION "obs-plugins/64bit")
 
-else() # Mac and Linux
+  add_library(ICU::ICU_data SHARED IMPORTED GLOBAL)
+  set_target_properties(ICU::ICU_data PROPERTIES IMPORTED_LOCATION "${ICU_DATA_LIBRARY}" INTERFACE_INCLUDE_DIRECTORIES
+                                                                                         "${ICU_INCLUDE_DIR}")
+
+  add_library(ICU::ICU_uc SHARED IMPORTED GLOBAL)
+  set_target_properties(ICU::ICU_uc PROPERTIES IMPORTED_LOCATION "${ICU_UC_LIBRARY}" INTERFACE_INCLUDE_DIRECTORIES
+                                                                                     "${ICU_INCLUDE_DIR}")
+
+  add_library(ICU::ICU_in SHARED IMPORTED GLOBAL)
+  set_target_properties(ICU::ICU_in PROPERTIES IMPORTED_LOCATION "${ICU_IN_LIBRARY}" INTERFACE_INCLUDE_DIRECTORIES
+                                                                                     "${ICU_INCLUDE_DIR}")
+
+else()
   set(ICU_URL
-      "https://github.com/unicode-org/icu/releases/download/release-${ICU_VERSION_UNDERSCORE}/icu4c-${ICU_VERSION_UNDERSCORE}-src.tgz"
+      "https://github.com/unicode-org/icu/releases/download/release-${ICU_VERSION_DASH}/icu4c-${ICU_VERSION_UNDERSCORE}-src.tgz"
   )
-  set(ICU_HASH "SHA256=94bb97d88f13bb74ec0168446a845511bd92c1c49ee8e63df646a48c38dfde6d")
+  set(ICU_HASH "SHA256=cb968df3e4d2e87e8b11c49a5d01c787bd13b9545280fc6642f826527618caef")
+  if(APPLE)
+    set(ICU_PLATFORM "MacOSX")
+  else()
+    set(ICU_PLATFORM "Linux")
+  endif()
 
   ExternalProject_Add(
-    ICU
-    URL ${ICU_URL}
-    URL_HASH ${ICU_HASH}
-    CONFIGURE_COMMAND <SOURCE_DIR>/source/runConfigureICU Linux --prefix=<INSTALL_DIR>
+    ICU_build
+    GIT_REPOSITORY "https://github.com/unicode-org/icu.git"
+    GIT_TAG "release-${ICU_VERSION_DASH}"
+    CONFIGURE_COMMAND <SOURCE_DIR>/icu4c/source/runConfigureICU ${ICU_PLATFORM} --prefix=<INSTALL_DIR> --enable-static
+                      --disable-shared
     BUILD_COMMAND make -j4
+    BUILD_BYPRODUCTS
+      <INSTALL_DIR>/lib/${CMAKE_STATIC_LIBRARY_PREFIX}icudata${CMAKE_STATIC_LIBRARY_SUFFIX}
+      <INSTALL_DIR>/lib/${CMAKE_STATIC_LIBRARY_PREFIX}icuuc${CMAKE_STATIC_LIBRARY_SUFFIX}
+      <INSTALL_DIR>/lib/${CMAKE_STATIC_LIBRARY_PREFIX}icuin${CMAKE_STATIC_LIBRARY_SUFFIX}
     INSTALL_COMMAND make install
     BUILD_IN_SOURCE 1)
 
-  ExternalProject_Get_Property(ICU INSTALL_DIR)
+  ExternalProject_Get_Property(ICU_build INSTALL_DIR)
 
   set(ICU_INCLUDE_DIR "${INSTALL_DIR}/include")
   set(ICU_LIBRARY_DIR "${INSTALL_DIR}/lib")
 
-  # Add ICU libraries
-  find_library(
-    ICU_DATA_LIBRARY
-    NAMES icudata
-    PATHS ${ICU_LIBRARY_DIR}
-    NO_DEFAULT_PATH)
-  find_library(
-    ICU_UC_LIBRARY
-    NAMES icuuc
-    PATHS ${ICU_LIBRARY_DIR}
-    NO_DEFAULT_PATH)
-  find_library(
-    ICU_IN_LIBRARY
-    NAMES icui18n
-    PATHS ${ICU_LIBRARY_DIR}
-    NO_DEFAULT_PATH)
+  add_library(ICU::ICU_data STATIC IMPORTED GLOBAL)
+  add_dependencies(ICU::ICU_data ICU_build)
+  set(ICU_DATA_LIBRARY "${ICU_LIBRARY_DIR}/${CMAKE_STATIC_LIBRARY_PREFIX}icudata${CMAKE_STATIC_LIBRARY_SUFFIX}")
+  set_target_properties(ICU::ICU_data PROPERTIES IMPORTED_LOCATION "${ICU_DATA_LIBRARY}" INTERFACE_INCLUDE_DIRECTORIES
+                                                                                         "${ICU_INCLUDE_DIR}")
+
+  add_library(ICU::ICU_uc STATIC IMPORTED GLOBAL)
+  add_dependencies(ICU::ICU_uc ICU_build)
+  set(ICU_UC_LIBRARY "${ICU_LIBRARY_DIR}/${CMAKE_STATIC_LIBRARY_PREFIX}icuuc${CMAKE_STATIC_LIBRARY_SUFFIX}")
+  set_target_properties(ICU::ICU_uc PROPERTIES IMPORTED_LOCATION "${ICU_UC_LIBRARY}" INTERFACE_INCLUDE_DIRECTORIES
+                                                                                     "${ICU_INCLUDE_DIR}")
+
+  add_library(ICU::ICU_in STATIC IMPORTED GLOBAL)
+  add_dependencies(ICU::ICU_in ICU_build)
+  set(ICU_IN_LIBRARY "${ICU_LIBRARY_DIR}/${CMAKE_STATIC_LIBRARY_PREFIX}icui18n${CMAKE_STATIC_LIBRARY_SUFFIX}")
+  set_target_properties(ICU::ICU_in PROPERTIES IMPORTED_LOCATION "${ICU_IN_LIBRARY}" INTERFACE_INCLUDE_DIRECTORIES
+                                                                                     "${ICU_INCLUDE_DIR}")
 endif()
 
 # Create an interface target for ICU
-add_library(ICU::ICU INTERFACE IMPORTED GLOBAL)
-add_dependencies(ICU::ICU ICU)
-target_include_directories(ICU::ICU INTERFACE ${ICU_INCLUDE_DIR})
-target_link_libraries(ICU::ICU INTERFACE ${ICU_DATA_LIBRARY} ${ICU_UC_LIBRARY} ${ICU_IN_LIBRARY})
+add_library(ICU INTERFACE)
+add_dependencies(ICU ICU_build)
+target_link_libraries(ICU INTERFACE ICU::ICU_data ICU::ICU_uc ICU::ICU_in)
+target_include_directories(ICU SYSTEM INTERFACE ${ICU_INCLUDE_DIR})

@@ -283,7 +283,8 @@ void set_text_callback(struct transcription_filter_data *gf,
 			// save the last subtitle if it was a full sentence
 			gf->last_transcription_sentence.push_back(result.text);
 			// remove the oldest sentence if the buffer is too long
-			while (gf->last_transcription_sentence.size() > gf->n_context_sentences) {
+			while (gf->last_transcription_sentence.size() >
+			       (size_t)gf->n_context_sentences) {
 				gf->last_transcription_sentence.pop_front();
 			}
 		}

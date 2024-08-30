@@ -98,7 +98,7 @@ endif()
 
 include(cmake/BuildICU.cmake)
 # Add ICU to the target
-target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE ICU::ICU)
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE ICU)
 target_include_directories(${CMAKE_PROJECT_NAME} SYSTEM PUBLIC ${ICU_INCLUDE_DIR})
 
 target_sources(
