@@ -20,26 +20,26 @@ if(WIN32)
   FetchContent_MakeAvailable(ICU_build)
 
   # Assuming the ZIP structure, adjust paths as necessary
-  set(ICU_INCLUDE_DIR "${icu_SOURCE_DIR}/include")
-  set(ICU_LIBRARY_DIR "${icu_SOURCE_DIR}/lib64")
-  set(ICU_BINARY_DIR "${icu_SOURCE_DIR}/bin64")
+  set(ICU_INCLUDE_DIR "${icu_build_SOURCE_DIR}/include")
+  set(ICU_LIBRARY_DIR "${icu_build_SOURCE_DIR}/lib64")
+  set(ICU_BINARY_DIR "${icu_build_SOURCE_DIR}/bin64")
 
   # Add ICU libraries
   find_library(
     ICU_DATA_LIBRARY
     NAMES icudt
     PATHS ${ICU_LIBRARY_DIR}
-    NO_DEFAULT_PATH)
+    NO_DEFAULT_PATH REQUIRED)
   find_library(
     ICU_UC_LIBRARY
     NAMES icuuc
     PATHS ${ICU_LIBRARY_DIR}
-    NO_DEFAULT_PATH)
+    NO_DEFAULT_PATH REQUIRED)
   find_library(
     ICU_IN_LIBRARY
     NAMES icuin
     PATHS ${ICU_LIBRARY_DIR}
-    NO_DEFAULT_PATH)
+    NO_DEFAULT_PATH REQUIRED)
 
   # find the dlls
   find_file(
@@ -81,8 +81,11 @@ else()
   set(ICU_HASH "SHA256=cb968df3e4d2e87e8b11c49a5d01c787bd13b9545280fc6642f826527618caef")
   if(APPLE)
     set(ICU_PLATFORM "MacOSX")
+    set(ICU_ADDITIONAL_CONFIGURE_COMMAND --with-library-bits=64 CFLAGS=-arch\ ${TARGET_ARCH}
+                                         CXXFLAGS=-arch\ ${TARGET_ARCH} LDFLAGS=-arch\ ${TARGET_ARCH})
   else()
     set(ICU_PLATFORM "Linux")
+    set(ICU_ADDITIONAL_CONFIGURE_COMMAND "")
   endif()
 
   ExternalProject_Add(
@@ -90,7 +93,7 @@ else()
     GIT_REPOSITORY "https://github.com/unicode-org/icu.git"
     GIT_TAG "release-${ICU_VERSION_DASH}"
     CONFIGURE_COMMAND <SOURCE_DIR>/icu4c/source/runConfigureICU ${ICU_PLATFORM} --prefix=<INSTALL_DIR> --enable-static
-                      --disable-shared
+                      --disable-shared --disable-debug --enable-release ${ICU_ADDITIONAL_CONFIGURE_COMMAND}
     BUILD_COMMAND make -j4
     BUILD_BYPRODUCTS
       <INSTALL_DIR>/lib/${CMAKE_STATIC_LIBRARY_PREFIX}icudata${CMAKE_STATIC_LIBRARY_SUFFIX}
@@ -127,4 +130,4 @@ endif()
 add_library(ICU INTERFACE)
 add_dependencies(ICU ICU_build)
 target_link_libraries(ICU INTERFACE ICU::ICU_data ICU::ICU_uc ICU::ICU_in)
-target_include_directories(ICU INTERFACE $<BUILD_INTERFACE:${ICU_INCLUDE_DIR}>)
+target_include_directories(ICU SYSTEM INTERFACE $<BUILD_INTERFACE:${ICU_INCLUDE_DIR}>)
