@@ -82,19 +82,19 @@ else()
   if(APPLE)
     set(ICU_PLATFORM "MacOSX")
     set(TARGET_ARCH -arch\ $ENV{MACOS_ARCH})
-    set(ICU_ADDITIONAL_CONFIGURE_COMMAND_PREFIX CFLAGS=${TARGET_ARCH} CXXFLAGS=${TARGET_ARCH} LDFLAGS=${TARGET_ARCH})
+    set(ICU_BUILD_ENV_VARS CFLAGS=${TARGET_ARCH} CXXFLAGS=${TARGET_ARCH} LDFLAGS=${TARGET_ARCH})
   else()
     set(ICU_PLATFORM "Linux")
-    set(ICU_ADDITIONAL_CONFIGURE_COMMAND_PREFIX "A=A")
+    set(ICU_BUILD_ENV_VARS "A=A")
   endif()
 
   ExternalProject_Add(
     ICU_build
+    DOWNLOAD_EXTRACT_TIMESTAMP true
     GIT_REPOSITORY "https://github.com/unicode-org/icu.git"
     GIT_TAG "release-${ICU_VERSION_DASH}"
-    CONFIGURE_COMMAND
-      ${CMAKE_COMMAND} -E env ${ICU_ADDITIONAL_CONFIGURE_COMMAND_PREFIX} <SOURCE_DIR>/icu4c/source/runConfigureICU
-      ${ICU_PLATFORM} --prefix=<INSTALL_DIR> --enable-static --disable-shared
+    CONFIGURE_COMMAND ${CMAKE_COMMAND} -E env ${ICU_BUILD_ENV_VARS} <SOURCE_DIR>/icu4c/source/runConfigureICU
+                      ${ICU_PLATFORM} --prefix=<INSTALL_DIR> --enable-static --disable-shared
     BUILD_COMMAND make -j4
     BUILD_BYPRODUCTS
       <INSTALL_DIR>/lib/${CMAKE_STATIC_LIBRARY_PREFIX}icudata${CMAKE_STATIC_LIBRARY_SUFFIX}
