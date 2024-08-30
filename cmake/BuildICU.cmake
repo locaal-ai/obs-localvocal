@@ -24,56 +24,29 @@ if(WIN32)
   set(ICU_LIBRARY_DIR "${icu_build_SOURCE_DIR}/lib64")
   set(ICU_BINARY_DIR "${icu_build_SOURCE_DIR}/bin64")
 
-  # Add ICU libraries
-  find_library(
-    ICU_DATA_LIBRARY
-    NAMES icudt
-    PATHS ${ICU_LIBRARY_DIR}
-    NO_DEFAULT_PATH REQUIRED)
-  find_library(
-    ICU_UC_LIBRARY
-    NAMES icuuc
-    PATHS ${ICU_LIBRARY_DIR}
-    NO_DEFAULT_PATH REQUIRED)
-  find_library(
-    ICU_IN_LIBRARY
-    NAMES icuin
-    PATHS ${ICU_LIBRARY_DIR}
-    NO_DEFAULT_PATH REQUIRED)
+  # Define the library names
+  set(ICU_LIBRARIES icudt icuuc icuin)
 
-  # find the dlls
-  find_file(
-    ICU_DATA_DLL
-    NAMES icudt${ICU_VERSION_NO_MINOR}.dll
-    PATHS ${ICU_BINARY_DIR}
-    NO_DEFAULT_PATH)
-  find_file(
-    ICU_UC_DLL
-    NAMES icuuc${ICU_VERSION_NO_MINOR}.dll
-    PATHS ${ICU_BINARY_DIR}
-    NO_DEFAULT_PATH)
-  find_file(
-    ICU_IN_DLL
-    NAMES icuin${ICU_VERSION_NO_MINOR}.dll
-    PATHS ${ICU_BINARY_DIR}
-    NO_DEFAULT_PATH)
-
-  # Copy the DLLs to the output directory
-  install(FILES ${ICU_DATA_DLL} DESTINATION "obs-plugins/64bit")
-  install(FILES ${ICU_UC_DLL} DESTINATION "obs-plugins/64bit")
-  install(FILES ${ICU_IN_DLL} DESTINATION "obs-plugins/64bit")
-
-  add_library(ICU::ICU_data SHARED IMPORTED GLOBAL)
-  set_target_properties(ICU::ICU_data PROPERTIES IMPORTED_LOCATION "${ICU_DATA_LIBRARY}" IMPORTED_IMPLIB
-                                                                                         "${ICU_DATA_LIBRARY}")
-
-  add_library(ICU::ICU_uc SHARED IMPORTED GLOBAL)
-  set_target_properties(ICU::ICU_uc PROPERTIES IMPORTED_LOCATION "${ICU_UC_LIBRARY}" IMPORTED_IMPLIB
-                                                                                     "${ICU_UC_LIBRARY}")
-
-  add_library(ICU::ICU_in SHARED IMPORTED GLOBAL)
-  set_target_properties(ICU::ICU_in PROPERTIES IMPORTED_LOCATION "${ICU_IN_LIBRARY}" IMPORTED_IMPLIB
-                                                                                     "${ICU_IN_LIBRARY}")
+  foreach(lib ${ICU_LIBRARIES})
+    # Add ICU library
+    find_library(
+      ICU_LIB_${lib}
+      NAMES ${lib}
+      PATHS ${ICU_LIBRARY_DIR}
+      NO_DEFAULT_PATH REQUIRED)
+    # find the dll
+    find_file(
+      ICU_DLL_${lib}
+      NAMES ${lib}${ICU_VERSION_NO_MINOR}.dll
+      PATHS ${ICU_BINARY_DIR}
+      NO_DEFAULT_PATH)
+    # Copy the DLLs to the output directory
+    install(FILES ${ICU_DLL_${lib}} DESTINATION "obs-plugins/64bit")
+    # add the library
+    add_library(ICU::${lib} SHARED IMPORTED GLOBAL)
+    set_target_properties(ICU::${lib} PROPERTIES IMPORTED_LOCATION "${ICU_LIB_${lib}}" IMPORTED_IMPLIB
+                                                                                       "${ICU_LIB_${lib}}")
+  endforeach()
 else()
   set(ICU_URL
       "https://github.com/unicode-org/icu/releases/download/release-${ICU_VERSION_DASH}/icu4c-${ICU_VERSION_UNDERSCORE}-src.tgz"
@@ -108,27 +81,21 @@ else()
   set(ICU_INCLUDE_DIR "${INSTALL_DIR}/include")
   set(ICU_LIBRARY_DIR "${INSTALL_DIR}/lib")
 
-  add_library(ICU::ICU_data STATIC IMPORTED GLOBAL)
-  add_dependencies(ICU::ICU_data ICU_build)
-  set(ICU_DATA_LIBRARY "${ICU_LIBRARY_DIR}/${CMAKE_STATIC_LIBRARY_PREFIX}icudata${CMAKE_STATIC_LIBRARY_SUFFIX}")
-  set_target_properties(ICU::ICU_data PROPERTIES IMPORTED_LOCATION "${ICU_DATA_LIBRARY}" INTERFACE_INCLUDE_DIRECTORIES
-                                                                                         "${ICU_INCLUDE_DIR}")
+  set(ICU_LIBRARIES icudata icuuc icui18n)
 
-  add_library(ICU::ICU_uc STATIC IMPORTED GLOBAL)
-  add_dependencies(ICU::ICU_uc ICU_build)
-  set(ICU_UC_LIBRARY "${ICU_LIBRARY_DIR}/${CMAKE_STATIC_LIBRARY_PREFIX}icuuc${CMAKE_STATIC_LIBRARY_SUFFIX}")
-  set_target_properties(ICU::ICU_uc PROPERTIES IMPORTED_LOCATION "${ICU_UC_LIBRARY}" INTERFACE_INCLUDE_DIRECTORIES
-                                                                                     "${ICU_INCLUDE_DIR}")
-
-  add_library(ICU::ICU_in STATIC IMPORTED GLOBAL)
-  add_dependencies(ICU::ICU_in ICU_build)
-  set(ICU_IN_LIBRARY "${ICU_LIBRARY_DIR}/${CMAKE_STATIC_LIBRARY_PREFIX}icui18n${CMAKE_STATIC_LIBRARY_SUFFIX}")
-  set_target_properties(ICU::ICU_in PROPERTIES IMPORTED_LOCATION "${ICU_IN_LIBRARY}" INTERFACE_INCLUDE_DIRECTORIES
-                                                                                     "${ICU_INCLUDE_DIR}")
+  foreach(lib ${ICU_LIBRARIES})
+    add_library(ICU::${lib} STATIC IMPORTED GLOBAL)
+    add_dependencies(ICU::${lib} ICU_build)
+    set(ICU_LIBRARY "${ICU_LIBRARY_DIR}/${CMAKE_STATIC_LIBRARY_PREFIX}${lib}${CMAKE_STATIC_LIBRARY_SUFFIX}")
+    set_target_properties(ICU::${lib} PROPERTIES IMPORTED_LOCATION "${ICU_LIBRARY}" INTERFACE_INCLUDE_DIRECTORIES
+                                                                                    "${ICU_INCLUDE_DIR}")
+  endforeach(lib ${ICU_LIBRARIES})
 endif()
 
 # Create an interface target for ICU
 add_library(ICU INTERFACE)
 add_dependencies(ICU ICU_build)
-target_link_libraries(ICU INTERFACE ICU::ICU_data ICU::ICU_uc ICU::ICU_in)
+foreach(lib ${ICU_LIBRARIES})
+  target_link_libraries(ICU INTERFACE ICU::${lib})
+endforeach()
 target_include_directories(ICU SYSTEM INTERFACE $<BUILD_INTERFACE:${ICU_INCLUDE_DIR}>)
