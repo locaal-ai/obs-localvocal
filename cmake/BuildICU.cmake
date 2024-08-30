@@ -64,17 +64,16 @@ if(WIN32)
   install(FILES ${ICU_IN_DLL} DESTINATION "obs-plugins/64bit")
 
   add_library(ICU::ICU_data SHARED IMPORTED GLOBAL)
-  set_target_properties(ICU::ICU_data PROPERTIES IMPORTED_LOCATION "${ICU_DATA_LIBRARY}" INTERFACE_INCLUDE_DIRECTORIES
-                                                                                         "${ICU_INCLUDE_DIR}")
+  set_target_properties(ICU::ICU_data PROPERTIES IMPORTED_LOCATION "${ICU_DATA_LIBRARY}" IMPORTED_IMPLIB
+                                                                                         "${ICU_DATA_LIBRARY}")
 
   add_library(ICU::ICU_uc SHARED IMPORTED GLOBAL)
-  set_target_properties(ICU::ICU_uc PROPERTIES IMPORTED_LOCATION "${ICU_UC_LIBRARY}" INTERFACE_INCLUDE_DIRECTORIES
-                                                                                     "${ICU_INCLUDE_DIR}")
+  set_target_properties(ICU::ICU_uc PROPERTIES IMPORTED_LOCATION "${ICU_UC_LIBRARY}" IMPORTED_IMPLIB
+                                                                                     "${ICU_UC_LIBRARY}")
 
   add_library(ICU::ICU_in SHARED IMPORTED GLOBAL)
-  set_target_properties(ICU::ICU_in PROPERTIES IMPORTED_LOCATION "${ICU_IN_LIBRARY}" INTERFACE_INCLUDE_DIRECTORIES
-                                                                                     "${ICU_INCLUDE_DIR}")
-
+  set_target_properties(ICU::ICU_in PROPERTIES IMPORTED_LOCATION "${ICU_IN_LIBRARY}" IMPORTED_IMPLIB
+                                                                                     "${ICU_IN_LIBRARY}")
 else()
   set(ICU_URL
       "https://github.com/unicode-org/icu/releases/download/release-${ICU_VERSION_DASH}/icu4c-${ICU_VERSION_UNDERSCORE}-src.tgz"
@@ -128,4 +127,4 @@ endif()
 add_library(ICU INTERFACE)
 add_dependencies(ICU ICU_build)
 target_link_libraries(ICU INTERFACE ICU::ICU_data ICU::ICU_uc ICU::ICU_in)
-target_include_directories(ICU SYSTEM INTERFACE ${ICU_INCLUDE_DIR})
+target_include_directories(ICU INTERFACE $<BUILD_INTERFACE:${ICU_INCLUDE_DIR}>)

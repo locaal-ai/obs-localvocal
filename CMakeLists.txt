@@ -151,7 +151,7 @@ if(ENABLE_TESTS)
 
   find_libav(${CMAKE_PROJECT_NAME}-tests)
 
-  target_link_libraries(${CMAKE_PROJECT_NAME}-tests PRIVATE ct2 sentencepiece Whispercpp Ort OBS::libobs ICU::ICU)
+  target_link_libraries(${CMAKE_PROJECT_NAME}-tests PRIVATE ct2 sentencepiece Whispercpp Ort OBS::libobs ICU)
   target_include_directories(${CMAKE_PROJECT_NAME}-tests PRIVATE src)
 
   # install the tests to the release/test directory
