@@ -29,10 +29,10 @@ struct DetectionResultWithText {
 	std::string language;
 };
 
-enum VadState { VAD_STATE_WAS_ON = 0, VAD_STATE_WAS_OFF, VAD_STATE_IS_OFF, VAD_STATE_PARTIAL };
-
 void whisper_loop(void *data);
 struct whisper_context *init_whisper_context(const std::string &model_path,
 					     struct transcription_filter_data *gf);
+void run_inference_and_callbacks(transcription_filter_data *gf, uint64_t start_offset_ms,
+				 uint64_t end_offset_ms, int vad_state);
 
 #endif // WHISPER_PROCESSING_H

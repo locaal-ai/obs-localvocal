@@ -96,6 +96,11 @@ else()
   include(cmake/FetchOnnxruntime.cmake)
 endif()
 
+include(cmake/BuildICU.cmake)
+# Add ICU to the target
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE ICU)
+target_include_directories(${CMAKE_PROJECT_NAME} SYSTEM PUBLIC ${ICU_INCLUDE_DIR})
+
 target_sources(
   ${CMAKE_PROJECT_NAME}
   PRIVATE src/plugin-main.c
@@ -114,9 +119,11 @@ target_sources(
           src/whisper-utils/whisper-model-utils.cpp
           src/whisper-utils/silero-vad-onnx.cpp
           src/whisper-utils/token-buffer-thread.cpp
+          src/whisper-utils/vad-processing.cpp
           src/translation/language_codes.cpp
           src/translation/translation.cpp
           src/translation/translation-utils.cpp
+          src/translation/translation-language-utils.cpp
           src/ui/filter-replace-dialog.cpp)
 
 set_target_properties_plugin(${CMAKE_PROJECT_NAME} PROPERTIES OUTPUT_NAME ${_name})
@@ -137,12 +144,14 @@ if(ENABLE_TESTS)
             src/whisper-utils/whisper-utils.cpp
             src/whisper-utils/silero-vad-onnx.cpp
             src/whisper-utils/token-buffer-thread.cpp
+            src/whisper-utils/vad-processing.cpp
             src/translation/language_codes.cpp
-            src/translation/translation.cpp)
+            src/translation/translation.cpp
+            src/translation/translation-language-utils.cpp)
 
   find_libav(${CMAKE_PROJECT_NAME}-tests)
 
-  target_link_libraries(${CMAKE_PROJECT_NAME}-tests PRIVATE ct2 sentencepiece Whispercpp Ort OBS::libobs)
+  target_link_libraries(${CMAKE_PROJECT_NAME}-tests PRIVATE ct2 sentencepiece Whispercpp Ort OBS::libobs ICU)
   target_include_directories(${CMAKE_PROJECT_NAME}-tests PRIVATE src)
 
   # install the tests to the release/test directory

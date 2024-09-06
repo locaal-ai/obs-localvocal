@@ -7,6 +7,7 @@
 #include "transcription-filter.h"
 #include "transcription-filter-utils.h"
 #include "whisper-utils/whisper-language.h"
+#include "whisper-utils/vad-processing.h"
 #include "model-utils/model-downloader-types.h"
 #include "translation/language_codes.h"
 #include "ui/filter-replace-dialog.h"
@@ -212,8 +213,12 @@ void add_translation_group_properties(obs_properties_t *ppts)
 	obs_property_t *prop_tgt = obs_properties_add_list(
 		translation_group, "translate_target_language", MT_("target_language"),
 		OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_STRING);
-	obs_properties_add_bool(translation_group, "translate_add_context",
-				MT_("translate_add_context"));
+
+	// add slider for number of context lines to add to the translation
+	obs_properties_add_int_slider(translation_group, "translate_add_context",
+				      MT_("translate_add_context"), 0, 5, 1);
+	obs_properties_add_bool(translation_group, "translate_only_full_sentences",
+				MT_("translate_only_full_sentences"));
 
 	// Populate the dropdown with the language codes
 	for (const auto &language : language_codes) {
@@ -290,6 +295,31 @@ void add_buffered_output_group_properties(obs_properties_t *ppts)
 		OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_INT);
 	obs_property_list_add_int(buffer_type_list, "Character", SEGMENTATION_TOKEN);
 	obs_property_list_add_int(buffer_type_list, "Word", SEGMENTATION_WORD);
+	obs_property_list_add_int(buffer_type_list, "Sentence", SEGMENTATION_SENTENCE);
+	// add callback to the segmentation selection to set default values
+	obs_property_set_modified_callback(buffer_type_list, [](obs_properties_t *props,
+								obs_property_t *property,
+								obs_data_t *settings) {
+		UNUSED_PARAMETER(property);
+		UNUSED_PARAMETER(props);
+		const int segmentation_type = (int)obs_data_get_int(settings, "buffer_output_type");
+		// set default values for the number of lines and characters per line
+		switch (segmentation_type) {
+		case SEGMENTATION_TOKEN:
+			obs_data_set_int(settings, "buffer_num_lines", 2);
+			obs_data_set_int(settings, "buffer_num_chars_per_line", 30);
+			break;
+		case SEGMENTATION_WORD:
+			obs_data_set_int(settings, "buffer_num_lines", 2);
+			obs_data_set_int(settings, "buffer_num_chars_per_line", 10);
+			break;
+		case SEGMENTATION_SENTENCE:
+			obs_data_set_int(settings, "buffer_num_lines", 2);
+			obs_data_set_int(settings, "buffer_num_chars_per_line", 2);
+			break;
+		}
+		return true;
+	});
 	// add buffer lines parameter
 	obs_properties_add_int_slider(buffered_output_group, "buffer_num_lines",
 				      MT_("buffer_num_lines"), 1, 5, 1);
@@ -310,16 +340,29 @@ void add_advanced_group_properties(obs_properties_t *ppts, struct transcription_
 
 	obs_properties_add_int_slider(advanced_config_group, "min_sub_duration",
 				      MT_("min_sub_duration"), 1000, 5000, 50);
+	obs_properties_add_int_slider(advanced_config_group, "max_sub_duration",
+				      MT_("max_sub_duration"), 1000, 5000, 50);
 	obs_properties_add_float_slider(advanced_config_group, "sentence_psum_accept_thresh",
 					MT_("sentence_psum_accept_thresh"), 0.0, 1.0, 0.05);
 
 	obs_properties_add_bool(advanced_config_group, "process_while_muted",
 				MT_("process_while_muted"));
 
-	obs_properties_add_bool(advanced_config_group, "vad_enabled", MT_("vad_enabled"));
+	// add selection for Active VAD vs Hybrid VAD
+	obs_property_t *vad_mode_list =
+		obs_properties_add_list(advanced_config_group, "vad_mode", MT_("vad_mode"),
+					OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_INT);
+	obs_property_list_add_int(vad_mode_list, MT_("Active_VAD"), VAD_MODE_ACTIVE);
+	obs_property_list_add_int(vad_mode_list, MT_("Hybrid_VAD"), VAD_MODE_HYBRID);
 	// add vad threshold slider
 	obs_properties_add_float_slider(advanced_config_group, "vad_threshold",
 					MT_("vad_threshold"), 0.0, 1.0, 0.05);
+	// add duration filter threshold slider
+	obs_properties_add_float_slider(advanced_config_group, "duration_filter_threshold",
+					MT_("duration_filter_threshold"), 0.1, 3.0, 0.05);
+	// add segment duration slider
+	obs_properties_add_int_slider(advanced_config_group, "segment_duration",
+				      MT_("segment_duration"), 3000, 15000, 100);
 
 	// add button to open filter and replace UI dialog
 	obs_properties_add_button2(
@@ -370,6 +413,10 @@ void add_whisper_params_group_properties(obs_properties_t *ppts)
 	obs_property_list_add_int(whisper_sampling_method_list, "Beam search",
 				  WHISPER_SAMPLING_BEAM_SEARCH);
 	obs_property_list_add_int(whisper_sampling_method_list, "Greedy", WHISPER_SAMPLING_GREEDY);
+
+	// add int slider for context sentences
+	obs_properties_add_int_slider(whisper_params_group, "n_context_sentences",
+				      MT_("n_context_sentences"), 0, 5, 1);
 
 	// int n_threads;
 	obs_properties_add_int_slider(whisper_params_group, "n_threads", MT_("n_threads"), 1, 8, 1);
@@ -506,4 +553,78 @@ obs_properties_t *transcription_filter_properties(void *data)
 
 	UNUSED_PARAMETER(data);
 	return ppts;
+}
+
+void transcription_filter_defaults(obs_data_t *s)
+{
+	obs_log(LOG_DEBUG, "filter defaults");
+
+	obs_data_set_default_bool(s, "buffered_output", false);
+	obs_data_set_default_int(s, "buffer_num_lines", 2);
+	obs_data_set_default_int(s, "buffer_num_chars_per_line", 30);
+	obs_data_set_default_int(s, "buffer_output_type",
+				 (int)TokenBufferSegmentation::SEGMENTATION_TOKEN);
+
+	obs_data_set_default_bool(s, "vad_mode", VAD_MODE_ACTIVE);
+	obs_data_set_default_double(s, "vad_threshold", 0.65);
+	obs_data_set_default_double(s, "duration_filter_threshold", 2.25);
+	obs_data_set_default_int(s, "segment_duration", 7000);
+	obs_data_set_default_int(s, "log_level", LOG_DEBUG);
+	obs_data_set_default_bool(s, "log_words", false);
+	obs_data_set_default_bool(s, "caption_to_stream", false);
+	obs_data_set_default_string(s, "whisper_model_path", "Whisper Tiny English (74Mb)");
+	obs_data_set_default_string(s, "whisper_language_select", "en");
+	obs_data_set_default_string(s, "subtitle_sources", "none");
+	obs_data_set_default_bool(s, "process_while_muted", false);
+	obs_data_set_default_bool(s, "subtitle_save_srt", false);
+	obs_data_set_default_bool(s, "truncate_output_file", false);
+	obs_data_set_default_bool(s, "only_while_recording", false);
+	obs_data_set_default_bool(s, "rename_file_to_match_recording", true);
+	obs_data_set_default_int(s, "min_sub_duration", 1000);
+	obs_data_set_default_int(s, "max_sub_duration", 3000);
+	obs_data_set_default_bool(s, "advanced_settings", false);
+	obs_data_set_default_bool(s, "translate", false);
+	obs_data_set_default_string(s, "translate_target_language", "__es__");
+	obs_data_set_default_int(s, "translate_add_context", 1);
+	obs_data_set_default_bool(s, "translate_only_full_sentences", true);
+	obs_data_set_default_string(s, "translate_model", "whisper-based-translation");
+	obs_data_set_default_string(s, "translation_model_path_external", "");
+	obs_data_set_default_int(s, "translate_input_tokenization_style", INPUT_TOKENIZAION_M2M100);
+	obs_data_set_default_double(s, "sentence_psum_accept_thresh", 0.4);
+	obs_data_set_default_bool(s, "partial_group", false);
+	obs_data_set_default_int(s, "partial_latency", 1100);
+
+	// translation options
+	obs_data_set_default_double(s, "translation_sampling_temperature", 0.1);
+	obs_data_set_default_double(s, "translation_repetition_penalty", 2.0);
+	obs_data_set_default_int(s, "translation_beam_size", 1);
+	obs_data_set_default_int(s, "translation_max_decoding_length", 65);
+	obs_data_set_default_int(s, "translation_no_repeat_ngram_size", 1);
+	obs_data_set_default_int(s, "translation_max_input_length", 65);
+
+	// Whisper parameters
+	obs_data_set_default_int(s, "whisper_sampling_method", WHISPER_SAMPLING_BEAM_SEARCH);
+	obs_data_set_default_int(s, "n_context_sentences", 0);
+	obs_data_set_default_string(s, "initial_prompt", "");
+	obs_data_set_default_int(s, "n_threads", 4);
+	obs_data_set_default_int(s, "n_max_text_ctx", 16384);
+	obs_data_set_default_bool(s, "whisper_translate", false);
+	obs_data_set_default_bool(s, "no_context", true);
+	obs_data_set_default_bool(s, "single_segment", true);
+	obs_data_set_default_bool(s, "print_special", false);
+	obs_data_set_default_bool(s, "print_progress", false);
+	obs_data_set_default_bool(s, "print_realtime", false);
+	obs_data_set_default_bool(s, "print_timestamps", false);
+	obs_data_set_default_bool(s, "token_timestamps", false);
+	obs_data_set_default_bool(s, "dtw_token_timestamps", false);
+	obs_data_set_default_double(s, "thold_pt", 0.01);
+	obs_data_set_default_double(s, "thold_ptsum", 0.01);
+	obs_data_set_default_int(s, "max_len", 0);
+	obs_data_set_default_bool(s, "split_on_word", true);
+	obs_data_set_default_int(s, "max_tokens", 0);
+	obs_data_set_default_bool(s, "suppress_blank", false);
+	obs_data_set_default_bool(s, "suppress_non_speech_tokens", true);
+	obs_data_set_default_double(s, "temperature", 0.1);
+	obs_data_set_default_double(s, "max_initial_ts", 1.0);
+	obs_data_set_default_double(s, "length_penalty", -1.0);
 }

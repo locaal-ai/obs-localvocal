@@ -36,6 +36,8 @@ struct transcription_filter_data {
 	size_t sentence_number;
 	// Minimal subtitle duration in ms
 	size_t min_sub_duration;
+	// Maximal subtitle duration in ms
+	size_t max_sub_duration;
 	// Last time a subtitle was rendered
 	uint64_t last_sub_render_time;
 	bool cleared_last_sub;
@@ -62,7 +64,7 @@ struct transcription_filter_data {
 	float sentence_psum_accept_thresh;
 
 	bool do_silence;
-	bool vad_enabled;
+	int vad_mode;
 	int log_level = LOG_DEBUG;
 	bool log_words;
 	bool caption_to_stream;
@@ -84,10 +86,16 @@ struct transcription_filter_data {
 	bool initial_creation = true;
 	bool partial_transcription = false;
 	int partial_latency = 1000;
+	float duration_filter_threshold = 2.25f;
+	int segment_duration = 7000;
 
 	// Last transcription result
-	std::string last_text;
+	std::string last_text_for_translation;
 	std::string last_text_translation;
+
+	// Transcription context sentences
+	int n_context_sentences;
+	std::deque<std::string> last_transcription_sentence;
 
 	// Text source to output the subtitles
 	std::string text_source_name;
@@ -110,6 +118,7 @@ struct transcription_filter_data {
 	struct translation_context translation_ctx;
 	std::string translation_model_index;
 	std::string translation_model_path_external;
+	bool translate_only_full_sentences;
 
 	bool buffered_output = false;
 	TokenBufferThread captions_monitor;

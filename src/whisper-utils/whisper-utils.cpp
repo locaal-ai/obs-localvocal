@@ -2,12 +2,9 @@
 #include "plugin-support.h"
 #include "model-utils/model-downloader.h"
 #include "whisper-processing.h"
+#include "vad-processing.h"
 
 #include <obs-module.h>
-
-#ifdef _WIN32
-#include <Windows.h>
-#endif
 
 void shutdown_whisper_thread(struct transcription_filter_data *gf)
 {
@@ -40,21 +37,7 @@ void start_whisper_thread_with_path(struct transcription_filter_data *gf,
 	}
 
 	// initialize Silero VAD
-#ifdef _WIN32
-	// convert mbstring to wstring
-	int count = MultiByteToWideChar(CP_UTF8, 0, silero_vad_model_file,
-					strlen(silero_vad_model_file), NULL, 0);
-	std::wstring silero_vad_model_path(count, 0);
-	MultiByteToWideChar(CP_UTF8, 0, silero_vad_model_file, strlen(silero_vad_model_file),
-			    &silero_vad_model_path[0], count);
-	obs_log(gf->log_level, "Create silero VAD: %S", silero_vad_model_path.c_str());
-#else
-	std::string silero_vad_model_path = silero_vad_model_file;
-	obs_log(gf->log_level, "Create silero VAD: %s", silero_vad_model_path.c_str());
-#endif
-	// roughly following https://github.com/SYSTRAN/faster-whisper/blob/master/faster_whisper/vad.py
-	// for silero vad parameters
-	gf->vad.reset(new VadIterator(silero_vad_model_path, WHISPER_SAMPLE_RATE));
+	initialize_vad(gf, silero_vad_model_file);
 
 	obs_log(gf->log_level, "Create whisper context");
 	gf->whisper_context = init_whisper_context(whisper_model_path, gf);

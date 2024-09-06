@@ -3,6 +3,7 @@
 #include "model-utils/model-find-utils.h"
 #include "transcription-filter-data.h"
 #include "language_codes.h"
+#include "translation-language-utils.h"
 
 #include <ctranslate2/translator.h>
 #include <sentencepiece_processor.h>
@@ -114,30 +115,52 @@ int translate(struct translation_context &translation_ctx, const std::string &te
 		if (translation_ctx.input_tokenization_style == INPUT_TOKENIZAION_M2M100) {
 			// set input tokens
 			std::vector<std::string> input_tokens = {source_lang, "<s>"};
-			if (translation_ctx.add_context &&
+			if (translation_ctx.add_context > 0 &&
 			    translation_ctx.last_input_tokens.size() > 0) {
-				input_tokens.insert(input_tokens.end(),
-						    translation_ctx.last_input_tokens.begin(),
-						    translation_ctx.last_input_tokens.end());
+				// add the last input tokens sentences to the input tokens
+				for (const auto &tokens : translation_ctx.last_input_tokens) {
+					input_tokens.insert(input_tokens.end(), tokens.begin(),
+							    tokens.end());
+				}
 			}
 			std::vector<std::string> new_input_tokens = translation_ctx.tokenizer(text);
 			input_tokens.insert(input_tokens.end(), new_input_tokens.begin(),
 					    new_input_tokens.end());
 			input_tokens.push_back("</s>");
 
-			translation_ctx.last_input_tokens = new_input_tokens;
+			// log the input tokens
+			std::string input_tokens_str;
+			for (const auto &token : input_tokens) {
+				input_tokens_str += token + ", ";
+			}
+			obs_log(LOG_INFO, "Input tokens: %s", input_tokens_str.c_str());
+
+			translation_ctx.last_input_tokens.push_back(new_input_tokens);
+			// remove the oldest input tokens
+			while (translation_ctx.last_input_tokens.size() >
+			       (size_t)translation_ctx.add_context) {
+				translation_ctx.last_input_tokens.pop_front();
+			}
 
 			const std::vector<std::vector<std::string>> batch = {input_tokens};
 
 			// get target prefix
 			target_prefix = {target_lang};
-			if (translation_ctx.add_context &&
+			// add the last translation tokens to the target prefix
+			if (translation_ctx.add_context > 0 &&
 			    translation_ctx.last_translation_tokens.size() > 0) {
-				target_prefix.insert(
-					target_prefix.end(),
-					translation_ctx.last_translation_tokens.begin(),
-					translation_ctx.last_translation_tokens.end());
+				for (const auto &tokens : translation_ctx.last_translation_tokens) {
+					target_prefix.insert(target_prefix.end(), tokens.begin(),
+							     tokens.end());
+				}
 			}
+
+			// log the target prefix
+			std::string target_prefix_str;
+			for (const auto &token : target_prefix) {
+				target_prefix_str += token + ",";
+			}
+			obs_log(LOG_INFO, "Target prefix: %s", target_prefix_str.c_str());
 
 			const std::vector<std::vector<std::string>> target_prefix_batch = {
 				target_prefix};
@@ -161,9 +184,26 @@ int translate(struct translation_context &translation_ctx, const std::string &te
 		std::vector<std::string> translation_tokens(
 			tokens_result.begin() + target_prefix.size(), tokens_result.end());
 
-		translation_ctx.last_translation_tokens = translation_tokens;
+		// log the translation tokens
+		std::string translation_tokens_str;
+		for (const auto &token : translation_tokens) {
+			translation_tokens_str += token + ", ";
+		}
+		obs_log(LOG_INFO, "Translation tokens: %s", translation_tokens_str.c_str());
+
+		// save the translation tokens
+		translation_ctx.last_translation_tokens.push_back(translation_tokens);
+		// remove the oldest translation tokens
+		while (translation_ctx.last_translation_tokens.size() >
+		       (size_t)translation_ctx.add_context) {
+			translation_ctx.last_translation_tokens.pop_front();
+		}
+		obs_log(LOG_INFO, "Last translation tokens deque size: %d",
+			(int)translation_ctx.last_translation_tokens.size());
+
 		// detokenize
-		result = translation_ctx.detokenizer(translation_tokens);
+		const std::string result_ = translation_ctx.detokenizer(translation_tokens);
+		result = remove_start_punctuation(result_);
 	} catch (std::exception &e) {
 		obs_log(LOG_ERROR, "Error: %s", e.what());
 		return OBS_POLYGLOT_TRANSLATION_FAIL;
