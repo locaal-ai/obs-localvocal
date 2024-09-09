@@ -11,6 +11,7 @@
 #include "model-utils/model-downloader-types.h"
 #include "translation/language_codes.h"
 #include "ui/filter-replace-dialog.h"
+#include "ui/filter-replace-utils.h"
 
 #include <string>
 #include <vector>

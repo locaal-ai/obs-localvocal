@@ -30,6 +30,7 @@
 #include "translation/translation.h"
 #include "translation/translation-includes.h"
 #include "ui/filter-replace-dialog.h"
+#include "ui/filter-replace-utils.h"
 
 void set_source_signals(transcription_filter_data *gf, obs_source_t *parent_source)
 {

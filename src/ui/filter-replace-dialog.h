@@ -27,9 +27,4 @@ private slots:
 	void editFilter(QTableWidgetItem *item);
 };
 
-std::string serialize_filter_words_replace(
-	const std::vector<std::tuple<std::string, std::string>> &filter_words_replace);
-std::vector<std::tuple<std::string, std::string>>
-deserialize_filter_words_replace(const std::string &filter_words_replace_str);
-
 #endif // FILTERREPLACEDIALOG_H

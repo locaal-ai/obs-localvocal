@@ -123,6 +123,7 @@ target_sources(
           src/translation/language_codes.cpp
           src/translation/translation.cpp
           src/translation/translation-utils.cpp
+          src/ui/filter-replace-utils.cpp
           src/translation/translation-language-utils.cpp
           src/ui/filter-replace-dialog.cpp)
 
@@ -147,6 +148,7 @@ if(ENABLE_TESTS)
             src/whisper-utils/vad-processing.cpp
             src/translation/language_codes.cpp
             src/translation/translation.cpp
+            src/ui/filter-replace-utils.cpp
             src/translation/translation-language-utils.cpp)
 
   find_libav(${CMAKE_PROJECT_NAME}-tests)
