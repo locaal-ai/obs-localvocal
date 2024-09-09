@@ -6,6 +6,9 @@
 #include "whisper-utils.h"
 #include "transcription-utils.h"
 
+#include <iostream>
+#include <sstream>
+
 #include <obs-module.h>
 
 #ifdef _WIN32
@@ -75,37 +78,74 @@ void TokenBufferThread::log_token_vector(const std::vector<std::string> &tokens)
 	obs_log(LOG_INFO, "TokenBufferThread::log_token_vector: '%s'", output.c_str());
 }
 
-void TokenBufferThread::addSentence(const std::string &sentence)
+void TokenBufferThread::addSentenceFromStdString(const std::string &sentence,
+						 TokenBufferTimePoint start_time,
+						 TokenBufferTimePoint end_time, bool is_partial)
 {
+	if (sentence.empty()) {
+		return;
+	}
 #ifdef _WIN32
 	// on windows convert from multibyte to wide char
 	int count =
 		MultiByteToWideChar(CP_UTF8, 0, sentence.c_str(), (int)sentence.length(), NULL, 0);
-	std::wstring sentence_ws(count, 0);
+	TokenBufferString sentence_ws(count, 0);
 	MultiByteToWideChar(CP_UTF8, 0, sentence.c_str(), (int)sentence.length(), &sentence_ws[0],
 			    count);
 #else
-	std::string sentence_ws = sentence;
+	TokenBufferString sentence_ws = sentence;
 #endif
-	// split to characters
-	std::vector<TokenBufferString> characters;
-	for (const auto &c : sentence_ws) {
-		characters.push_back(TokenBufferString(1, c));
+
+	TokenBufferSentence sentence_for_add;
+	sentence_for_add.start_time = start_time;
+	sentence_for_add.end_time = end_time;
+
+	if (this->segmentation == SEGMENTATION_WORD) {
+		// split the sentence to words
+		std::vector<TokenBufferString> words;
+		std::basic_istringstream<TokenBufferString::value_type> iss(sentence_ws);
+		TokenBufferString word_token;
+		while (iss >> word_token) {
+			words.push_back(word_token);
+		}
+		// add the words to a sentence
+		for (const auto &word : words) {
+			sentence_for_add.tokens.push_back({word, is_partial});
+			sentence_for_add.tokens.push_back({SPACE, is_partial});
+		}
+	} else if (this->segmentation == SEGMENTATION_TOKEN) {
+		// split to characters
+		std::vector<TokenBufferString> characters;
+		for (const auto &c : sentence_ws) {
+			characters.push_back(TokenBufferString(1, c));
+		}
+		// add the characters to a sentece
+		for (const auto &character : characters) {
+			sentence_for_add.tokens.push_back({character, is_partial});
+		}
+	} else {
+		// add the whole sentence as a single token
+		sentence_for_add.tokens.push_back({sentence_ws, is_partial});
+		sentence_for_add.tokens.push_back({SPACE, is_partial});
 	}
+	addSentence(sentence_for_add);
+}
 
-	std::lock_guard<std::mutex> lock(inputQueueMutex);
+void TokenBufferThread::addSentence(const TokenBufferSentence &sentence)
+{
+	std::lock_guard<std::mutex> lock(this->inputQueueMutex);
 
-	// add the characters to the inputQueue
-	for (const auto &character : characters) {
+	// add the tokens to the inputQueue
+	for (const auto &character : sentence.tokens) {
 		inputQueue.push_back(character);
 	}
-	inputQueue.push_back(SPACE);
+	inputQueue.push_back({SPACE, sentence.tokens.back().is_partial});
 
 	// add to the contribution queue as well
-	for (const auto &character : characters) {
+	for (const auto &character : sentence.tokens) {
 		contributionQueue.push_back(character);
 	}
-	contributionQueue.push_back(SPACE);
+	contributionQueue.push_back({SPACE, sentence.tokens.back().is_partial});
 	this->lastContributionTime = std::chrono::steady_clock::now();
 }
 
@@ -148,7 +188,7 @@ void TokenBufferThread::monitor()
 				if (this->segmentation == SEGMENTATION_TOKEN) {
 					// pop tokens until a space is found
 					while (!presentationQueue.empty() &&
-					       presentationQueue.front() != SPACE) {
+					       presentationQueue.front().token != SPACE) {
 						presentationQueue.pop_front();
 					}
 				}
@@ -158,6 +198,13 @@ void TokenBufferThread::monitor()
 				std::lock_guard<std::mutex> lock(inputQueueMutex);
 
 				if (!inputQueue.empty()) {
+					// if the input on the inputQueue is partial - first remove all partials
+					// from the end of the presentation queue
+					while (!presentationQueue.empty() &&
+					       presentationQueue.back().is_partial) {
+						presentationQueue.pop_back();
+					}
+
 					// if there are token on the input queue
 					// then add to the presentation queue based on the segmentation
 					if (this->segmentation == SEGMENTATION_SENTENCE) {
@@ -171,16 +218,17 @@ void TokenBufferThread::monitor()
 						presentationQueue.push_back(inputQueue.front());
 						inputQueue.pop_front();
 					} else {
+						// SEGMENTATION_WORD
 						// skip spaces in the beginning of the input queue
 						while (!inputQueue.empty() &&
-						       inputQueue.front() == SPACE) {
+						       inputQueue.front().token == SPACE) {
 							inputQueue.pop_front();
 						}
 						// add one word to the presentation queue
-						TokenBufferString word;
+						TokenBufferToken word;
 						while (!inputQueue.empty() &&
-						       inputQueue.front() != SPACE) {
-							word += inputQueue.front();
+						       inputQueue.front().token != SPACE) {
+							word = inputQueue.front();
 							inputQueue.pop_front();
 						}
 						presentationQueue.push_back(word);
@@ -200,7 +248,7 @@ void TokenBufferThread::monitor()
 					size_t wordsInSentence = 0;
 					for (size_t i = 0; i < presentationQueue.size(); i++) {
 						const auto &word = presentationQueue[i];
-						sentences.back() += word + SPACE;
+						sentences.back() += word.token + SPACE;
 						wordsInSentence++;
 						if (wordsInSentence == this->numPerSentence) {
 							sentences.push_back(TokenBufferString());
@@ -211,12 +259,12 @@ void TokenBufferThread::monitor()
 					for (size_t i = 0; i < presentationQueue.size(); i++) {
 						const auto &token = presentationQueue[i];
 						// skip spaces in the beginning of a sentence (tokensInSentence == 0)
-						if (token == SPACE &&
+						if (token.token == SPACE &&
 						    sentences.back().length() == 0) {
 							continue;
 						}
 
-						sentences.back() += token;
+						sentences.back() += token.token;
 						if (sentences.back().length() ==
 						    this->numPerSentence) {
 							// if the next character is not a space - this is a broken word
@@ -280,7 +328,7 @@ void TokenBufferThread::monitor()
 				// take the contribution queue and send it to the output
 				TokenBufferString contribution;
 				for (const auto &token : contributionQueue) {
-					contribution += token;
+					contribution += token.token;
 				}
 				contributionQueue.clear();
 #ifdef _WIN32

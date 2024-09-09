@@ -17,6 +17,7 @@
 #include "transcription-filter.h"
 #include "transcription-utils.h"
 #include "whisper-utils/whisper-utils.h"
+#include "whisper-utils/vad-processing.h"
 #include "audio-file-utils.h"
 #include "translation/language_codes.h"
 #include "ui/filter-replace-utils.h"
@@ -149,7 +150,7 @@ create_context(int sample_rate, int channels, const std::string &whisper_model_p
 	// 	},
 	// 	30, std::chrono::seconds(10));
 
-	gf->vad_enabled = true;
+	gf->vad_mode = VAD_MODE_ACTIVE;
 	gf->log_words = true;
 	gf->caption_to_stream = false;
 	gf->start_timestamp_ms = now_ms();
@@ -158,7 +159,7 @@ create_context(int sample_rate, int channels, const std::string &whisper_model_p
 	gf->buffered_output = false;
 
 	gf->target_lang = "";
-	gf->translation_ctx.add_context = true;
+	gf->translation_ctx.add_context = 1;
 	gf->translation_output = "";
 	gf->translate = false;
 	gf->sentence_psum_accept_thresh = 0.4;

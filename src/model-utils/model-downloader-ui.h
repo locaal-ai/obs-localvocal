@@ -50,8 +50,8 @@ protected:
 private:
 	QVBoxLayout *layout;
 	QProgressBar *progress_bar;
-	QThread *download_thread;
-	ModelDownloadWorker *download_worker;
+	QPointer<QThread> download_thread;
+	QPointer<ModelDownloadWorker> download_worker;
 	// Callback for when the download is finished
 	download_finished_callback_t download_finished_callback;
 	bool mPrepareToClose;

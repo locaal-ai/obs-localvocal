@@ -53,8 +53,8 @@ std::string send_sentence_to_translation(const std::string &sentence,
 					 struct transcription_filter_data *gf,
 					 const std::string &source_language)
 {
-	const std::string last_text = gf->last_text;
-	gf->last_text = sentence;
+	const std::string last_text = gf->last_text_for_translation;
+	gf->last_text_for_translation = sentence;
 	if (gf->translate && !sentence.empty()) {
 		obs_log(gf->log_level, "Translating text. %s -> %s", source_language.c_str(),
 			gf->target_lang.c_str());
@@ -199,11 +199,6 @@ void set_text_callback(struct transcription_filter_data *gf,
 		       const DetectionResultWithText &resultIn)
 {
 	DetectionResultWithText result = resultIn;
-	if (!result.text.empty() && (result.result == DETECTION_RESULT_SPEECH ||
-				     result.result == DETECTION_RESULT_PARTIAL)) {
-		gf->last_sub_render_time = now_ms();
-		gf->cleared_last_sub = false;
-	}
 
 	std::string str_copy = result.text;
 
@@ -233,9 +228,12 @@ void set_text_callback(struct transcription_filter_data *gf,
 		}
 	}
 
+	bool should_translate =
+		gf->translate_only_full_sentences ? result.result == DETECTION_RESULT_SPEECH : true;
+
 	// send the sentence to translation (if enabled)
 	std::string translated_sentence =
-		send_sentence_to_translation(str_copy, gf, result.language);
+		should_translate ? send_sentence_to_translation(str_copy, gf, result.language) : "";
 
 	if (gf->translate) {
 		if (gf->translation_output == "none") {
@@ -243,10 +241,12 @@ void set_text_callback(struct transcription_filter_data *gf,
 			str_copy = translated_sentence;
 		} else {
 			if (gf->buffered_output) {
-				if (result.result == DETECTION_RESULT_SPEECH) {
-					// buffered output - add the sentence to the monitor
-					gf->translation_monitor.addSentence(translated_sentence);
-				}
+				// buffered output - add the sentence to the monitor
+				gf->translation_monitor.addSentenceFromStdString(
+					translated_sentence,
+					get_time_point_from_ms(result.start_timestamp_ms),
+					get_time_point_from_ms(result.end_timestamp_ms),
+					result.result == DETECTION_RESULT_PARTIAL);
 			} else {
 				// non-buffered output - send the sentence to the selected source
 				send_caption_to_source(gf->translation_output, translated_sentence,
@@ -256,9 +256,10 @@ void set_text_callback(struct transcription_filter_data *gf,
 	}
 
 	if (gf->buffered_output) {
-		if (result.result == DETECTION_RESULT_SPEECH) {
-			gf->captions_monitor.addSentence(str_copy);
-		}
+		gf->captions_monitor.addSentenceFromStdString(
+			str_copy, get_time_point_from_ms(result.start_timestamp_ms),
+			get_time_point_from_ms(result.end_timestamp_ms),
+			result.result == DETECTION_RESULT_PARTIAL);
 	} else {
 		// non-buffered output - send the sentence to the selected source
 		send_caption_to_source(gf->text_source_name, str_copy, gf);
@@ -272,6 +273,21 @@ void set_text_callback(struct transcription_filter_data *gf,
 	if (gf->save_to_file && gf->output_file_path != "" &&
 	    result.result == DETECTION_RESULT_SPEECH) {
 		send_sentence_to_file(gf, result, str_copy, translated_sentence);
+	}
+
+	if (!result.text.empty() && (result.result == DETECTION_RESULT_SPEECH ||
+				     result.result == DETECTION_RESULT_PARTIAL)) {
+		gf->last_sub_render_time = now_ms();
+		gf->cleared_last_sub = false;
+		if (result.result == DETECTION_RESULT_SPEECH) {
+			// save the last subtitle if it was a full sentence
+			gf->last_transcription_sentence.push_back(result.text);
+			// remove the oldest sentence if the buffer is too long
+			while (gf->last_transcription_sentence.size() >
+			       (size_t)gf->n_context_sentences) {
+				gf->last_transcription_sentence.pop_front();
+			}
+		}
 	}
 };
 
@@ -314,6 +330,12 @@ void reset_caption_state(transcription_filter_data *gf_)
 	}
 	send_caption_to_source(gf_->text_source_name, "", gf_);
 	send_caption_to_source(gf_->translation_output, "", gf_);
+	// reset translation context
+	gf_->last_text_for_translation = "";
+	gf_->last_text_translation = "";
+	gf_->translation_ctx.last_input_tokens.clear();
+	gf_->translation_ctx.last_translation_tokens.clear();
+	gf_->last_transcription_sentence.clear();
 	// flush the buffer
 	{
 		std::lock_guard<std::mutex> lock(gf_->whisper_buf_mutex);

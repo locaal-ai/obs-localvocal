@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+#include <deque>
 #include <functional>
 #include <memory>
 
@@ -25,10 +26,10 @@ struct translation_context {
 	std::unique_ptr<ctranslate2::TranslationOptions> options;
 	std::function<std::vector<std::string>(const std::string &)> tokenizer;
 	std::function<std::string(const std::vector<std::string> &)> detokenizer;
-	std::vector<std::string> last_input_tokens;
-	std::vector<std::string> last_translation_tokens;
-	// Use the last translation as context for the next translation
-	bool add_context;
+	std::deque<std::vector<std::string>> last_input_tokens;
+	std::deque<std::vector<std::string>> last_translation_tokens;
+	// How many sentences to use as context for the next translation
+	int add_context;
 	InputTokenizationStyle input_tokenization_style;
 };
 
