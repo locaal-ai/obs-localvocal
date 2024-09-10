@@ -1,16 +1,16 @@
 include(ExternalProject)
 include(FetchContent)
 
-set(PREBUILT_WHISPERCPP_VERSION "0.0.5")
+set(PREBUILT_WHISPERCPP_VERSION "0.0.6")
 set(PREBUILT_WHISPERCPP_URL_BASE
     "https://github.com/occ-ai/occ-ai-dep-whispercpp/releases/download/${PREBUILT_WHISPERCPP_VERSION}")
 
 if(APPLE)
   # check the "MACOS_ARCH" env var to figure out if this is x86 or arm64
   if($ENV{MACOS_ARCH} STREQUAL "x86_64")
-    set(WHISPER_CPP_HASH "da61500b9a37f8630b9e4ed49bc3fe7858729d7a28a2e80bf6cfa4cb97523546")
+    set(WHISPER_CPP_HASH "454abee900a96a0a10a91f631ff797bdbdf2df0d2a819479a409634c9be1e12c")
   elseif($ENV{MACOS_ARCH} STREQUAL "arm64")
-    set(WHISPER_CPP_HASH "ef1e2628ba09414c0848d58c471440f38b8393cb5d428edf82b9e78aeeecdd15")
+    set(WHISPER_CPP_HASH "f726388cc494f6fca864c860af6c1bc2932c3dc823ef92197b1e29f088425668")
   else()
     message(
       FATAL_ERROR
@@ -54,13 +54,13 @@ elseif(WIN32)
   set(WHISPER_CPP_URL
       "${PREBUILT_WHISPERCPP_URL_BASE}/whispercpp-windows-${ARCH_PREFIX}-${PREBUILT_WHISPERCPP_VERSION}.zip")
   if(${ACCELERATION} STREQUAL "cpu")
-    set(WHISPER_CPP_HASH "2b1cfa0dd764132c4cde60e112a8e6328d28d158d91a8845080baa3e9d2dcdcd")
+    set(WHISPER_CPP_HASH "126c5d859e902b4cd0f2cd09304a68750f1dbc6a7aa62e280cfd56c51a6a1c95")
     add_compile_definitions("LOCALVOCAL_WITH_CPU")
   elseif(${ACCELERATION} STREQUAL "cuda")
-    set(WHISPER_CPP_HASH "011e813742fddf0911c4a36d2080d7a388cf78738081297088e7d50023e4f9bc")
+    set(WHISPER_CPP_HASH "5b9592c311a7f1612894ca0b36f6bd4effb6a46acd03d33924df56c52f566779")
     add_compile_definitions("LOCALVOCAL_WITH_CUDA")
   elseif(${ACCELERATION} STREQUAL "hipblas")
-    set(WHISPER_CPP_HASH "f2980d6cd3df9cac464378d26d2c19d827bcac995c8d0398a39230a9be936013")
+    set(WHISPER_CPP_HASH "c306ecce16cd10f377fdefbf7bb252abac8e6638a2637f82b1f1f32dd2cb4e39")
     add_compile_definitions("LOCALVOCAL_WITH_HIPBLAS")
   else()
     message(
