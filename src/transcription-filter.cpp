@@ -396,6 +396,7 @@ void transcription_filter_update(void *data, obs_data_t *s)
 		gf->whisper_params.temperature = (float)obs_data_get_double(s, "temperature");
 		gf->whisper_params.max_initial_ts = (float)obs_data_get_double(s, "max_initial_ts");
 		gf->whisper_params.length_penalty = (float)obs_data_get_double(s, "length_penalty");
+		gf->whisper_params.no_timestamps = true;
 
 		if (gf->vad) {
 			const float vad_threshold = (float)obs_data_get_double(s, "vad_threshold");

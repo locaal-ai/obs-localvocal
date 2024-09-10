@@ -322,7 +322,7 @@ void recording_state_callback(enum obs_frontend_event event, void *data)
 	}
 }
 
-void reset_caption_state(transcription_filter_data *gf_)
+void clear_current_caption(transcription_filter_data *gf_)
 {
 	if (gf_->captions_monitor.isEnabled()) {
 		gf_->captions_monitor.clear();
@@ -336,6 +336,12 @@ void reset_caption_state(transcription_filter_data *gf_)
 	gf_->translation_ctx.last_input_tokens.clear();
 	gf_->translation_ctx.last_translation_tokens.clear();
 	gf_->last_transcription_sentence.clear();
+	gf_->cleared_last_sub = true;
+}
+
+void reset_caption_state(transcription_filter_data *gf_)
+{
+	clear_current_caption(gf_);
 	// flush the buffer
 	{
 		std::lock_guard<std::mutex> lock(gf_->whisper_buf_mutex);
