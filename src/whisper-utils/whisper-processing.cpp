@@ -169,7 +169,8 @@ struct DetectionResultWithText run_whisper_inference(struct transcription_filter
 		// add low volume white noise
 		const float noise_level = 0.01f;
 		for (size_t i = 0; i < new_size; ++i) {
-			pcm32f_data[i] = noise_level * ((float)rand() / (float)RAND_MAX * 2.0f - 1.0f);
+			pcm32f_data[i] =
+				noise_level * ((float)rand() / (float)RAND_MAX * 2.0f - 1.0f);
 		}
 
 		memcpy(pcm32f_data + (new_size - pcm32f_num_samples) / 2, pcm32f_data_,
@@ -240,7 +241,8 @@ struct DetectionResultWithText run_whisper_inference(struct transcription_filter
 			// get token
 			whisper_token_data token =
 				whisper_full_get_token_data(gf->whisper_context, n_segment, j);
-			const std::string token_str = whisper_token_to_str(gf->whisper_context, token.id);
+			const std::string token_str =
+				whisper_token_to_str(gf->whisper_context, token.id);
 			bool keep = true;
 			// if the token starts with '[' and ends with ']', don't keep it
 			if (token_str[0] == '[' && token_str[token_str.size() - 1] == ']') {
@@ -277,8 +279,8 @@ struct DetectionResultWithText run_whisper_inference(struct transcription_filter
 				text += token_str;
 				tokens.push_back(token);
 			}
-			obs_log(gf->log_level, "S %d, T %2d: %5d\t%s\tp: %.3f [keep: %d]", n_segment,
-				j, token.id, token_str.c_str(), token.p, keep);
+			obs_log(gf->log_level, "S %d, T %2d: %5d\t%s\tp: %.3f [keep: %d]",
+				n_segment, j, token.id, token_str.c_str(), token.p, keep);
 		}
 	}
 	sentence_p /= (float)tokens.size();
