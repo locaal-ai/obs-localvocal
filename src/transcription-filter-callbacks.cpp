@@ -218,7 +218,8 @@ void set_text_callback(struct transcription_filter_data *gf,
 		for (const auto &filter_words : gf->filter_words_replace) {
 			// if filter exists within str_copy, replace it with the replacement
 			str_copy = std::regex_replace(str_copy,
-						      std::regex(std::get<0>(filter_words)),
+						      std::regex(std::get<0>(filter_words),
+								 std::regex_constants::icase),
 						      std::get<1>(filter_words));
 		}
 		// if the text was modified, log the original and modified text

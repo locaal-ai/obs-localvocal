@@ -27,6 +27,9 @@ FilterReplaceDialog::FilterReplaceDialog(QWidget *parent, transcription_filter_d
 	// connect edit triggers
 	connect(ui->tableWidget, &QTableWidget::itemChanged, this,
 		&FilterReplaceDialog::editFilter);
+	// connect toolButton_addPrepopulatedFilter
+	connect(ui->toolButton_addPrepopulatedFilter, &QToolButton::clicked, this,
+		&FilterReplaceDialog::addPrepopulatedFilter);
 }
 
 FilterReplaceDialog::~FilterReplaceDialog()
@@ -72,4 +75,29 @@ void FilterReplaceDialog::editFilter(QTableWidgetItem *item)
 	}
 	// use the row number to update the filter_words_replace map
 	ctx->filter_words_replace[item->row()] = std::make_tuple(key, value);
+}
+
+void FilterReplaceDialog::addPrepopulatedFilter()
+{
+	// add a prepopulated filter_words_replace map entry
+	// check the value of the comboBox_selectPrepopulatedFilter
+	// and add the corresponding filter_words_replace map entry
+	std::string replace_value = "";
+	std::string replace_pattern;
+	const std::string selected =
+		ui->comboBox_selectPrepopulatedFilter->currentText().toStdString();
+	if (selected == "English Swear Words") {
+		replace_pattern = "(fuck|shit|bitch|cunt|cock|dick|pussy)";
+		replace_value = "****";
+	} else if (selected == "English Hallucinations") {
+		replace_pattern = "(Thank you|Thanks for watching|Please subscribe)";
+	} else if (selected == "Korean Hallucinations") {
+		replace_pattern = "MBC.*";
+	}
+	ctx->filter_words_replace.push_back(std::make_tuple(replace_pattern, replace_value));
+	ui->tableWidget->insertRow(ui->tableWidget->rowCount());
+	ui->tableWidget->setItem(ui->tableWidget->rowCount() - 1, 0,
+				 new QTableWidgetItem(QString::fromStdString(replace_pattern)));
+	ui->tableWidget->setItem(ui->tableWidget->rowCount() - 1, 1,
+				 new QTableWidgetItem(QString::fromStdString(replace_value)));
 }
