@@ -25,6 +25,7 @@ private slots:
 	void addFilter();
 	void removeFilter();
 	void editFilter(QTableWidgetItem *item);
+	void addPrepopulatedFilter();
 };
 
 #endif // FILTERREPLACEDIALOG_H

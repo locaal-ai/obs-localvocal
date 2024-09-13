@@ -218,7 +218,8 @@ void set_text_callback(struct transcription_filter_data *gf,
 		for (const auto &filter_words : gf->filter_words_replace) {
 			// if filter exists within str_copy, replace it with the replacement
 			str_copy = std::regex_replace(str_copy,
-						      std::regex(std::get<0>(filter_words)),
+						      std::regex(std::get<0>(filter_words),
+								 std::regex_constants::icase),
 						      std::get<1>(filter_words));
 		}
 		// if the text was modified, log the original and modified text
@@ -322,7 +323,7 @@ void recording_state_callback(enum obs_frontend_event event, void *data)
 	}
 }
 
-void reset_caption_state(transcription_filter_data *gf_)
+void clear_current_caption(transcription_filter_data *gf_)
 {
 	if (gf_->captions_monitor.isEnabled()) {
 		gf_->captions_monitor.clear();
@@ -336,6 +337,12 @@ void reset_caption_state(transcription_filter_data *gf_)
 	gf_->translation_ctx.last_input_tokens.clear();
 	gf_->translation_ctx.last_translation_tokens.clear();
 	gf_->last_transcription_sentence.clear();
+	gf_->cleared_last_sub = true;
+}
+
+void reset_caption_state(transcription_filter_data *gf_)
+{
+	clear_current_caption(gf_);
 	// flush the buffer
 	{
 		std::lock_guard<std::mutex> lock(gf_->whisper_buf_mutex);

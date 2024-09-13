@@ -161,11 +161,18 @@ struct DetectionResultWithText run_whisper_inference(struct transcription_filter
 
 	if (pcm32f_num_samples < WHISPER_SAMPLE_RATE) {
 		obs_log(gf->log_level,
-			"Speech segment is less than 1 second, padding with zeros to 1 second");
+			"Speech segment is less than 1 second, padding with white noise to 1 second");
 		const size_t new_size = (size_t)(1.01f * (float)(WHISPER_SAMPLE_RATE));
 		// create a new buffer and copy the data to it in the middle
 		pcm32f_data = (float *)bzalloc(new_size * sizeof(float));
-		memset(pcm32f_data, 0, new_size * sizeof(float));
+
+		// add low volume white noise
+		const float noise_level = 0.01f;
+		for (size_t i = 0; i < new_size; ++i) {
+			pcm32f_data[i] =
+				noise_level * ((float)rand() / (float)RAND_MAX * 2.0f - 1.0f);
+		}
+
 		memcpy(pcm32f_data + (new_size - pcm32f_num_samples) / 2, pcm32f_data_,
 		       pcm32f_num_samples * sizeof(float));
 		pcm32f_size = new_size;
@@ -234,10 +241,11 @@ struct DetectionResultWithText run_whisper_inference(struct transcription_filter
 			// get token
 			whisper_token_data token =
 				whisper_full_get_token_data(gf->whisper_context, n_segment, j);
-			const char *token_str = whisper_token_to_str(gf->whisper_context, token.id);
+			const std::string token_str =
+				whisper_token_to_str(gf->whisper_context, token.id);
 			bool keep = true;
 			// if the token starts with '[' and ends with ']', don't keep it
-			if (token_str[0] == '[' && token_str[strlen(token_str) - 1] == ']') {
+			if (token_str[0] == '[' && token_str[token_str.size() - 1] == ']') {
 				keep = false;
 			}
 			// if this is a special token, don't keep it
@@ -271,8 +279,8 @@ struct DetectionResultWithText run_whisper_inference(struct transcription_filter
 				text += token_str;
 				tokens.push_back(token);
 			}
-			obs_log(gf->log_level, "S %d, T %d: %d\t%s\tp: %.3f [keep: %d]", n_segment,
-				j, token.id, token_str, token.p, keep);
+			obs_log(gf->log_level, "S %d, T %2d: %5d\t%s\tp: %.3f [keep: %d]",
+				n_segment, j, token.id, token_str.c_str(), token.p, keep);
 		}
 	}
 	sentence_p /= (float)tokens.size();
@@ -379,8 +387,7 @@ void whisper_loop(void *data)
 				obs_log(gf->log_level,
 					"Clearing current subtitle. now: %lu ms, last: %lu ms", now,
 					gf->last_sub_render_time);
-				set_text_callback(gf, {DETECTION_RESULT_UNKNOWN, "", 0, 0, {}});
-				gf->cleared_last_sub = true;
+				clear_current_caption(gf);
 			}
 		}
 

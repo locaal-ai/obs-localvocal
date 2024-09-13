@@ -622,7 +622,7 @@ void transcription_filter_defaults(obs_data_t *s)
 	obs_data_set_default_double(s, "thold_ptsum", 0.01);
 	obs_data_set_default_int(s, "max_len", 0);
 	obs_data_set_default_bool(s, "split_on_word", true);
-	obs_data_set_default_int(s, "max_tokens", 0);
+	obs_data_set_default_int(s, "max_tokens", 50);
 	obs_data_set_default_bool(s, "suppress_blank", false);
 	obs_data_set_default_bool(s, "suppress_non_speech_tokens", true);
 	obs_data_set_default_double(s, "temperature", 0.1);

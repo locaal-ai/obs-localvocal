@@ -152,6 +152,7 @@ struct transcription_filter_audio_info {
 
 // Callback sent when the transcription has a new result
 void set_text_callback(struct transcription_filter_data *gf, const DetectionResultWithText &str);
+void clear_current_caption(transcription_filter_data *gf_);
 
 // Callback sent when the VAD finds an audio chunk. Sample rate = WHISPER_SAMPLE_RATE, channels = 1
 // The audio chunk is in 32-bit float format
