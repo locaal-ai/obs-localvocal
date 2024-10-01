@@ -504,6 +504,14 @@ void add_general_group_properties(obs_properties_t *ppts)
 	}
 }
 
+void add_stenographer_group_properties(obs_properties_t *ppts)
+{
+	// add group for stenographer options
+	obs_properties_t *stenographer_group = obs_properties_create();
+	obs_properties_add_group(ppts, "stenographer_group", MT_("stenographer_parameters"),
+				 OBS_GROUP_CHECKABLE, stenographer_group);
+}
+
 void add_partial_group_properties(obs_properties_t *ppts)
 {
 	// add a group for partial transcription
@@ -544,6 +552,7 @@ obs_properties_t *transcription_filter_properties(void *data)
 	add_advanced_group_properties(ppts, gf);
 	add_logging_group_properties(ppts);
 	add_partial_group_properties(ppts);
+	add_stenographer_group_properties(ppts);
 	add_whisper_params_group_properties(ppts);
 
 	// Add a informative text about the plugin

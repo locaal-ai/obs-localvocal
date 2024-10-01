@@ -80,7 +80,7 @@ struct obs_audio_data *transcription_filter_filter_audio(void *data, struct obs_
 		return audio;
 	}
 
-	if (gf->whisper_context == nullptr) {
+	if (gf->whisper_context == nullptr && !gf->stenographer_enabled) {
 		// Whisper not initialized, just pass through
 		return audio;
 	}
@@ -103,6 +103,8 @@ struct obs_audio_data *transcription_filter_filter_audio(void *data, struct obs_
 			circlebuf_push_back(&gf->input_buffers[c], audio->data[c],
 					    audio->frames * sizeof(float));
 		}
+		obs_log(gf->log_level, "currently %lu bytes in the audio input buffer",
+			gf->input_buffers[0].size);
 		// push audio packet info (timestamp/frame count) to info circlebuf
 		struct transcription_filter_audio_info info = {0};
 		info.frames = audio->frames; // number of frames in this packet
@@ -163,6 +165,10 @@ void transcription_filter_destroy(void *data)
 	}
 	if (gf->translation_monitor.isEnabled()) {
 		gf->translation_monitor.stopThread();
+	}
+	if (gf->transcription_handler != nullptr) {
+		gf->transcription_handler->stop();
+		delete gf->transcription_handler;
 	}
 
 	bfree(gf);
@@ -404,7 +410,11 @@ void transcription_filter_update(void *data, obs_data_t *s)
 		}
 	}
 
-	if (gf->context != nullptr && obs_source_enabled(gf->context)) {
+	// check if stenographer is enabled
+	bool new_stenographer_enabled = obs_data_get_bool(s, "stenographer_group");
+
+	if (!new_stenographer_enabled && gf->context != nullptr &&
+	    obs_source_enabled(gf->context)) {
 		if (gf->initial_creation) {
 			obs_log(LOG_INFO, "Initial filter creation and source enabled");
 
@@ -422,6 +432,37 @@ void transcription_filter_update(void *data, obs_data_t *s)
 				obs_log(LOG_INFO, "New model selected: %s", new_model_path.c_str());
 				update_whisper_model(gf);
 			}
+		}
+	}
+
+	if (new_stenographer_enabled != gf->stenographer_enabled) {
+		gf->stenographer_enabled = new_stenographer_enabled;
+		if (gf->stenographer_enabled) {
+			obs_log(gf->log_level, "Stenographer enabled");
+			shutdown_whisper_thread(gf); // stop whisper
+			gf->transcription_handler = new TranscriptionHandler(
+				gf, [gf](const std::string &type, const std::string &text,
+					 uint64_t start_timestamp, uint64_t end_timestamp) {
+					// send_caption_to_source(gf->text_source_name, text, gf);
+					DetectionResultWithText result;
+					result.text = text;
+					result.result =
+						(type == "partial")
+							? DetectionResult::DETECTION_RESULT_PARTIAL
+							: DetectionResult::DETECTION_RESULT_SPEECH;
+					result.start_timestamp_ms = start_timestamp;
+					result.end_timestamp_ms = end_timestamp;
+					set_text_callback(gf, result);
+				});
+			gf->transcription_handler->start();
+		} else {
+			obs_log(gf->log_level, "Stenographer disabled");
+			if (gf->transcription_handler) {
+				gf->transcription_handler->stop();
+				delete gf->transcription_handler;
+				gf->transcription_handler = nullptr;
+			}
+			update_whisper_model(gf); // restart whisper
 		}
 	}
 }

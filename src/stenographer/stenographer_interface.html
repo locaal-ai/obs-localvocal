@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stenographer Interface</title>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        #captionInput { width: 100%; height: 100px; }
+        #visualizer { width: 100%; height: 100px; background-color: #f0f0f0; }
+        .status-connected { color: green; }
+        .status-disconnected { color: red; }
+        .status-connecting { color: orange; }
+    </style>
+</head>
+<body>
+    <h1>Stenographer Interface</h1>
+    <button id="startButton">Start Audio</button>
+    <canvas id="visualizer"></canvas>
+    <textarea id="captionInput" placeholder="Enter captions here..."></textarea>
+    <div id="connectionStatus">Connection Status: <span id="statusText" class="status-disconnected">Disconnected</span></div>
+    <div id="audioStatus">Audio Status: Not started</div>
+
+    <script>
+        const WS_URL = 'ws://localhost:9002';
+        let ws;
+        const captionInput = document.getElementById('captionInput');
+        const audioStatus = document.getElementById('audioStatus');
+        const connectionStatus = document.getElementById('statusText');
+        const startButton = document.getElementById('startButton');
+        const visualizer = document.getElementById('visualizer');
+        const visualizerContext = visualizer.getContext('2d');
+        let audioContext;
+        let audioQueue = [];
+        let isAudioInitialized = false;
+        let analyser;
+        let reconnectInterval = 1000; // Start with 1 second interval
+        const MAX_RECONNECT_INTERVAL = 30000; // Max 30 seconds
+
+        // Set up the canvas
+        visualizer.width = visualizer.offsetWidth;
+        visualizer.height = visualizer.offsetHeight;
+
+        let currentStartTimestamp = 0;
+
+        function connectWebSocket() {
+            ws = new WebSocket(WS_URL);
+
+            ws.onopen = () => {
+                console.log('WebSocket connection established');
+                updateConnectionStatus('Connected');
+                reconnectInterval = 1000; // Reset reconnect interval on successful connection
+            };
+
+            ws.onmessage = (event) => {
+                if (event.data instanceof Blob) {
+                    if (isAudioInitialized) {
+                        handleAudioData(event.data);
+                    } else {
+                        audioQueue.push(event.data);
+                    }
+                } else {
+                    // This is our timestamp information
+                    try {
+                        const timestampInfo = JSON.parse(event.data);
+                        currentStartTimestamp = timestampInfo.start_timestamp;
+                    } catch (error) {
+                        console.error('Error parsing timestamp information:', error);
+                    }
+                }
+            };
+
+            ws.onclose = (event) => {
+                console.log('WebSocket connection closed:', event.code, event.reason);
+                updateConnectionStatus('Disconnected');
+                scheduleReconnection();
+            };
+
+            ws.onerror = (error) => {
+                console.error('WebSocket error:', error);
+                updateConnectionStatus('Error');
+            };
+        }
+
+        function updateConnectionStatus(status) {
+            connectionStatus.textContent = status;
+            connectionStatus.className = `status-${status.toLowerCase()}`;
+            if (status === 'Disconnected' || status === 'Error') {
+                startButton.disabled = true;
+                audioStatus.textContent = 'Audio Status: Stopped (Connection lost)';
+            } else if (status === 'Connected' && !isAudioInitialized) {
+                startButton.disabled = false;
+                audioStatus.textContent = 'Audio Status: Ready (Click "Start Audio" to begin)';
+            }
+        }
+
+        function scheduleReconnection() {
+            console.log(`Attempting to reconnect in ${reconnectInterval / 1000} seconds`);
+            updateConnectionStatus('Connecting');
+            setTimeout(() => {
+                connectWebSocket();
+            }, reconnectInterval);
+
+            // Exponential backoff for reconnection attempts
+            reconnectInterval = Math.min(reconnectInterval * 2, MAX_RECONNECT_INTERVAL);
+        }
+
+        startButton.addEventListener('click', initializeAudio);
+
+        function initializeAudio() {
+            if (!audioContext && ws.readyState === WebSocket.OPEN) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                analyser = audioContext.createAnalyser();
+                analyser.fftSize = 256;
+                audioContext.resume().then(() => {
+                    isAudioInitialized = true;
+                    audioStatus.textContent = 'Audio Status: Playing';
+                    startButton.disabled = true;
+                    processAudioQueue();
+                    visualizeAudio();
+                });
+            }
+        }
+
+        function processAudioQueue() {
+            while (audioQueue.length > 0) {
+                handleAudioData(audioQueue.shift());
+            }
+        }
+
+        captionInput.addEventListener('input', () => {
+            sendCaptionUpdate('partial');
+        });
+
+        captionInput.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                sendCaptionUpdate('sentence');
+                captionInput.value = '';
+            }
+        });
+
+        function sendCaptionUpdate(type) {
+            if (ws.readyState === WebSocket.OPEN) {
+                const now = Date.now(); // Keep in milliseconds
+                const message = JSON.stringify({
+                    type: type,
+                    text: captionInput.value,
+                    start_timestamp: currentStartTimestamp,
+                    end_timestamp: type === 'sentence' ? now : 0 // 0 for partial sentences
+                });
+                ws.send(message);
+                
+                if (type === 'sentence') {
+                    currentStartTimestamp = now; // Reset start timestamp for next sentence
+                }
+            } else {
+                console.warn('Cannot send caption update: WebSocket is not connected');
+            }
+        }
+
+        async function handleAudioData(blob) {
+            const arrayBuffer = await blob.arrayBuffer();
+            audioContext.decodeAudioData(arrayBuffer, (audioBuffer) => {
+                playAudio(audioBuffer);
+            }, (error) => {
+                console.error('Error decoding audio data:', error);
+            });
+        }
+
+        function playAudio(audioBuffer) {
+            const source = audioContext.createBufferSource();
+            source.buffer = audioBuffer;
+            source.connect(analyser);
+            analyser.connect(audioContext.destination);
+            source.start();
+        }
+
+        function visualizeAudio() {
+            const bufferLength = analyser.frequencyBinCount;
+            const dataArray = new Uint8Array(bufferLength);
+
+            function draw() {
+                requestAnimationFrame(draw);
+
+                analyser.getByteTimeDomainData(dataArray);
+
+                visualizerContext.fillStyle = 'rgb(200, 200, 200)';
+                visualizerContext.fillRect(0, 0, visualizer.width, visualizer.height);
+
+                visualizerContext.lineWidth = 2;
+                visualizerContext.strokeStyle = 'rgb(0, 0, 0)';
+
+                visualizerContext.beginPath();
+
+                const sliceWidth = visualizer.width * 1.0 / bufferLength;
+                let x = 0;
+
+                for (let i = 0; i < bufferLength; i++) {
+                    const v = dataArray[i] / 128.0;
+                    const y = v * visualizer.height / 2;
+
+                    if (i === 0) {
+                        visualizerContext.moveTo(x, y);
+                    } else {
+                        visualizerContext.lineTo(x, y);
+                    }
+
+                    x += sliceWidth;
+                }
+
+                visualizerContext.lineTo(visualizer.width, visualizer.height / 2);
+                visualizerContext.stroke();
+            }
+
+            draw();
+        }
+
+        // Initial connection
+        connectWebSocket();
+    </script>
+</body>
+</html>
