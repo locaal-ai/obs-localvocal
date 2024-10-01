@@ -20,7 +20,7 @@ function(find_libav TARGET)
   endif()
 
   if(NOT buildspec)
-    file(READ "${CMAKE_CURRENT_SOURCE_DIR}/buildspec.json" buildspec)
+    file(READ "${CMAKE_SOURCE_DIR}/buildspec.json" buildspec)
   endif()
   string(
     JSON
@@ -36,7 +36,7 @@ function(find_libav TARGET)
   elseif(APPLE)
     set(arch universal)
   endif()
-  set(deps_root "${CMAKE_CURRENT_SOURCE_DIR}/.deps/obs-deps-${version}-${arch}")
+  set(deps_root "${CMAKE_SOURCE_DIR}/.deps/obs-deps-${version}-${arch}")
 
   target_include_directories(${TARGET} PRIVATE "${deps_root}/include")
   target_link_libraries(

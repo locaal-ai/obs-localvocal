@@ -130,32 +130,5 @@ target_sources(
 set_target_properties_plugin(${CMAKE_PROJECT_NAME} PROPERTIES OUTPUT_NAME ${_name})
 
 if(ENABLE_TESTS)
-  add_executable(${CMAKE_PROJECT_NAME}-tests)
-
-  include(cmake/FindLibAvObs.cmake)
-
-  target_sources(
-    ${CMAKE_PROJECT_NAME}-tests
-    PRIVATE src/tests/localvocal-offline-test.cpp
-            src/tests/audio-file-utils.cpp
-            src/transcription-utils.cpp
-            src/model-utils/model-infos.cpp
-            src/model-utils/model-find-utils.cpp
-            src/whisper-utils/whisper-processing.cpp
-            src/whisper-utils/whisper-utils.cpp
-            src/whisper-utils/silero-vad-onnx.cpp
-            src/whisper-utils/token-buffer-thread.cpp
-            src/whisper-utils/vad-processing.cpp
-            src/translation/language_codes.cpp
-            src/translation/translation.cpp
-            src/ui/filter-replace-utils.cpp
-            src/translation/translation-language-utils.cpp)
-
-  find_libav(${CMAKE_PROJECT_NAME}-tests)
-
-  target_link_libraries(${CMAKE_PROJECT_NAME}-tests PRIVATE ct2 sentencepiece Whispercpp Ort OBS::libobs ICU)
-  target_include_directories(${CMAKE_PROJECT_NAME}-tests PRIVATE src)
-
-  # install the tests to the release/test directory
-  install(TARGETS ${CMAKE_PROJECT_NAME}-tests DESTINATION test)
+  add_subdirectory(src/tests)
 endif()
