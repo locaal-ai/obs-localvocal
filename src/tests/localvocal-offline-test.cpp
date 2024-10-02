@@ -21,6 +21,7 @@
 #include "audio-file-utils.h"
 #include "translation/language_codes.h"
 #include "ui/filter-replace-utils.h"
+#include "model-utils/model-downloader-types.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -82,6 +83,14 @@ void obs_log(int log_level, const char *format, ...)
 	va_end(args);
 
 	printf("\n");
+}
+
+const std::map<std::string, ModelInfo> &models_info()
+{
+	static const std::unique_ptr<const std::map<std::string, ModelInfo>> cached_models_info =
+		std::make_unique<const std::map<std::string, ModelInfo>>();
+
+	return *cached_models_info;
 }
 
 transcription_filter_data *

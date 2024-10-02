@@ -7,7 +7,6 @@ target_sources(
   PRIVATE ${CMAKE_SOURCE_DIR}/src/tests/localvocal-offline-test.cpp
           ${CMAKE_SOURCE_DIR}/src/tests/audio-file-utils.cpp
           ${CMAKE_SOURCE_DIR}/src/transcription-utils.cpp
-          ${CMAKE_SOURCE_DIR}/src/model-utils/model-infos.cpp
           ${CMAKE_SOURCE_DIR}/src/model-utils/model-find-utils.cpp
           ${CMAKE_SOURCE_DIR}/src/whisper-utils/whisper-processing.cpp
           ${CMAKE_SOURCE_DIR}/src/whisper-utils/whisper-utils.cpp

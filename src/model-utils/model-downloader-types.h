@@ -23,6 +23,6 @@ struct ModelInfo {
 	std::vector<ModelFileDownloadInfo> files;
 };
 
-extern std::map<std::string, ModelInfo> models_info;
+extern const std::map<std::string, ModelInfo> &models_info();
 
 #endif /* MODEL_DOWNLOADER_TYPES_H */
