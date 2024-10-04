@@ -117,7 +117,8 @@ void send_sentence_to_file(struct transcription_filter_data *gf,
 			output_file << str_copy << std::endl;
 			output_file.close();
 			if (write_translations) {
-				std::ofstream translated_output_file(translated_file_path, openmode);
+				std::ofstream translated_output_file(translated_file_path,
+								     openmode);
 				translated_output_file << translated_sentence << std::endl;
 				translated_output_file.close();
 			}
@@ -301,7 +302,8 @@ void recording_state_callback(enum obs_frontend_event event, void *data)
 	struct transcription_filter_data *gf_ =
 		static_cast<struct transcription_filter_data *>(data);
 	if (event == OBS_FRONTEND_EVENT_RECORDING_STARTING) {
-		if (gf_->save_srt && gf_->save_only_while_recording && gf_->output_file_path != "") {
+		if (gf_->save_srt && gf_->save_only_while_recording &&
+		    gf_->output_file_path != "") {
 			obs_log(gf_->log_level, "Recording started. Resetting srt file.");
 			// truncate file if it exists
 			if (std::ifstream(gf_->output_file_path)) {
