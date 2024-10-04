@@ -1,4 +1,4 @@
-#ifdef _WIN32
+def _WIN32
 #define NOMINMAX
 #endif
 
@@ -319,7 +319,29 @@ void recording_state_callback(enum obs_frontend_event event, void *data)
 			std::string srt_file_name = recording_file_name + ".srt";
 			// rename the file
 			std::rename(gf_->output_file_path.c_str(), srt_file_name.c_str());
-		}
+		} else if (gf_->save_only_while_recording &&
+			gf_->rename_file_to_match_recording) {
+				obs_log(gf_->log_level, "Recording stopped. Rename transcript file.");
+			// use obs_frontend_get_last_recording to get the last recording file name
+			std::string recording_file_name = obs_frontend_get_last_recording();
+			// get the recording suffix, to ensure the new suffix doesn't match and overwrite the video
+			std::string recording_file_suffix = recording_file_name.substr(
+				recording_file_name.find_last_of(".") + 1);
+			// remove the recording extension
+			std::string recording_file_name_sans_suffix = recording_file_name.substr(
+				0, recording_file_name.find_last_of("."));
+			// keep the extension from the transcript file
+			std::string transcript_file_suffix = gf_->output_file_path.substr(
+				gf_->output_file_path.find_last_of(".") + 1);
+
+			std::string srt_file_name = recording_file_name_sans_suffix + "." + transcript_file_suffix;
+			// ensure the user didn't originally name the transcript with a matching suffix to the video
+			if (transcript_file_suffix == recording_file_suffix) {
+				srt_file_name = srt_file_name + ".txt";
+			}
+			// rename the file
+			std::rename(gf_->output_file_path.c_str(), srt_file_name.c_str());
+	        }
 	}
 }
 
