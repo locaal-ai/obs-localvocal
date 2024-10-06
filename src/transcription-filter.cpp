@@ -440,10 +440,10 @@ void transcription_filter_update(void *data, obs_data_t *s)
 		if (gf->stenographer_enabled) {
 			obs_log(gf->log_level, "Stenographer enabled");
 			shutdown_whisper_thread(gf); // stop whisper
+			gf->stenographer_delay = (int)obs_data_get_int(s, "stenographer_delay");
 			gf->transcription_handler = new TranscriptionHandler(
 				gf, [gf](const std::string &type, const std::string &text,
 					 uint64_t start_timestamp, uint64_t end_timestamp) {
-					// send_caption_to_source(gf->text_source_name, text, gf);
 					DetectionResultWithText result;
 					result.text = text;
 					result.result =

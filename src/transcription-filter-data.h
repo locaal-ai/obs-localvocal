@@ -131,6 +131,7 @@ struct transcription_filter_data {
 
 	bool stenographer_enabled = false;
 	TranscriptionHandler *transcription_handler = nullptr;
+	int stenographer_delay = 0;
 
 	// ctor
 	transcription_filter_data() : whisper_buf_mutex(), whisper_ctx_mutex(), wshiper_thread_cv()
