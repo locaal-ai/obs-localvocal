@@ -328,6 +328,21 @@ void set_text_callback(struct transcription_filter_data *gf,
 	}
 };
 
+void clear_current_caption(transcription_filter_data *gf_)
+{
+	if (gf_->captions_monitor.isEnabled()) {
+		gf_->captions_monitor.clear();
+		gf_->translation_monitor.clear();
+	}
+	// reset translation context
+	gf_->last_text_for_translation = "";
+	gf_->last_text_translation = "";
+	gf_->translation_ctx.last_input_tokens.clear();
+	gf_->translation_ctx.last_translation_tokens.clear();
+	gf_->last_transcription_sentence.clear();
+	gf_->cleared_last_sub = true;
+}
+
 void release_context(transcription_filter_data *gf)
 {
 	obs_log(LOG_INFO, "destroy");

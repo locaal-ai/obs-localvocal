@@ -122,7 +122,7 @@ private:
 	void processAudioQueue()
 	{
 		while (running) {
-			// get data from buffer and resample
+			// get data from buffer and resample to 16kHz
 			uint64_t start_timestamp_offset_ns = 0;
 			uint64_t end_timestamp_offset_ns = 0;
 

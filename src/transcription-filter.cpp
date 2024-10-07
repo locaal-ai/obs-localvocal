@@ -114,6 +114,31 @@ struct obs_audio_data *transcription_filter_filter_audio(void *data, struct obs_
 		gf->wshiper_thread_cv.notify_one();
 	}
 
+	if (gf->stenographer_enabled) {
+		// Stenographer mode - apply delay.
+		// Store the audio data in a buffer and process it after the delay.
+		// push the data to the back of gf->stenographer_delay_buffer
+		for (size_t c = 0; c < gf->channels; c++) {
+			for (size_t i = 0; i < audio->frames; i++) {
+				gf->stenographer_delay_buffers[c].push_back(audio->data[c][i]);
+			}
+		}
+
+		// If the buffer is larger than the delay, emit the oldest data
+		// Take from the buffer as much as requested by the incoming audio data
+		size_t delay_frames = gf->sample_rate * gf->stenographer_delay / 1000;
+		if (gf->stenographer_delay_buffers[0].size() >= delay_frames) {
+			// Replace data on the audio buffer with the delayed data
+			for (size_t c = 0; c < gf->channels; c++) {
+				for (size_t i = 0; i < audio->frames; i++) {
+					audio->data[c][i] =
+						gf->stenographer_delay_buffers[c].front();
+					gf->stenographer_delay_buffers[c].pop_front();
+				}
+			}
+		}
+	}
+
 	return audio;
 }
 

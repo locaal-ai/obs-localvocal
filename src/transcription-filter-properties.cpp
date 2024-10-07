@@ -512,8 +512,8 @@ void add_stenographer_group_properties(obs_properties_t *ppts)
 				 OBS_GROUP_CHECKABLE, stenographer_group);
 
 	// add delay amount for partial transcription
-	obs_properties_add_int_slider(stenographer_group, "stenographer_delay", MT_("stenographer_delay"),
-				      1000, 12000, 100);
+	obs_properties_add_int_slider(stenographer_group, "stenographer_delay",
+				      MT_("stenographer_delay"), 1000, 12000, 100);
 }
 
 void add_partial_group_properties(obs_properties_t *ppts)

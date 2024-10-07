@@ -168,6 +168,7 @@ if(ENABLE_TESTS)
             src/whisper-utils/silero-vad-onnx.cpp
             src/whisper-utils/token-buffer-thread.cpp
             src/whisper-utils/vad-processing.cpp
+            src/whisper-utils/resample-utils.cpp
             src/translation/language_codes.cpp
             src/translation/translation.cpp
             src/ui/filter-replace-utils.cpp
