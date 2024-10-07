@@ -131,7 +131,7 @@ struct transcription_filter_data {
 
 	bool stenographer_enabled = false;
 	TranscriptionHandler *transcription_handler = nullptr;
-	int stenographer_delay = 1000;
+	int stenographer_delay_ms = 1000;
 	std::deque<float> stenographer_delay_buffers[MAX_PREPROC_CHANNELS];
 
 	// ctor
