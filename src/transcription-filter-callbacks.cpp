@@ -413,7 +413,7 @@ void enable_callback(void *data_, calldata_t *cd)
 		obs_log(gf_->log_level, "enable_callback: enable");
 		gf_->active = true;
 		reset_caption_state(gf_);
-		if (!gf_->stenographer_enabled) {
+		if (!gf_->aws_transcribe_enabled) {
 			update_whisper_model(gf_);
 		}
 	} else {

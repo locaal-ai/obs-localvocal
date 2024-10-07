@@ -1,0 +1,16 @@
+{
+    "whisper_language": "ko",
+    "source_language": "ko",
+    "target_language": "jp",
+    "whisper_model_path": "C:/Users/roysh/AppData/Roaming/obs-studio/plugin_config/obs-localvocal/models/ggml-model-whisper-small/ggml-model-whisper-small.bin",
+    "silero_vad_model_file": "C:/Users/roysh/Downloads/obs-localvocal/data/models/silero-vad/silero_vad.onnx",
+    "ct2_model_folder": "C:/Users/roysh/Downloads/argos-ko-ja/translate-ko_ja-1_2_1/translate-ko_ja-1_2_1",
+    "fix_utf8": true,
+    "suppress_sentences": "MBC 뉴스.*\n다음 영상에서 만나요!\n구독과 좋아요 눌러주세요!\n구독과 좋아요는 저에게 아주 큰\n다음 영상에서 만나요\n끝까지 시청해주셔서 감사합니다\n구독과 좋아요 부탁드립니다!\n구독과 좋아요 눌러주세요!\n구독과 좋아요 부탁드",
+    "overlap_ms": 125,
+    "log_level": "debug",
+    "whisper_sampling_method": 1,
+    "enable_audio_chunks_callback": true,
+    "temperature": 0.0,
+    "no_context": true
+}

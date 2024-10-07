@@ -147,7 +147,7 @@ target_sources(
           src/ui/filter-replace-utils.cpp
           src/translation/translation-language-utils.cpp
           src/ui/filter-replace-dialog.cpp
-          src/stenographer/stenographer.cpp)
+          src/aws-transcribe/aws-transcribe.cpp)
 
 set_target_properties_plugin(${CMAKE_PROJECT_NAME} PROPERTIES OUTPUT_NAME ${_name})
 

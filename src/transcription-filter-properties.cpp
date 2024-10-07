@@ -504,16 +504,14 @@ void add_general_group_properties(obs_properties_t *ppts)
 	}
 }
 
-void add_stenographer_group_properties(obs_properties_t *ppts)
+void add_aws_transcribe_group_properties(obs_properties_t *ppts)
 {
-	// add group for stenographer options
-	obs_properties_t *stenographer_group = obs_properties_create();
-	obs_properties_add_group(ppts, "stenographer_group", MT_("stenographer_parameters"),
-				 OBS_GROUP_CHECKABLE, stenographer_group);
+	// add group for aws_transcribe options
+	obs_properties_t *aws_transcribe_group = obs_properties_create();
+	obs_properties_add_group(ppts, "aws_transcribe_group", MT_("aws_transcribe_parameters"),
+				 OBS_GROUP_CHECKABLE, aws_transcribe_group);
 
-	// add delay amount for partial transcription
-	obs_properties_add_int_slider(stenographer_group, "stenographer_delay",
-				      MT_("stenographer_delay"), 1000, 12000, 100);
+	// TODO: Add options for AWS Transcribe ..
 }
 
 void add_partial_group_properties(obs_properties_t *ppts)
@@ -556,7 +554,7 @@ obs_properties_t *transcription_filter_properties(void *data)
 	add_advanced_group_properties(ppts, gf);
 	add_logging_group_properties(ppts);
 	add_partial_group_properties(ppts);
-	add_stenographer_group_properties(ppts);
+	add_aws_transcribe_group_properties(ppts);
 	add_whisper_params_group_properties(ppts);
 
 	// Add a informative text about the plugin
@@ -607,8 +605,8 @@ void transcription_filter_defaults(obs_data_t *s)
 	obs_data_set_default_double(s, "sentence_psum_accept_thresh", 0.4);
 	obs_data_set_default_bool(s, "partial_group", false);
 	obs_data_set_default_int(s, "partial_latency", 1100);
-	obs_data_set_default_bool(s, "stenographer_group", false);
-	obs_data_set_default_int(s, "stenographer_delay", 10000);
+	obs_data_set_default_bool(s, "aws_transcribe_group", false);
+	obs_data_set_default_int(s, "aws_transcribe_delay", 10000);
 
 	// translation options
 	obs_data_set_default_double(s, "translation_sampling_temperature", 0.1);

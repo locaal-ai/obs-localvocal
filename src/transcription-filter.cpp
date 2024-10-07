@@ -80,7 +80,7 @@ struct obs_audio_data *transcription_filter_filter_audio(void *data, struct obs_
 		return audio;
 	}
 
-	if (gf->whisper_context == nullptr && !gf->stenographer_enabled) {
+	if (gf->whisper_context == nullptr && !gf->aws_transcribe_enabled) {
 		// Whisper not initialized, just pass through
 		return audio;
 	}
@@ -112,31 +112,6 @@ struct obs_audio_data *transcription_filter_filter_audio(void *data, struct obs_
 		info.timestamp_offset_ns = now_ns() - gf->start_timestamp_ms * 1000000;
 		circlebuf_push_back(&gf->info_buffer, &info, sizeof(info));
 		gf->wshiper_thread_cv.notify_one();
-	}
-
-	if (gf->stenographer_enabled) {
-		// Stenographer mode - apply delay.
-		// Store the audio data in a buffer and process it after the delay.
-		// push the data to the back of gf->stenographer_delay_buffer
-		for (size_t c = 0; c < gf->channels; c++) {
-			for (size_t i = 0; i < audio->frames; i++) {
-				gf->stenographer_delay_buffers[c].push_back(audio->data[c][i]);
-			}
-		}
-
-		// If the buffer is larger than the delay, emit the oldest data
-		// Take from the buffer as much as requested by the incoming audio data
-		size_t delay_frames = gf->sample_rate * gf->stenographer_delay / 1000;
-		if (gf->stenographer_delay_buffers[0].size() >= delay_frames) {
-			// Replace data on the audio buffer with the delayed data
-			for (size_t c = 0; c < gf->channels; c++) {
-				for (size_t i = 0; i < audio->frames; i++) {
-					audio->data[c][i] =
-						gf->stenographer_delay_buffers[c].front();
-					gf->stenographer_delay_buffers[c].pop_front();
-				}
-			}
-		}
 	}
 
 	return audio;
@@ -435,10 +410,10 @@ void transcription_filter_update(void *data, obs_data_t *s)
 		}
 	}
 
-	// check if stenographer is enabled
-	bool new_stenographer_enabled = obs_data_get_bool(s, "stenographer_group");
+	// check if AWS Transcribe is enabled
+	bool new_aws_transcribe_enabled = obs_data_get_bool(s, "aws_transcribe_group");
 
-	if (!new_stenographer_enabled && gf->context != nullptr &&
+	if (!new_aws_transcribe_enabled && gf->context != nullptr &&
 	    obs_source_enabled(gf->context)) {
 		if (gf->initial_creation) {
 			obs_log(LOG_INFO, "Initial filter creation and source enabled");
@@ -460,12 +435,11 @@ void transcription_filter_update(void *data, obs_data_t *s)
 		}
 	}
 
-	if (new_stenographer_enabled != gf->stenographer_enabled) {
-		gf->stenographer_enabled = new_stenographer_enabled;
-		if (gf->stenographer_enabled) {
-			obs_log(gf->log_level, "Stenographer enabled");
+	if (new_aws_transcribe_enabled != gf->aws_transcribe_enabled) {
+		gf->aws_transcribe_enabled = new_aws_transcribe_enabled;
+		if (gf->aws_transcribe_enabled) {
+			obs_log(gf->log_level, "AWS Transcribe enabled");
 			shutdown_whisper_thread(gf); // stop whisper
-			gf->stenographer_delay = (int)obs_data_get_int(s, "stenographer_delay");
 			gf->transcription_handler = new TranscriptionHandler(
 				gf, [gf](const std::string &type, const std::string &text,
 					 uint64_t start_timestamp, uint64_t end_timestamp) {
@@ -481,7 +455,7 @@ void transcription_filter_update(void *data, obs_data_t *s)
 				});
 			gf->transcription_handler->start();
 		} else {
-			obs_log(gf->log_level, "Stenographer disabled");
+			obs_log(gf->log_level, "AWS Transcribe disabled");
 			if (gf->transcription_handler) {
 				gf->transcription_handler->stop();
 				delete gf->transcription_handler;
