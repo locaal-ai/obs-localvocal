@@ -15,11 +15,23 @@
 </head>
 <body>
     <h1>Stenographer Interface</h1>
-    <button id="startButton">Start Audio</button>
+    <button id="startAudioBtn">Start Audio</button>
+    <button id="pauseResumeBtn">Pause Audio</button>
+
+    <div id="connectionStatus">
+        Connection Status: <span id="statusText" class="status-disconnected">Disconnected</span>
+    </div>
+
+    <div id="audioStatus">
+        Audio Status: <span id="audioStatusText">Not started</span>
+    </div>
+
+    <div>
+        <p>Hotkey: Press Alt+P to pause/resume audio</p>
+    </div>
+
     <canvas id="visualizer"></canvas>
     <textarea id="captionInput" placeholder="Enter captions here..."></textarea>
-    <div id="connectionStatus">Connection Status: <span id="statusText" class="status-disconnected">Disconnected</span></div>
-    <div id="audioStatus">Audio Status: Not started</div>
 
     <script>
         const WS_URL = 'ws://localhost:9002';
@@ -42,6 +54,25 @@
         visualizer.height = visualizer.offsetHeight;
 
         let currentStartTimestamp = 0;
+
+        let isAudioPlaying = false;
+        let isPaused = false;
+
+        const startAudioBtn = document.getElementById('startAudioBtn');
+        const pauseResumeBtn = document.getElementById('pauseResumeBtn');
+        const statusText = document.getElementById('statusText');
+        const audioStatusText = document.getElementById('audioStatusText');
+
+        startAudioBtn.addEventListener('click', toggleAudio);
+        pauseResumeBtn.addEventListener('click', togglePause);
+
+        // Add event listener for the Alt+P key combination
+        document.addEventListener('keydown', (event) => {
+            if (event.altKey && (event.key === 'p' || event.key === 'P')) {
+                event.preventDefault(); // Prevent default Alt+P behavior
+                togglePause();
+            }
+        });
 
         function connectWebSocket() {
             ws = new WebSocket(WS_URL);
@@ -150,7 +181,7 @@
                     end_timestamp: type === 'sentence' ? now : 0 // 0 for partial sentences
                 });
                 ws.send(message);
-                
+
                 if (type === 'sentence') {
                     currentStartTimestamp = now; // Reset start timestamp for next sentence
                 }
@@ -214,6 +245,41 @@
             }
 
             draw();
+        }
+
+        function toggleAudio() {
+            if (!isAudioPlaying) {
+                // Logic to start audio (replace with actual WebSocket logic)
+                isAudioPlaying = true;
+                statusText.textContent = 'Connected';
+                statusText.className = 'status-connected';
+                audioStatusText.textContent = 'Playing';
+                startAudioBtn.textContent = 'Stop Audio';
+            } else {
+                // Logic to stop audio
+                isAudioPlaying = false;
+                isPaused = false;
+                statusText.textContent = 'Disconnected';
+                statusText.className = 'status-disconnected';
+                audioStatusText.textContent = 'Not started';
+                startAudioBtn.textContent = 'Start Audio';
+                pauseResumeBtn.textContent = 'Pause Audio';
+            }
+        }
+
+        function togglePause() {
+            if (!isAudioPlaying) return;
+
+            isPaused = !isPaused;
+            if (isPaused) {
+                // Logic to pause audio
+                audioStatusText.textContent = 'Paused';
+                pauseResumeBtn.textContent = 'Resume Audio';
+            } else {
+                // Logic to resume audio
+                audioStatusText.textContent = 'Playing';
+                pauseResumeBtn.textContent = 'Pause Audio';
+            }
         }
 
         // Initial connection
