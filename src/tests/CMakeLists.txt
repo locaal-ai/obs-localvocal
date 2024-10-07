@@ -11,6 +11,7 @@ target_sources(
           ${CMAKE_SOURCE_DIR}/src/model-utils/model-find-utils.cpp
           ${CMAKE_SOURCE_DIR}/src/whisper-utils/whisper-processing.cpp
           ${CMAKE_SOURCE_DIR}/src/whisper-utils/whisper-utils.cpp
+          ${CMAKE_SOURCE_DIR}/src/whisper-utils/resample-utils.cpp
           ${CMAKE_SOURCE_DIR}/src/whisper-utils/silero-vad-onnx.cpp
           ${CMAKE_SOURCE_DIR}/src/whisper-utils/token-buffer-thread.cpp
           ${CMAKE_SOURCE_DIR}/src/whisper-utils/vad-processing.cpp
