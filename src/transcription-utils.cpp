@@ -82,6 +82,36 @@ std::string fix_utf8(const std::string &str)
 #endif
 }
 
+/**
+ * @brief Trims leading and trailing whitespace characters from the given string.
+ * 
+ * This function removes any whitespace characters (spaces, tabs, newlines, etc.)
+ * from the beginning and end of the input string, returning a new string with
+ * the whitespace removed.
+ * 
+ * @param str The input string to be trimmed.
+ * @return A new string with leading and trailing whitespace removed.
+ */
+std::string trim(const std::string& str) {
+    std::string str_copy = str;
+    
+    // remove trailing spaces, newlines, tabs or punctuation
+    auto last_non_space = std::find_if(str_copy.rbegin(), str_copy.rend(), 
+        [](unsigned char ch) {
+            return !std::isspace(ch) && !std::ispunct(ch);
+        }).base();
+    str_copy.erase(last_non_space, str_copy.end());
+    
+    // remove leading spaces, newlines, tabs or punctuation
+    auto first_non_space = std::find_if(str_copy.begin(), str_copy.end(),
+        [](unsigned char ch) {
+            return !std::isspace(ch) && !std::ispunct(ch);
+        });
+    str_copy.erase(str_copy.begin(), first_non_space);
+    
+    return str_copy;
+}
+
 /*
 * Remove leading and trailing non-alphabetic characters from a string.
 * This function is used to remove leading and trailing spaces, newlines, tabs or punctuation.
@@ -111,21 +141,7 @@ std::string remove_leading_trailing_nonalpha(const std::string &str)
 			return "";
 		}
 	}
-	std::string str_copy = str;
-	// remove trailing spaces, newlines, tabs or punctuation
-	auto last_non_space =
-		std::find_if(str_copy.rbegin(), str_copy.rend(), [](unsigned char ch) {
-			return !std::isspace(ch) || !std::ispunct(ch);
-		}).base();
-	str_copy.erase(last_non_space, str_copy.end());
-	// remove leading spaces, newlines, tabs or punctuation
-	auto first_non_space = std::find_if(str_copy.begin(), str_copy.end(),
-					    [](unsigned char ch) {
-						    return !std::isspace(ch) || !std::ispunct(ch);
-					    }) +
-			       1;
-	str_copy.erase(str_copy.begin(), first_non_space);
-	return str_copy;
+	return trim(str);
 }
 
 std::vector<std::string> split(const std::string &string, char delimiter)

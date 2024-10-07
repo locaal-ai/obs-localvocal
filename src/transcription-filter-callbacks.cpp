@@ -208,7 +208,9 @@ void set_text_callback(struct transcription_filter_data *gf,
 		str_copy = fix_utf8(str_copy);
 	} else {
 		// only remove leading and trailing non-alphanumeric characters if the output is English
+		obs_log(LOG_INFO, "before: %s", str_copy.c_str());
 		str_copy = remove_leading_trailing_nonalpha(str_copy);
+		obs_log(LOG_INFO, "after: %s", str_copy.c_str());
 	}
 
 	// if suppression is enabled, check if the text is in the suppression list
@@ -411,7 +413,9 @@ void enable_callback(void *data_, calldata_t *cd)
 		obs_log(gf_->log_level, "enable_callback: enable");
 		gf_->active = true;
 		reset_caption_state(gf_);
-		update_whisper_model(gf_);
+		if (!gf_->stenographer_enabled) {
+			update_whisper_model(gf_);
+		}
 	} else {
 		obs_log(gf_->log_level, "enable_callback: disable");
 		gf_->active = false;

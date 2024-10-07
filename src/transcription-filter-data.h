@@ -19,6 +19,7 @@
 #include "whisper-utils/silero-vad-onnx.h"
 #include "whisper-utils/whisper-processing.h"
 #include "whisper-utils/token-buffer-thread.h"
+#include "stenographer/stenographer.h"
 
 #define MAX_PREPROC_CHANNELS 10
 
@@ -127,6 +128,11 @@ struct transcription_filter_data {
 	int buffered_output_num_chars = 30;
 	TokenBufferSegmentation buffered_output_output_type =
 		TokenBufferSegmentation::SEGMENTATION_TOKEN;
+
+	bool stenographer_enabled = false;
+	TranscriptionHandler *transcription_handler = nullptr;
+	int stenographer_delay = 1000;
+	std::deque<float> stenographer_delay_buffers[MAX_PREPROC_CHANNELS];
 
 	// ctor
 	transcription_filter_data() : whisper_buf_mutex(), whisper_ctx_mutex(), wshiper_thread_cv()
