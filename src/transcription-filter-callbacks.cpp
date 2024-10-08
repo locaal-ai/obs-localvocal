@@ -352,6 +352,7 @@ void reset_caption_state(transcription_filter_data *gf_)
 			if (gf_->input_buffers[c].data != nullptr) {
 				circlebuf_free(&gf_->input_buffers[c]);
 			}
+			gf_->stenographer_delay_buffers[c].clear();
 		}
 		if (gf_->info_buffer.data != nullptr) {
 			circlebuf_free(&gf_->info_buffer);
@@ -409,17 +410,16 @@ void enable_callback(void *data_, calldata_t *cd)
 {
 	transcription_filter_data *gf_ = static_cast<struct transcription_filter_data *>(data_);
 	bool enable = calldata_bool(cd, "enabled");
+	reset_caption_state(gf_);
 	if (enable) {
 		obs_log(gf_->log_level, "enable_callback: enable");
 		gf_->active = true;
-		reset_caption_state(gf_);
 		if (!gf_->stenographer_enabled) {
 			update_whisper_model(gf_);
 		}
 	} else {
 		obs_log(gf_->log_level, "enable_callback: disable");
 		gf_->active = false;
-		reset_caption_state(gf_);
 		shutdown_whisper_thread(gf_);
 	}
 }

@@ -25,7 +25,7 @@
 
 struct transcription_filter_data {
 	obs_source_t *context; // obs filter source (this filter)
-	size_t channels;       // number of channels
+	size_t channels;       // number of channels in the input
 	uint32_t sample_rate;  // input sample rate
 	// How many input frames (in input sample rate) are needed for the next whisper frame
 	size_t frames;
