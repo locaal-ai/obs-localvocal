@@ -434,6 +434,3254 @@
           "sha256": "394221709CD5AD1F40C46E6031CA61BCE88931E6E088C188294C6D5A55FFA7E2"
         }
       ]
+    },
+    {
+      "friendly_name": "Whisper Base Awareai German (Marksdo)",
+      "local_folder_name": "ggml-base-awareai.de",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-base-awareai.de.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "German",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Base Callvoice Korean (Marksdo)",
+      "local_folder_name": "ggml-base-callvoice.ko",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-base-callvoice.ko.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Korean",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Base Neurai Persian (Marksdo)",
+      "local_folder_name": "ggml-base-neurai.fa",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-base-neurai.fa.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Persian",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Base Quran Arabic (Marksdo)",
+      "local_folder_name": "ggml-base-quran.ar",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-base-quran.ar.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Arabic",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Base Sungbeom Korean (Marksdo)",
+      "local_folder_name": "ggml-base-sungbeom.ko",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-base-sungbeom.ko.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Korean",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Base Waveletdeboshir Russian (Marksdo)",
+      "local_folder_name": "ggml-base-waveletdeboshir.ru",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-base-waveletdeboshir.ru.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Russian",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Base Bengali (Marksdo)",
+      "local_folder_name": "ggml-base.bn",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-base.bn.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Bengali",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Base Norwegian Bokm\u00e5l (Marksdo)",
+      "local_folder_name": "ggml-base.nb",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-base.nb.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Norwegian Bokm\u00e5l",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Distil Large V2 English (Marksdo)",
+      "local_folder_name": "ggml-distil-large-v2.en",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-distil-large-v2.en.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "English",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Distil Large V2 Portuguese (Marksdo)",
+      "local_folder_name": "ggml-distil-large-v2.pt",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-distil-large-v2.pt.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Portuguese",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Distil Large V3 Sercan Turkish (Marksdo)",
+      "local_folder_name": "ggml-distil-large-v3-Sercan.tr",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-distil-large-v3-Sercan.tr.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Turkish",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Distil Large V3 Primeline German (Marksdo)",
+      "local_folder_name": "ggml-distil-large-v3-primeline.de",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-distil-large-v3-primeline.de.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "German",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Distil Large V3 Reazonspeech Japanese (Marksdo)",
+      "local_folder_name": "ggml-distil-large-v3-reazonspeech.ja",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-distil-large-v3-reazonspeech.ja.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Japanese",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Distil Large V3 German (Marksdo)",
+      "local_folder_name": "ggml-distil-large-v3.de",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-distil-large-v3.de.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "German",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Distil Large V3 English (Marksdo)",
+      "local_folder_name": "ggml-distil-large-v3.en",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-distil-large-v3.en.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "English",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Distil Large V3 Spanish (Marksdo)",
+      "local_folder_name": "ggml-distil-large-v3.es",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-distil-large-v3.es.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Spanish",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Distil Large V3 Hindi (Marksdo)",
+      "local_folder_name": "ggml-distil-large-v3.hi",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-distil-large-v3.hi.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Hindi",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Distil Large V3 Polish (Marksdo)",
+      "local_folder_name": "ggml-distil-large-v3.pl",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-distil-large-v3.pl.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Polish",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Distil Medium English (Marksdo)",
+      "local_folder_name": "ggml-distil-medium.en",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-distil-medium.en.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "English",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Distil Small Alvanlii Cantonese (Marksdo)",
+      "local_folder_name": "ggml-distil-small-alvanlii.cantonese",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-distil-small-alvanlii.cantonese.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Cantonese",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Distil Small English (Marksdo)",
+      "local_folder_name": "ggml-distil-small.en",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-distil-small.en.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "English",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Large 5k Japanese (Marksdo)",
+      "local_folder_name": "ggml-large-5k.ja",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-large-5k.ja.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Japanese",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Large Mohamedrashad Arabic (Marksdo)",
+      "local_folder_name": "ggml-large-MohamedRashad.ar",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-large-MohamedRashad.ar.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Arabic",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Large Huzaifa1117.ur (Marksdo)",
+      "local_folder_name": "ggml-large-huzaifa1117.ur",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-large-huzaifa1117.ur.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": null,
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Large Liqi03 Polish (Marksdo)",
+      "local_folder_name": "ggml-large-liqi03.pl",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-large-liqi03.pl.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Polish",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Large V2 10k Sin2piusc Japanese (Marksdo)",
+      "local_folder_name": "ggml-large-v2-10k-sin2piusc.ja",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-large-v2-10k-sin2piusc.ja.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Japanese",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Large V2 Cleaned Hungarian (Marksdo)",
+      "local_folder_name": "ggml-large-v2-cleaned.hu",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-large-v2-cleaned.hu.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Hungarian",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Large V2 Mitchelldehaven Russian (Marksdo)",
+      "local_folder_name": "ggml-large-v2-mitchelldehaven.ru",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-large-v2-mitchelldehaven.ru.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Russian",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Large V2 Sandiago21 Italian (Marksdo)",
+      "local_folder_name": "ggml-large-v2-sandiago21.it",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-large-v2-sandiago21.it.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Italian",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Large V2 Greek (Marksdo)",
+      "local_folder_name": "ggml-large-v2.el",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-large-v2.el.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Greek",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Large V2 Korean (Marksdo)",
+      "local_folder_name": "ggml-large-v2.ko",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-large-v2.ko.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Korean",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Large V2 Vietnamese (Marksdo)",
+      "local_folder_name": "ggml-large-v2.vi",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-large-v2.vi.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Vietnamese",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Large V2 Chinese (Marksdo)",
+      "local_folder_name": "ggml-large-v2.zh",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-large-v2.zh.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Chinese",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Large V3 202405 German (Marksdo)",
+      "local_folder_name": "ggml-large-v3-202405.de",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-large-v3-202405.de.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "German",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Large V3 Ailabimcs Latvian (Marksdo)",
+      "local_folder_name": "ggml-large-v3-AiLabIMCS.lv",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-large-v3-AiLabIMCS.lv.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Latvian",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Large V3 Belle2 Chinese (Marksdo)",
+      "local_folder_name": "ggml-large-v3-BELLE2.zh",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-large-v3-BELLE2.zh.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Chinese",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Large V3 Cem13 Czech (Marksdo)",
+      "local_folder_name": "ggml-large-v3-Cem13.cs",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-large-v3-Cem13.cs.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Czech",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Large V3 Mightystudent Arabic (Marksdo)",
+      "local_folder_name": "ggml-large-v3-MightyStudent.ar",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-large-v3-MightyStudent.ar.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Arabic",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Large V3 Na0s Medical English (Marksdo)",
+      "local_folder_name": "ggml-large-v3-Na0s-medical.en",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-large-v3-Na0s-medical.en.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "English",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Large V3 Nbailab Norwegian Bokm\u00e5l (Marksdo)",
+      "local_folder_name": "ggml-large-v3-NbAiLab.nb",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-large-v3-NbAiLab.nb.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Norwegian Bokm\u00e5l",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Large V3 Antony66 Russian (Marksdo)",
+      "local_folder_name": "ggml-large-v3-antony66.ru",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-large-v3-antony66.ru.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Russian",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Large V3 Belle Chinese (Marksdo)",
+      "local_folder_name": "ggml-large-v3-belle.zh",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-large-v3-belle.zh.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Chinese",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Large V3 Bofenghuang French (Marksdo)",
+      "local_folder_name": "ggml-large-v3-bofenghuang.fr",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-large-v3-bofenghuang.fr.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "French",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Large V3 Drewschaub Japanese (Marksdo)",
+      "local_folder_name": "ggml-large-v3-drewschaub.ja",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-large-v3-drewschaub.ja.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Japanese",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Large V3 Fsicoli Italian (Marksdo)",
+      "local_folder_name": "ggml-large-v3-fsicoli.it",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-large-v3-fsicoli.it.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Italian",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Large V3 Fsicoli Portuguese (Marksdo)",
+      "local_folder_name": "ggml-large-v3-fsicoli.pt",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-large-v3-fsicoli.pt.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Portuguese",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Large V3 Kotobav1.1 Japanese (Marksdo)",
+      "local_folder_name": "ggml-large-v3-kotobav1.1.ja",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-large-v3-kotobav1.1.ja.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Japanese",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Large V3 Kotobav1 Japanese (Marksdo)",
+      "local_folder_name": "ggml-large-v3-kotobav1.ja",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-large-v3-kotobav1.ja.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Japanese",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Large V3 Liqi03 Thai (Marksdo)",
+      "local_folder_name": "ggml-large-v3-liqi03.th",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-large-v3-liqi03.th.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Thai",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Large V3 Nsalahaddinov.az (Marksdo)",
+      "local_folder_name": "ggml-large-v3-nsalahaddinov.az",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-large-v3-nsalahaddinov.az.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": null,
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Large V3 Podlodka Russian (Marksdo)",
+      "local_folder_name": "ggml-large-v3-podlodka.ru",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-large-v3-podlodka.ru.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Russian",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Large V3 Quinnb Hindi (Marksdo)",
+      "local_folder_name": "ggml-large-v3-quinnb.hi",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-large-v3-quinnb.hi.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Hindi",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Large V3 Czech (Marksdo)",
+      "local_folder_name": "ggml-large-v3.cs",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-large-v3.cs.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Czech",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Large V3 German (Marksdo)",
+      "local_folder_name": "ggml-large-v3.de",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-large-v3.de.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "German",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Large V3 Finnish (Marksdo)",
+      "local_folder_name": "ggml-large-v3.fi",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-large-v3.fi.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Finnish",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Large V3 Japanese (Marksdo)",
+      "local_folder_name": "ggml-large-v3.ja",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-large-v3.ja.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Japanese",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Large V3 Russian (Marksdo)",
+      "local_folder_name": "ggml-large-v3.ru",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-large-v3.ru.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Russian",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Large V3.taiwanese (Marksdo)",
+      "local_folder_name": "ggml-large-v3.taiwanese",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-large-v3.taiwanese.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": null,
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Large V3 Thai (Marksdo)",
+      "local_folder_name": "ggml-large-v3.th",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-large-v3.th.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Thai",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Large Voicelab Icelandic (Marksdo)",
+      "local_folder_name": "ggml-large-voicelab.is",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-large-voicelab.is.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Icelandic",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Large Arabic (Marksdo)",
+      "local_folder_name": "ggml-large.ar",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-large.ar.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Arabic",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Large Bulgarian (Marksdo)",
+      "local_folder_name": "ggml-large.bg",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-large.bg.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Bulgarian",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Large Bengali (Marksdo)",
+      "local_folder_name": "ggml-large.bn",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-large.bn.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Bengali",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Large Cantonese (Marksdo)",
+      "local_folder_name": "ggml-large.cantonese",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-large.cantonese.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Cantonese",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Large Czech (Marksdo)",
+      "local_folder_name": "ggml-large.cs",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-large.cs.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Czech",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Large German (Marksdo)",
+      "local_folder_name": "ggml-large.de",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-large.de.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "German",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Large Spanish (Marksdo)",
+      "local_folder_name": "ggml-large.es",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-large.es.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Spanish",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Large French (Marksdo)",
+      "local_folder_name": "ggml-large.fr",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-large.fr.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "French",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Large Hebrew (Marksdo)",
+      "local_folder_name": "ggml-large.he",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-large.he.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Hebrew",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Large Hindi (Marksdo)",
+      "local_folder_name": "ggml-large.hi",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-large.hi.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Hindi",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Large Hungarian (Marksdo)",
+      "local_folder_name": "ggml-large.hu",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-large.hu.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Hungarian",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Large Indonesian (Marksdo)",
+      "local_folder_name": "ggml-large.id",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-large.id.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Indonesian",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Large Italian (Marksdo)",
+      "local_folder_name": "ggml-large.it",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-large.it.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Italian",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Large Japanese (Marksdo)",
+      "local_folder_name": "ggml-large.jp",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-large.jp.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Japanese",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Large Korean (Marksdo)",
+      "local_folder_name": "ggml-large.ko",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-large.ko.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Korean",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Large Norwegian Bokm\u00e5l (Marksdo)",
+      "local_folder_name": "ggml-large.nb",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-large.nb.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Norwegian Bokm\u00e5l",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Large Dutch (Marksdo)",
+      "local_folder_name": "ggml-large.nl",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-large.nl.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Dutch",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Large Polish (Marksdo)",
+      "local_folder_name": "ggml-large.pl",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-large.pl.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Polish",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Large Portuguese (Marksdo)",
+      "local_folder_name": "ggml-large.pt",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-large.pt.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Portuguese",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Large Russian (Marksdo)",
+      "local_folder_name": "ggml-large.ru",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-large.ru.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Russian",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Large Swedish (Marksdo)",
+      "local_folder_name": "ggml-large.sv",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-large.sv.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Swedish",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Large Thai (Marksdo)",
+      "local_folder_name": "ggml-large.th",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-large.th.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Thai",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Large Ukrainian (Marksdo)",
+      "local_folder_name": "ggml-large.uk",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-large.uk.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Ukrainian",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Large Vietnamese (Marksdo)",
+      "local_folder_name": "ggml-large.vi",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-large.vi.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Vietnamese",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Large Chinese (Marksdo)",
+      "local_folder_name": "ggml-large.zh",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-large.zh.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Chinese",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Medium 15k Sin2piusc Japanese (Marksdo)",
+      "local_folder_name": "ggml-medium-15k-sin2piusc.ja",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-medium-15k-sin2piusc.ja.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Japanese",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Medium 22k 5k Sin2piusc Japanese (Marksdo)",
+      "local_folder_name": "ggml-medium-22k_5k-sin2piusc.ja",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-medium-22k_5k-sin2piusc.ja.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Japanese",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Medium 240612 Indonesian (Marksdo)",
+      "local_folder_name": "ggml-medium-240612.id",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-medium-240612.id.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Indonesian",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Medium Abosteet Arabic (Marksdo)",
+      "local_folder_name": "ggml-medium-Abosteet.ar",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-medium-Abosteet.ar.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Arabic",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Medium Hfsalai Actc0 English (Marksdo)",
+      "local_folder_name": "ggml-medium-HFSaLAI-actc0.en",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-medium-HFSaLAI-actc0.en.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "English",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Medium Jayyh Korean (Marksdo)",
+      "local_folder_name": "ggml-medium-JayYH.ko",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-medium-JayYH.ko.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Korean",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Medium Aisha Uzbek (Marksdo)",
+      "local_folder_name": "ggml-medium-aisha.uz",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-medium-aisha.uz.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Uzbek",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Medium Cahya Indonesian (Marksdo)",
+      "local_folder_name": "ggml-medium-cahya.id",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-medium-cahya.id.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Indonesian",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Medium Cankaracelebi Turkish (Marksdo)",
+      "local_folder_name": "ggml-medium-cankaracelebi.tr",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-medium-cankaracelebi.tr.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Turkish",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Medium Hthierno Estonian (Marksdo)",
+      "local_folder_name": "ggml-medium-hthierno.et",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-medium-hthierno.et.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Estonian",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Medium Kid Children English (Marksdo)",
+      "local_folder_name": "ggml-medium-kid-children.en",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-medium-kid-children.en.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "English",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Medium Kiranpantha Nepali (Marksdo)",
+      "local_folder_name": "ggml-medium-kiranpantha.np",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-medium-kiranpantha.np.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Nepali",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Medium Sin2piusc Japanese (Marksdo)",
+      "local_folder_name": "ggml-medium-sin2piusc.ja",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-medium-sin2piusc.ja.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Japanese",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Medium Vasista22 Kannada (Marksdo)",
+      "local_folder_name": "ggml-medium-vasista22.kn",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-medium-vasista22.kn.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Kannada",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Medium Zeroth Seastar105 Korean (Marksdo)",
+      "local_folder_name": "ggml-medium-zeroth-seastar105.ko",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-medium-zeroth-seastar105.ko.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Korean",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Medium Zeroth Spow12 Korean (Marksdo)",
+      "local_folder_name": "ggml-medium-zeroth-spow12.ko",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-medium-zeroth-spow12.ko.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Korean",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Medium Arabic (Marksdo)",
+      "local_folder_name": "ggml-medium.ar",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-medium.ar.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Arabic",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Medium Cantonese (Marksdo)",
+      "local_folder_name": "ggml-medium.cantonese",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-medium.cantonese.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Cantonese",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Medium Danish (Marksdo)",
+      "local_folder_name": "ggml-medium.da",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-medium.da.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Danish",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Medium Spanish (Marksdo)",
+      "local_folder_name": "ggml-medium.es",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-medium.es.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Spanish",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Medium French (Marksdo)",
+      "local_folder_name": "ggml-medium.fr",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-medium.fr.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "French",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Medium Hebrew (Marksdo)",
+      "local_folder_name": "ggml-medium.he",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-medium.he.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Hebrew",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Medium Hindi (Marksdo)",
+      "local_folder_name": "ggml-medium.hi",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-medium.hi.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Hindi",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Medium Indonesian (Marksdo)",
+      "local_folder_name": "ggml-medium.id",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-medium.id.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Indonesian",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Medium Italian (Marksdo)",
+      "local_folder_name": "ggml-medium.it",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-medium.it.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Italian",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Medium Japanese (Marksdo)",
+      "local_folder_name": "ggml-medium.jp",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-medium.jp.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Japanese",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Medium Kannada (Marksdo)",
+      "local_folder_name": "ggml-medium.kn",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-medium.kn.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Kannada",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Medium Korean (Marksdo)",
+      "local_folder_name": "ggml-medium.ko",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-medium.ko.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Korean",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Medium Malayalam (Marksdo)",
+      "local_folder_name": "ggml-medium.ml",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-medium.ml.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Malayalam",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Medium Malay (Marksdo)",
+      "local_folder_name": "ggml-medium.ms",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-medium.ms.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Malay",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Medium Norwegian Bokm\u00e5l (Marksdo)",
+      "local_folder_name": "ggml-medium.nb",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-medium.nb.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Norwegian Bokm\u00e5l",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Medium Polish (Marksdo)",
+      "local_folder_name": "ggml-medium.pl",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-medium.pl.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Polish",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Medium Portuguese (Marksdo)",
+      "local_folder_name": "ggml-medium.pt",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-medium.pt.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Portuguese",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Medium Romanian (Marksdo)",
+      "local_folder_name": "ggml-medium.ro",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-medium.ro.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Romanian",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Medium Russian (Marksdo)",
+      "local_folder_name": "ggml-medium.ru",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-medium.ru.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Russian",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Medium Tamil (Marksdo)",
+      "local_folder_name": "ggml-medium.ta",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-medium.ta.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Tamil",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Medium Telugu (Marksdo)",
+      "local_folder_name": "ggml-medium.te",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-medium.te.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Telugu",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Medium Thai (Marksdo)",
+      "local_folder_name": "ggml-medium.th",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-medium.th.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Thai",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Medium Turkish (Marksdo)",
+      "local_folder_name": "ggml-medium.tr",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-medium.tr.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Turkish",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Medium Ukrainian (Marksdo)",
+      "local_folder_name": "ggml-medium.uk",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-medium.uk.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Ukrainian",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Medium Vietnamese (Marksdo)",
+      "local_folder_name": "ggml-medium.vi",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-medium.vi.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Vietnamese",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Medium Yoruba (Marksdo)",
+      "local_folder_name": "ggml-medium.yo",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-medium.yo.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Yoruba",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Medium Chinese (Marksdo)",
+      "local_folder_name": "ggml-medium.zhTW",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-medium.zhTW.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Traditional Chinese",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Small Cptn Maazff37 Pashto (Marksdo)",
+      "local_folder_name": "ggml-small-Cptn-maazff37.ps",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-small-Cptn-maazff37.ps.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Pashto",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Small Seyiclover Korean (Marksdo)",
+      "local_folder_name": "ggml-small-SeyiClover.ko",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-small-SeyiClover.ko.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Korean",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Small Alavardo Russian (Marksdo)",
+      "local_folder_name": "ggml-small-alavardo.ru",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-small-alavardo.ru.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Russian",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Small Alm Italian (Marksdo)",
+      "local_folder_name": "ggml-small-alm.it",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-small-alm.it.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Italian",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Small Alvanlii Cantonese (Marksdo)",
+      "local_folder_name": "ggml-small-alvanlii.cantonese",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-small-alvanlii.cantonese.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Cantonese",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Small Biodatlab Thai (Marksdo)",
+      "local_folder_name": "ggml-small-biodatlab.th",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-small-biodatlab.th.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Thai",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Small Byoussef Korean (Marksdo)",
+      "local_folder_name": "ggml-small-byoussef.ko",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-small-byoussef.ko.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Korean",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Small Danielizham Spanish (Marksdo)",
+      "local_folder_name": "ggml-small-danielizham.es",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-small-danielizham.es.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Spanish",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Small Erenozaltun Turkish (Marksdo)",
+      "local_folder_name": "ggml-small-erenozaltun.tr",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-small-erenozaltun.tr.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Turkish",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Small Fintuned Radio English (Marksdo)",
+      "local_folder_name": "ggml-small-fintuned-radio.en",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-small-fintuned-radio.en.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "English",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Small Hamzamalik11 Arabic (Marksdo)",
+      "local_folder_name": "ggml-small-hamzamalik11.ar",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-small-hamzamalik11.ar.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Arabic",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Small Jensenlwt Singlish English (Marksdo)",
+      "local_folder_name": "ggml-small-jensenlwt-singlish.en",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-small-jensenlwt-singlish.en.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "English",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Small Kannada Kannada (Marksdo)",
+      "local_folder_name": "ggml-small-kannada.kn",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-small-kannada.kn.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Kannada",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Small Kiranpantha Nepali (Marksdo)",
+      "local_folder_name": "ggml-small-kiranpantha.np",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-small-kiranpantha.np.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Nepali",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Small Lorenzoncina Russian (Marksdo)",
+      "local_folder_name": "ggml-small-lorenzoncina.ru",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-small-lorenzoncina.ru.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Russian",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Small Maxseats Set11 Korean (Marksdo)",
+      "local_folder_name": "ggml-small-maxseats-set11.ko",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-small-maxseats-set11.ko.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Korean",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Small Maxseats Set12 Korean (Marksdo)",
+      "local_folder_name": "ggml-small-maxseats-set12.ko",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-small-maxseats-set12.ko.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Korean",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Small Maxseats Set35 Korean (Marksdo)",
+      "local_folder_name": "ggml-small-maxseats-set35.ko",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-small-maxseats-set35.ko.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Korean",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Small Maxseats Set36 Korean (Marksdo)",
+      "local_folder_name": "ggml-small-maxseats-set36.ko",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-small-maxseats-set36.ko.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Korean",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Small Maxseats Set37 Korean (Marksdo)",
+      "local_folder_name": "ggml-small-maxseats-set37.ko",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-small-maxseats-set37.ko.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Korean",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Small Maxseats Set38 Korean (Marksdo)",
+      "local_folder_name": "ggml-small-maxseats-set38.ko",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-small-maxseats-set38.ko.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Korean",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Small Maxseats Set39 Korean (Marksdo)",
+      "local_folder_name": "ggml-small-maxseats-set39.ko",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-small-maxseats-set39.ko.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Korean",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Small Maxseats Set48 Korean (Marksdo)",
+      "local_folder_name": "ggml-small-maxseats-set48.ko",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-small-maxseats-set48.ko.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Korean",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Small Maxseats Set54 Korean (Marksdo)",
+      "local_folder_name": "ggml-small-maxseats-set54.ko",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-small-maxseats-set54.ko.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Korean",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Small Maxseats Set7 Korean (Marksdo)",
+      "local_folder_name": "ggml-small-maxseats-set7.ko",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-small-maxseats-set7.ko.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Korean",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Small Maxseats Set9 Korean (Marksdo)",
+      "local_folder_name": "ggml-small-maxseats-set9.ko",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-small-maxseats-set9.ko.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Korean",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Small Mizoru Russian (Marksdo)",
+      "local_folder_name": "ggml-small-mizoru.ru",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-small-mizoru.ru.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Russian",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Small Mvbnh Korean (Marksdo)",
+      "local_folder_name": "ggml-small-mvbnh.ko",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-small-mvbnh.ko.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Korean",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Small Mwrites Cantonese (Marksdo)",
+      "local_folder_name": "ggml-small-mwrites.cantonese",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-small-mwrites.cantonese.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Cantonese",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Small Poppysmickarlili Cantonese (Marksdo)",
+      "local_folder_name": "ggml-small-poppysmickarlili.cantonese",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-small-poppysmickarlili.cantonese.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Cantonese",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Small Pplantinga Swahili (Marksdo)",
+      "local_folder_name": "ggml-small-pplantinga.sw",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-small-pplantinga.sw.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Swahili",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Small Rmacek Zib2 German (Marksdo)",
+      "local_folder_name": "ggml-small-rmacek-zib2.de",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-small-rmacek-zib2.de.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "German",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Small Singlespeaker Korean (Marksdo)",
+      "local_folder_name": "ggml-small-singlespeaker.ko",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-small-singlespeaker.ko.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Korean",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Small Sinhala Sinhala (Marksdo)",
+      "local_folder_name": "ggml-small-sinhala.si",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-small-sinhala.si.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Sinhala",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Small Sungbeom Korean (Marksdo)",
+      "local_folder_name": "ggml-small-sungbeom.ko",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-small-sungbeom.ko.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Korean",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Small Vickyee Japanese (Marksdo)",
+      "local_folder_name": "ggml-small-vickyee.ja",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-small-vickyee.ja.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Japanese",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Small Waveletdeboshir Russian (Marksdo)",
+      "local_folder_name": "ggml-small-waveletdeboshir.ru",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-small-waveletdeboshir.ru.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Russian",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Small Whitemouse84 Russian (Marksdo)",
+      "local_folder_name": "ggml-small-whitemouse84.ru",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-small-whitemouse84.ru.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Russian",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Small Yehor Ukrainian (Marksdo)",
+      "local_folder_name": "ggml-small-yehor.uk",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-small-yehor.uk.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Ukrainian",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Small Arabic (Marksdo)",
+      "local_folder_name": "ggml-small.ar",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-small.ar.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Arabic",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Small Belarusian (Marksdo)",
+      "local_folder_name": "ggml-small.be",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-small.be.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Belarusian",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Small Cantonese (Marksdo)",
+      "local_folder_name": "ggml-small.cantonese",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-small.cantonese.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Cantonese",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Small German (Marksdo)",
+      "local_folder_name": "ggml-small.de",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-small.de.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "German",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Small Dhivehi (Marksdo)",
+      "local_folder_name": "ggml-small.dv",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-small.dv.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Dhivehi",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Small Spanish (Marksdo)",
+      "local_folder_name": "ggml-small.es",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-small.es.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Spanish",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Small Persian (Marksdo)",
+      "local_folder_name": "ggml-small.fa",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-small.fa.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Persian",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Small French (Marksdo)",
+      "local_folder_name": "ggml-small.fr",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-small.fr.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "French",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Small Hindi (Marksdo)",
+      "local_folder_name": "ggml-small.hi",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-small.hi.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Hindi",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Small Indonesian (Marksdo)",
+      "local_folder_name": "ggml-small.id",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-small.id.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Indonesian",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Small Italian (Marksdo)",
+      "local_folder_name": "ggml-small.it",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-small.it.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Italian",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Small Japanese (Marksdo)",
+      "local_folder_name": "ggml-small.ja",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-small.ja.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Japanese",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Small Korean (Marksdo)",
+      "local_folder_name": "ggml-small.ko",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-small.ko.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Korean",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Small Kyrgyz (Marksdo)",
+      "local_folder_name": "ggml-small.kyrgyz",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-small.kyrgyz.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Kyrgyz",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Small Norwegian Bokm\u00e5l (Marksdo)",
+      "local_folder_name": "ggml-small.nb",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-small.nb.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Norwegian Bokm\u00e5l",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Small Dutch (Marksdo)",
+      "local_folder_name": "ggml-small.nl",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-small.nl.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Dutch",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Small Punjabi (Marksdo)",
+      "local_folder_name": "ggml-small.pa",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-small.pa.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Punjabi",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Small Portuguese (Marksdo)",
+      "local_folder_name": "ggml-small.pt",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-small.pt.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Portuguese",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Small Russian (Marksdo)",
+      "local_folder_name": "ggml-small.ru",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-small.ru.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Russian",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Small Ukrainian (Marksdo)",
+      "local_folder_name": "ggml-small.uk",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-small.uk.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Ukrainian",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Small Uzbek (Marksdo)",
+      "local_folder_name": "ggml-small.uz",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-small.uz.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Uzbek",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Small Chinese (Marksdo)",
+      "local_folder_name": "ggml-small.zh",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-small.zh.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Chinese",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Small Chinese (Marksdo)",
+      "local_folder_name": "ggml-small.zhTW",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-small.zhTW.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Traditional Chinese",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Tiny Raivisdejus Latvian (Marksdo)",
+      "local_folder_name": "ggml-tiny-RaivisDejus.lv",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-tiny-RaivisDejus.lv.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Latvian",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Tiny Awareai German (Marksdo)",
+      "local_folder_name": "ggml-tiny-awareai.de",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-tiny-awareai.de.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "German",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Tiny Juierror Thai (Marksdo)",
+      "local_folder_name": "ggml-tiny-juierror.th",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-tiny-juierror.th.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Thai",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Tiny Kaen2891 Korean (Marksdo)",
+      "local_folder_name": "ggml-tiny-kaen2891.ko",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-tiny-kaen2891.ko.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Korean",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Tiny Kuan2 Book English (Marksdo)",
+      "local_folder_name": "ggml-tiny-kuan2-book.en",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-tiny-kuan2-book.en.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "English",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Tiny Niko Japanese (Marksdo)",
+      "local_folder_name": "ggml-tiny-niko.ja",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-tiny-niko.ja.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Japanese",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Tiny Sinhala Sinhala (Marksdo)",
+      "local_folder_name": "ggml-tiny-sinhala.si",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-tiny-sinhala.si.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Sinhala",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Tiny Spraveenkumar1318 English (Marksdo)",
+      "local_folder_name": "ggml-tiny-spraveenkumar1318.en",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-tiny-spraveenkumar1318.en.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "English",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Tiny Waveletdeboshir Russian (Marksdo)",
+      "local_folder_name": "ggml-tiny-waveletdeboshir.ru",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-tiny-waveletdeboshir.ru.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Russian",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Tiny Indonesian (Marksdo)",
+      "local_folder_name": "ggml-tiny.id",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-tiny.id.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Indonesian",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Tiny Japanese (Marksdo)",
+      "local_folder_name": "ggml-tiny.ja",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-tiny.ja.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Japanese",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Tiny Latvian (Marksdo)",
+      "local_folder_name": "ggml-tiny.lv",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-tiny.lv.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Latvian",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Tiny Norwegian Bokm\u00e5l (Marksdo)",
+      "local_folder_name": "ggml-tiny.nb",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Marksdo/WhisperMate/resolve/main/ggml-tiny.nb.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Norwegian Bokm\u00e5l",
+        "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
     }
   ]
 }
