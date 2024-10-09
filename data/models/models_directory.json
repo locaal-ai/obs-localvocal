@@ -1348,8 +1348,8 @@
       }
     },
     {
-      "friendly_name": "Whisper Large V3.taiwanese (Marksdo)",
-      "local_folder_name": "ggml-large-v3.taiwanese",
+      "friendly_name": "Whisper Large V3 Taiwanese (Marksdo)",
+      "local_folder_name": "ggml-large-v3-taiwanese",
       "type": "MODEL_TYPE_TRANSCRIPTION",
       "files": [
         {
@@ -3572,7 +3572,7 @@
       }
     },
     {
-      "friendly_name": "Whisper Tiny Sinhala Sinhala (Marksdo)",
+      "friendly_name": "Whisper Tiny Sinhala (Marksdo)",
       "local_folder_name": "ggml-tiny-sinhala.si",
       "type": "MODEL_TYPE_TRANSCRIPTION",
       "files": [
@@ -3680,6 +3680,582 @@
       "extra": {
         "language": "Norwegian Bokm\u00e5l",
         "description": "This model is a part of the WhisperMate project. https://whispermate.app",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Large V3 (vonjack)",
+      "local_folder_name": "whisper-large-v3-f16",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/vonjack/whisper-large-v3-gguf/resolve/main/whisper-large-v3-f16.gguf",
+          "sha256": null
+        }
+      ],
+      "extra": {
+        "language": null,
+        "description": "Whisper GGML model",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Medium Q4 (OllmOne)",
+      "local_folder_name": "model-q4k",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/OllmOne/whisper-medium-GGUF/resolve/main/model-q4k.gguf",
+          "sha256": null
+        }
+      ],
+      "extra": {
+        "language": null,
+        "description": "Whisper GGML model",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Large V3 Q4 (OllmOne)",
+      "local_folder_name": "model-q4k",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/OllmOne/whisper-large-v3-GGUF/resolve/main/model-q4k.gguf",
+          "sha256": null
+        }
+      ],
+      "extra": {
+        "language": null,
+        "description": "Whisper GGML model",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Medium Korean (royshilkrot)",
+      "local_folder_name": "training_args",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/royshilkrot/whisper-medium-korean-ggml/resolve/main/whisper-medium-korean.bin",
+          "sha256": null
+        }
+      ],
+      "extra": {
+        "language": null,
+        "description": "Whisper GGML model",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Model Whisper (chatgpt-openai)",
+      "local_folder_name": "ggml-base.en",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/chatgpt-openai/ggml-model-whisper/resolve/main/ggml-base.en.bin",
+          "sha256": null
+        }
+      ],
+      "extra": {
+        "language": null,
+        "description": "Whisper GGML model",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Large V2 (4bit)",
+      "local_folder_name": "ggml-large-v2",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/4bit/whisper-large-v2-ggml/resolve/main/ggml-large-v2.bin",
+          "sha256": null
+        }
+      ],
+      "extra": {
+        "language": null,
+        "description": "Whisper GGML model",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Small Russian 1k Steps (sBPOH)",
+      "local_folder_name": "ggml-model-ru",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/sBPOH/whisper-small-ru-1k-steps-ggml/resolve/main/ggml-model-ru.bin",
+          "sha256": null
+        }
+      ],
+      "extra": {
+        "language": "Russian",
+        "description": "Whisper GGML model",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Large V2 Q5 (gabluz)",
+      "local_folder_name": "ggml-large-v2-q5_1",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/gabluz/ggml-whisper-large-quantized/resolve/main/ggml-large-v2-q5_1.bin",
+          "sha256": null
+        }
+      ],
+      "extra": {
+        "language": null,
+        "description": "Whisper GGML model",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Base (danielus)",
+      "local_folder_name": "ggml-base-fp16",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/danielus/ggml-whisper-models/resolve/main/ggml-base-fp16.bin",
+          "sha256": null
+        }
+      ],
+      "extra": {
+        "language": null,
+        "description": "Whisper GGML model",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Tiny Q5 (gabluz)",
+      "local_folder_name": "qqml-tiny-q5_1",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/gabluz/ggml-whisper-tiny-quantized/resolve/main/qqml-tiny-q5_1.bin",
+          "sha256": null
+        }
+      ],
+      "extra": {
+        "language": null,
+        "description": "Whisper GGML model",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Small Q5 (gabluz)",
+      "local_folder_name": "qqml-small-q5_1",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/gabluz/ggml-whisper-small-quantized/resolve/main/qqml-small-q5_1.bin",
+          "sha256": null
+        }
+      ],
+      "extra": {
+        "language": null,
+        "description": "Whisper GGML model",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Base Q4 English (frinedl)",
+      "local_folder_name": "ggml-base.en-q4_0",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/frinedl/ggml-quantized-whisper-en/resolve/main/ggml-base.en-q4_0.bin",
+          "sha256": null
+        }
+      ],
+      "extra": {
+        "language": "English",
+        "description": "Whisper GGML model",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Medium Q5 (mukowaty)",
+      "local_folder_name": "ggml-medium-cs-mikr-q5_0",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/mukowaty/ggml-whisper/resolve/main/cs/ggml-medium-cs-mikr-q5_0.bin",
+          "sha256": null
+        }
+      ],
+      "extra": {
+        "language": null,
+        "description": "Whisper GGML model",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Base (rahalmichel)",
+      "local_folder_name": "ggml-base",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/rahalmichel/whisper-ggml/resolve/main/ggml-base.bin",
+          "sha256": null
+        }
+      ],
+      "extra": {
+        "language": null,
+        "description": "Whisper GGML model",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Large V3 Finnish (Finnish-NLP)",
+      "local_folder_name": "ggml-model-fi-large-v3",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Finnish-NLP/Finnish-finetuned-whisper-models-ggml-format/resolve/main/ggml-model-fi-large-v3.bin",
+          "sha256": null
+        }
+      ],
+      "extra": {
+        "language": null,
+        "description": "Whisper GGML model",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Medium Portuguese (Gustrd)",
+      "local_folder_name": "whisper-medium-portuguese-ggml-model",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Gustrd/whisper-medium-portuguese-ggml-model/resolve/main/whisper-medium-portuguese-ggml-model.bin",
+          "sha256": null
+        }
+      ],
+      "extra": {
+        "language": null,
+        "description": "Whisper GGML model",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Base Q5 (AI-Engine)",
+      "local_folder_name": "whisper-ggml-base-q5_1",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/AI-Engine/Whisper-Q5-GGML/resolve/main/whisper-ggml-base-q5_1.bin",
+          "sha256": null
+        }
+      ],
+      "extra": {
+        "language": null,
+        "description": "Whisper GGML model",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Large V2 Japanese (hturner08)",
+      "local_folder_name": "ggml-large-v2-japanese",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/hturner08/whisper-finetune-ggml/resolve/main/ggml-large-v2-japanese.bin",
+          "sha256": null
+        }
+      ],
+      "extra": {
+        "language": null,
+        "description": "Whisper GGML model",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Large Sme (jimregan)",
+      "local_folder_name": "ggml-model",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/jimregan/whisper-large-sme-ggml/resolve/main/ggml-model.bin",
+          "sha256": null
+        }
+      ],
+      "extra": {
+        "language": null,
+        "description": "Whisper GGML model",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Medium Tamil Ft (Reggie)",
+      "local_folder_name": "ggml-tamil-medium-vasista22",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Reggie/whisper-tamil-small-ft-gguf/resolve/main/ggml-tamil-medium-vasista22.bin",
+          "sha256": null
+        }
+      ],
+      "extra": {
+        "language": null,
+        "description": "Whisper GGML model",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Distil Large V3 (distil-whisper)",
+      "local_folder_name": "ggml-distil-large-v3",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/distil-whisper/distil-large-v3-ggml/resolve/main/ggml-distil-large-v3.bin",
+          "sha256": null
+        }
+      ],
+      "extra": {
+        "language": null,
+        "description": "Whisper GGML model",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Tiny Q5 (nitsuai)",
+      "local_folder_name": "qqml-tiny-q5_1",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/nitsuai/ggml-whisper-tiny-quantized-BIN/resolve/main/qqml-tiny-q5_1.bin",
+          "sha256": null
+        }
+      ],
+      "extra": {
+        "language": null,
+        "description": "Whisper GGML model",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Large V2 Q5 (itayl)",
+      "local_folder_name": "ivrit-ai--whisper-large-v2-tuned-ggml-model-q5_1",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/itayl/whisper-large-v2-tuned-GGML/resolve/main/ivrit-ai--whisper-large-v2-tuned-ggml-model-q5_1.bin",
+          "sha256": null
+        }
+      ],
+      "extra": {
+        "language": null,
+        "description": "Whisper GGML model",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper V1.0 Q5 (kotoba-tech)",
+      "local_folder_name": "ggml-kotoba-whisper-v1.0-q5_0",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/kotoba-tech/kotoba-whisper-v1.0-ggml/resolve/main/ggml-kotoba-whisper-v1.0-q5_0.bin",
+          "sha256": null
+        }
+      ],
+      "extra": {
+        "language": null,
+        "description": "Whisper GGML model",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Large V2 Q4 (Ftfyhh)",
+      "local_folder_name": "whisper-ggml-large-v2-q4_0",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/Ftfyhh/whisper-ggml-q4_0-models/resolve/main/whisper-ggml-large-v2-q4_0.bin",
+          "sha256": null
+        }
+      ],
+      "extra": {
+        "language": null,
+        "description": "Whisper GGML model",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper V2 D3 E3 (ivrit-ai)",
+      "local_folder_name": "ggml-ivrit-v2-d3-e3",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/ivrit-ai/whisper-v2-d3-e3-ggml/resolve/main/ggml-ivrit-v2-d3-e3.bin",
+          "sha256": null
+        }
+      ],
+      "extra": {
+        "language": null,
+        "description": "Whisper GGML model",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Medium (mosesdaudu)",
+      "local_folder_name": "ggml-model",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/mosesdaudu/whisper-medium-GGML/resolve/main/ggml-model.bin",
+          "sha256": null
+        }
+      ],
+      "extra": {
+        "language": null,
+        "description": "Whisper GGML model",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Tiny Q5 (VxPro)",
+      "local_folder_name": "ggml-model-whisper-tiny-q5_1",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/VxPro/ggml-model-whisper-tiny-q5_1.bin/resolve/main/ggml-model-whisper-tiny-q5_1.bin",
+          "sha256": null
+        }
+      ],
+      "extra": {
+        "language": null,
+        "description": "Whisper GGML model",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Large V3 (leafspark)",
+      "local_folder_name": "ggml-model",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/leafspark/whisper-large-v3-ggml/resolve/main/ggml-model.bin",
+          "sha256": null
+        }
+      ],
+      "extra": {
+        "language": null,
+        "description": "Whisper GGML model",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Large V3 Chinese Punct (dixyes)",
+      "local_folder_name": "ggml-model",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/dixyes/Belle-whisper-large-v3-zh-punct-GGML/resolve/main/ggml-model.bin",
+          "sha256": null
+        }
+      ],
+      "extra": {
+        "language": "Chinese",
+        "description": "Whisper GGML model",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Large V3 Chinese (dixyes)",
+      "local_folder_name": "ggml-model",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/dixyes/Belle-whisper-large-v3-zh-GGML/resolve/main/ggml-model.bin",
+          "sha256": null
+        }
+      ],
+      "extra": {
+        "language": "Chinese",
+        "description": "Whisper GGML model",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Distil Small English (dharmab)",
+      "local_folder_name": "ggml-distil-small-f32.en",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/dharmab/distill-whisper-ggml/resolve/main/ggml-distil-small-f32.en.bin",
+          "sha256": null
+        }
+      ],
+      "extra": {
+        "language": null,
+        "description": "Whisper GGML model",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper V2 D4 (ivrit-ai)",
+      "local_folder_name": "ggml-ivrit-v2-d4",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/ivrit-ai/whisper-v2-d4-ggml/resolve/main/ggml-ivrit-v2-d4.bin",
+          "sha256": null
+        }
+      ],
+      "extra": {
+        "language": null,
+        "description": "Whisper GGML model",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper V2.0 Q5 (kotoba-tech)",
+      "local_folder_name": "ggml-kotoba-whisper-v2.0-q5_0",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/kotoba-tech/kotoba-whisper-v2.0-ggml/resolve/main/ggml-kotoba-whisper-v2.0-q5_0.bin",
+          "sha256": null
+        }
+      ],
+      "extra": {
+        "language": null,
+        "description": "Whisper GGML model",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Bilingual V1.0 Q5 (kotoba-tech)",
+      "local_folder_name": "ggml-kotoba-whisper-bilingual-v1.0-q5_0",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/kotoba-tech/kotoba-whisper-bilingual-v1.0-ggml/resolve/main/ggml-kotoba-whisper-bilingual-v1.0-q5_0.bin",
+          "sha256": null
+        }
+      ],
+      "extra": {
+        "language": null,
+        "description": "Whisper GGML model",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Large V3 Turbo (royshilkrot)",
+      "local_folder_name": "whisper-large-v3-turbo-ggml",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/royshilkrot/whisper-large-v3-turbo-gguf/resolve/main/whisper-large-v3-turbo-ggml.bin",
+          "sha256": null
+        }
+      ],
+      "extra": {
+        "language": null,
+        "description": "Whisper GGML model",
         "source": "Hugging Face"
       }
     }

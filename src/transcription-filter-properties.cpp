@@ -152,15 +152,16 @@ void add_transcription_group_properties(obs_properties_t *ppts,
 	obs_property_t *whisper_models_list = obs_properties_add_list(
 		transcription_group, "whisper_model_path", MT_("whisper_model"),
 		OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_STRING);
-	// Add models from models_info map
-	for (const auto &model_info : models_info()) {
-		if (model_info.second.type == MODEL_TYPE_TRANSCRIPTION) {
-			obs_property_list_add_string(whisper_models_list, model_info.first.c_str(),
-						     model_info.first.c_str());
-		}
-	}
 	obs_property_list_add_string(whisper_models_list, "Load external model file",
 				     "!!!external!!!");
+	// Add models from models_info map
+	for (const auto &model_info : get_sorted_models_info()) {
+		if (model_info.type == MODEL_TYPE_TRANSCRIPTION) {
+			obs_property_list_add_string(whisper_models_list,
+						     model_info.friendly_name.c_str(),
+						     model_info.friendly_name.c_str());
+		}
+	}
 
 	// Add a file selection input to select an external model file
 	obs_properties_add_path(transcription_group, "whisper_model_path_external",

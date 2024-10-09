@@ -19,6 +19,25 @@ static size_t WriteCallback(void *contents, size_t size, size_t nmemb, void *use
 	return size * nmemb;
 }
 
+/**
+ * @brief Downloads a JSON file from a specified GitHub URL.
+ *
+ * This function uses libcurl to download a JSON file from a GitHub repository.
+ * The downloaded content is stored in the provided string reference.
+ *
+ * @param json_content A reference to a string where the downloaded JSON content will be stored.
+ * @return true if the download was successful and the HTTP response code was 200, false otherwise.
+ *
+ * The function performs the following steps:
+ * - Initializes a CURL session.
+ * - Sets the URL to download the JSON from.
+ * - Sets the callback function to write the downloaded data.
+ * - Follows redirects and sets a timeout of 10 seconds.
+ * - Performs the download operation.
+ * - Checks for errors and logs them using obs_log.
+ * - Cleans up the CURL session.
+ * - Checks the HTTP response code to ensure it is 200 (OK).
+ */
 bool download_json_from_github(std::string &json_content)
 {
 	CURL *curl;
@@ -61,6 +80,37 @@ bool download_json_from_github(std::string &json_content)
 	return true;
 }
 
+/**
+ * @brief Parses a JSON object to extract model information.
+ *
+ * This function takes a JSON object representing a model and extracts various
+ * fields to populate a ModelInfo structure. It performs validation on the
+ * presence and types of required fields and logs warnings for any missing or
+ * invalid fields.
+ *
+ * @param model The JSON object containing the model information.
+ * @return An optional ModelInfo object. If the required fields are missing or
+ *         invalid, it returns std::nullopt.
+ *
+ * The JSON object is expected to have the following structure:
+ * {
+ *     "friendly_name": "string",          // Required
+ *     "local_folder_name": "string",      // Optional
+ *     "type": "string",                   // Optional, expected values: "MODEL_TYPE_TRANSCRIPTION" or "MODEL_TYPE_TRANSLATION"
+ *     "files": [                          // Optional, array of file objects
+ *         {
+ *             "url": "string",            // Required in each file object
+ *             "sha256": "string"          // Required in each file object
+ *         },
+ *         ...
+ *     ],
+ *     "extra": {                          // Optional
+ *         "language": "string",           // Optional
+ *         "description": "string",        // Optional
+ *         "source": "string"              // Optional
+ *     }
+ * }
+ */
 std::optional<ModelInfo> parse_model_json(const nlohmann::json &model)
 {
 	ModelInfo model_info;
@@ -118,9 +168,30 @@ std::optional<ModelInfo> parse_model_json(const nlohmann::json &model)
 			model_info.friendly_name.c_str());
 	}
 
+	// Parse the new "extra" field
+	if (model.contains("extra") && model["extra"].is_object()) {
+		const auto &extra = model["extra"];
+		if (extra.contains("language") && extra["language"].is_string())
+			model_info.extra.language = extra["language"].get<std::string>();
+		if (extra.contains("description") && extra["description"].is_string())
+			model_info.extra.description = extra["description"].get<std::string>();
+		if (extra.contains("source") && extra["source"].is_string())
+			model_info.extra.source = extra["source"].get<std::string>();
+	}
+
 	return model_info;
 }
 
+/**
+ * @brief Loads model information from a JSON source.
+ *
+ * This function attempts to download a JSON file containing model information from GitHub.
+ * If the download fails, it falls back to loading the JSON file from a local directory.
+ * The JSON file is expected to contain an array of models under the key "models".
+ * Each model's information is parsed and stored in a map with the model's friendly name as the key.
+ *
+ * @return A map where the keys are model friendly names and the values are ModelInfo objects.
+ */
 std::map<std::string, ModelInfo> load_models_info()
 {
 	std::map<std::string, ModelInfo> models_info_map;
@@ -179,4 +250,39 @@ const std::map<std::string, ModelInfo> &models_info()
 		std::make_unique<const std::map<std::string, ModelInfo>>(load_models_info());
 
 	return *cached_models_info;
+}
+
+const std::vector<ModelInfo> get_sorted_models_info()
+{
+	const auto &models_map = models_info();
+	std::vector<ModelInfo> standard_models;
+	std::vector<ModelInfo> huggingface_models;
+
+	// Separate models into two categories
+	for (const auto &[key, model] : models_map) {
+		if (!model.extra.source.empty()) {
+			huggingface_models.push_back(model);
+		} else {
+			standard_models.push_back(model);
+		}
+	}
+
+	// Sort both vectors based on friendly_name
+	auto sort_by_name = [](const ModelInfo &a, const ModelInfo &b) {
+		return a.friendly_name < b.friendly_name;
+	};
+	std::sort(standard_models.begin(), standard_models.end(), sort_by_name);
+	std::sort(huggingface_models.begin(), huggingface_models.end(), sort_by_name);
+
+	// Combine the sorted vectors with a separator
+	std::vector<ModelInfo> result = std::move(standard_models);
+	if (!huggingface_models.empty()) {
+		ModelInfo info;
+		info.friendly_name = "--------- HuggingFace Models ---------";
+		info.type = ModelType::MODEL_TYPE_TRANSCRIPTION;
+		result.push_back(info);
+		result.insert(result.end(), huggingface_models.begin(), huggingface_models.end());
+	}
+
+	return result;
 }
