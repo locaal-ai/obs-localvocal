@@ -195,7 +195,7 @@ std::map<std::string, ModelInfo> load_models_info()
 
 	// Try to download from GitHub first
 	std::string github_json_content;
-	bool download_success = false; // download_json_from_github(github_json_content);
+	bool download_success = download_json_from_github(github_json_content);
 
 	if (download_success) {
 		obs_log(LOG_INFO, "Successfully downloaded models directory from GitHub");
