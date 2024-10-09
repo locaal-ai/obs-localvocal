@@ -156,10 +156,6 @@ std::optional<ModelInfo> parse_model_json(const nlohmann::json &model)
 
 			if (file.contains("sha256") && file["sha256"].is_string())
 				file_info.sha256 = file["sha256"].get<std::string>();
-			else
-				obs_log(LOG_WARNING,
-					"Missing or invalid 'sha256' for a file in model: %s",
-					model_info.friendly_name.c_str());
 
 			model_info.files.push_back(file_info);
 		}
@@ -199,7 +195,7 @@ std::map<std::string, ModelInfo> load_models_info()
 
 	// Try to download from GitHub first
 	std::string github_json_content;
-	bool download_success = download_json_from_github(github_json_content);
+	bool download_success = false; // download_json_from_github(github_json_content);
 
 	if (download_success) {
 		obs_log(LOG_INFO, "Successfully downloaded models directory from GitHub");

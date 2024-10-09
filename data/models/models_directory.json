@@ -436,7 +436,7 @@
       ]
     },
     {
-      "friendly_name": "Whisper Base Awareai German (Marksdo)",
+      "friendly_name": "Whisper Base German Awareai (Marksdo)",
       "local_folder_name": "ggml-base-awareai.de",
       "type": "MODEL_TYPE_TRANSCRIPTION",
       "files": [
@@ -452,7 +452,7 @@
       }
     },
     {
-      "friendly_name": "Whisper Base Callvoice Korean (Marksdo)",
+      "friendly_name": "Whisper Base Korean Callvoice (Marksdo)",
       "local_folder_name": "ggml-base-callvoice.ko",
       "type": "MODEL_TYPE_TRANSCRIPTION",
       "files": [
@@ -468,7 +468,7 @@
       }
     },
     {
-      "friendly_name": "Whisper Base Neurai Persian (Marksdo)",
+      "friendly_name": "Whisper Base Persian Neurai (Marksdo)",
       "local_folder_name": "ggml-base-neurai.fa",
       "type": "MODEL_TYPE_TRANSCRIPTION",
       "files": [
@@ -484,7 +484,7 @@
       }
     },
     {
-      "friendly_name": "Whisper Base Quran Arabic (Marksdo)",
+      "friendly_name": "Whisper Base Arabic Quran (Marksdo)",
       "local_folder_name": "ggml-base-quran.ar",
       "type": "MODEL_TYPE_TRANSCRIPTION",
       "files": [
@@ -500,7 +500,7 @@
       }
     },
     {
-      "friendly_name": "Whisper Base Sungbeom Korean (Marksdo)",
+      "friendly_name": "Whisper Base Korean Sungbeom (Marksdo)",
       "local_folder_name": "ggml-base-sungbeom.ko",
       "type": "MODEL_TYPE_TRANSCRIPTION",
       "files": [
@@ -516,7 +516,7 @@
       }
     },
     {
-      "friendly_name": "Whisper Base Waveletdeboshir Russian (Marksdo)",
+      "friendly_name": "Whisper Base Russian Waveletdeboshir (Marksdo)",
       "local_folder_name": "ggml-base-waveletdeboshir.ru",
       "type": "MODEL_TYPE_TRANSCRIPTION",
       "files": [
@@ -596,7 +596,7 @@
       }
     },
     {
-      "friendly_name": "Whisper Distil Large V3 Sercan Turkish (Marksdo)",
+      "friendly_name": "Whisper Distil Large V3 Turkish Sercan (Marksdo)",
       "local_folder_name": "ggml-distil-large-v3-Sercan.tr",
       "type": "MODEL_TYPE_TRANSCRIPTION",
       "files": [
@@ -612,7 +612,7 @@
       }
     },
     {
-      "friendly_name": "Whisper Distil Large V3 Primeline German (Marksdo)",
+      "friendly_name": "Whisper Distil Large V3 German Primeline (Marksdo)",
       "local_folder_name": "ggml-distil-large-v3-primeline.de",
       "type": "MODEL_TYPE_TRANSCRIPTION",
       "files": [
@@ -628,7 +628,7 @@
       }
     },
     {
-      "friendly_name": "Whisper Distil Large V3 Reazonspeech Japanese (Marksdo)",
+      "friendly_name": "Whisper Distil Large V3 Japanese Reazonspeech (Marksdo)",
       "local_folder_name": "ggml-distil-large-v3-reazonspeech.ja",
       "type": "MODEL_TYPE_TRANSCRIPTION",
       "files": [
@@ -740,7 +740,7 @@
       }
     },
     {
-      "friendly_name": "Whisper Distil Small Alvanlii Cantonese (Marksdo)",
+      "friendly_name": "Whisper Distil Small Cantonese Alvanlii (Marksdo)",
       "local_folder_name": "ggml-distil-small-alvanlii.cantonese",
       "type": "MODEL_TYPE_TRANSCRIPTION",
       "files": [
@@ -772,7 +772,7 @@
       }
     },
     {
-      "friendly_name": "Whisper Large 5k Japanese (Marksdo)",
+      "friendly_name": "Whisper Large Japanese 5k (Marksdo)",
       "local_folder_name": "ggml-large-5k.ja",
       "type": "MODEL_TYPE_TRANSCRIPTION",
       "files": [
@@ -788,7 +788,7 @@
       }
     },
     {
-      "friendly_name": "Whisper Large Mohamedrashad Arabic (Marksdo)",
+      "friendly_name": "Whisper Large Arabic Mohamedrashad (Marksdo)",
       "local_folder_name": "ggml-large-MohamedRashad.ar",
       "type": "MODEL_TYPE_TRANSCRIPTION",
       "files": [
@@ -804,7 +804,7 @@
       }
     },
     {
-      "friendly_name": "Whisper Large Huzaifa1117.ur (Marksdo)",
+      "friendly_name": "Whisper Large Urdu Huzaifa1117 (Marksdo)",
       "local_folder_name": "ggml-large-huzaifa1117.ur",
       "type": "MODEL_TYPE_TRANSCRIPTION",
       "files": [
@@ -820,7 +820,7 @@
       }
     },
     {
-      "friendly_name": "Whisper Large Liqi03 Polish (Marksdo)",
+      "friendly_name": "Whisper Large Polish Liqi03 (Marksdo)",
       "local_folder_name": "ggml-large-liqi03.pl",
       "type": "MODEL_TYPE_TRANSCRIPTION",
       "files": [
@@ -836,7 +836,7 @@
       }
     },
     {
-      "friendly_name": "Whisper Large V2 10k Sin2piusc Japanese (Marksdo)",
+      "friendly_name": "Whisper Large V2 Japanese 10k Sin2piusc (Marksdo)",
       "local_folder_name": "ggml-large-v2-10k-sin2piusc.ja",
       "type": "MODEL_TYPE_TRANSCRIPTION",
       "files": [
@@ -852,7 +852,7 @@
       }
     },
     {
-      "friendly_name": "Whisper Large V2 Cleaned Hungarian (Marksdo)",
+      "friendly_name": "Whisper Large V2 Hungarian Cleaned (Marksdo)",
       "local_folder_name": "ggml-large-v2-cleaned.hu",
       "type": "MODEL_TYPE_TRANSCRIPTION",
       "files": [
@@ -868,7 +868,7 @@
       }
     },
     {
-      "friendly_name": "Whisper Large V2 Mitchelldehaven Russian (Marksdo)",
+      "friendly_name": "Whisper Large V2 Russian Mitchelldehaven (Marksdo)",
       "local_folder_name": "ggml-large-v2-mitchelldehaven.ru",
       "type": "MODEL_TYPE_TRANSCRIPTION",
       "files": [
@@ -884,7 +884,7 @@
       }
     },
     {
-      "friendly_name": "Whisper Large V2 Sandiago21 Italian (Marksdo)",
+      "friendly_name": "Whisper Large V2 Italian Sandiago21 (Marksdo)",
       "local_folder_name": "ggml-large-v2-sandiago21.it",
       "type": "MODEL_TYPE_TRANSCRIPTION",
       "files": [
@@ -964,7 +964,7 @@
       }
     },
     {
-      "friendly_name": "Whisper Large V3 202405 German (Marksdo)",
+      "friendly_name": "Whisper Large V3 German 202405 (Marksdo)",
       "local_folder_name": "ggml-large-v3-202405.de",
       "type": "MODEL_TYPE_TRANSCRIPTION",
       "files": [
@@ -980,7 +980,7 @@
       }
     },
     {
-      "friendly_name": "Whisper Large V3 Ailabimcs Latvian (Marksdo)",
+      "friendly_name": "Whisper Large V3 Latvian Ailabimcs (Marksdo)",
       "local_folder_name": "ggml-large-v3-AiLabIMCS.lv",
       "type": "MODEL_TYPE_TRANSCRIPTION",
       "files": [
@@ -996,7 +996,7 @@
       }
     },
     {
-      "friendly_name": "Whisper Large V3 Belle2 Chinese (Marksdo)",
+      "friendly_name": "Whisper Large V3 Chinese Belle2 (Marksdo)",
       "local_folder_name": "ggml-large-v3-BELLE2.zh",
       "type": "MODEL_TYPE_TRANSCRIPTION",
       "files": [
@@ -1012,7 +1012,7 @@
       }
     },
     {
-      "friendly_name": "Whisper Large V3 Cem13 Czech (Marksdo)",
+      "friendly_name": "Whisper Large V3 Czech Cem13 (Marksdo)",
       "local_folder_name": "ggml-large-v3-Cem13.cs",
       "type": "MODEL_TYPE_TRANSCRIPTION",
       "files": [
@@ -1028,7 +1028,7 @@
       }
     },
     {
-      "friendly_name": "Whisper Large V3 Mightystudent Arabic (Marksdo)",
+      "friendly_name": "Whisper Large V3 Arabic Mightystudent (Marksdo)",
       "local_folder_name": "ggml-large-v3-MightyStudent.ar",
       "type": "MODEL_TYPE_TRANSCRIPTION",
       "files": [
@@ -1044,7 +1044,7 @@
       }
     },
     {
-      "friendly_name": "Whisper Large V3 Na0s Medical English (Marksdo)",
+      "friendly_name": "Whisper Large V3 English Na0s Medical (Marksdo)",
       "local_folder_name": "ggml-large-v3-Na0s-medical.en",
       "type": "MODEL_TYPE_TRANSCRIPTION",
       "files": [
@@ -1060,7 +1060,7 @@
       }
     },
     {
-      "friendly_name": "Whisper Large V3 Nbailab Norwegian Bokm\u00e5l (Marksdo)",
+      "friendly_name": "Whisper Large V3 Norwegian Bokm\u00e5l Nbailab (Marksdo)",
       "local_folder_name": "ggml-large-v3-NbAiLab.nb",
       "type": "MODEL_TYPE_TRANSCRIPTION",
       "files": [
@@ -1076,7 +1076,7 @@
       }
     },
     {
-      "friendly_name": "Whisper Large V3 Antony66 Russian (Marksdo)",
+      "friendly_name": "Whisper Large V3 Russian Antony66 (Marksdo)",
       "local_folder_name": "ggml-large-v3-antony66.ru",
       "type": "MODEL_TYPE_TRANSCRIPTION",
       "files": [
@@ -1092,7 +1092,7 @@
       }
     },
     {
-      "friendly_name": "Whisper Large V3 Belle Chinese (Marksdo)",
+      "friendly_name": "Whisper Large V3 Chinese Belle (Marksdo)",
       "local_folder_name": "ggml-large-v3-belle.zh",
       "type": "MODEL_TYPE_TRANSCRIPTION",
       "files": [
@@ -1108,7 +1108,7 @@
       }
     },
     {
-      "friendly_name": "Whisper Large V3 Bofenghuang French (Marksdo)",
+      "friendly_name": "Whisper Large V3 French Bofenghuang (Marksdo)",
       "local_folder_name": "ggml-large-v3-bofenghuang.fr",
       "type": "MODEL_TYPE_TRANSCRIPTION",
       "files": [
@@ -1124,7 +1124,7 @@
       }
     },
     {
-      "friendly_name": "Whisper Large V3 Drewschaub Japanese (Marksdo)",
+      "friendly_name": "Whisper Large V3 Japanese Drewschaub (Marksdo)",
       "local_folder_name": "ggml-large-v3-drewschaub.ja",
       "type": "MODEL_TYPE_TRANSCRIPTION",
       "files": [
@@ -1140,7 +1140,7 @@
       }
     },
     {
-      "friendly_name": "Whisper Large V3 Fsicoli Italian (Marksdo)",
+      "friendly_name": "Whisper Large V3 Italian Fsicoli (Marksdo)",
       "local_folder_name": "ggml-large-v3-fsicoli.it",
       "type": "MODEL_TYPE_TRANSCRIPTION",
       "files": [
@@ -1156,7 +1156,7 @@
       }
     },
     {
-      "friendly_name": "Whisper Large V3 Fsicoli Portuguese (Marksdo)",
+      "friendly_name": "Whisper Large V3 Portuguese Fsicoli (Marksdo)",
       "local_folder_name": "ggml-large-v3-fsicoli.pt",
       "type": "MODEL_TYPE_TRANSCRIPTION",
       "files": [
@@ -1172,7 +1172,7 @@
       }
     },
     {
-      "friendly_name": "Whisper Large V3 Kotobav1.1 Japanese (Marksdo)",
+      "friendly_name": "Whisper Large V3 Japanese Kotoba v1.1 (Marksdo)",
       "local_folder_name": "ggml-large-v3-kotobav1.1.ja",
       "type": "MODEL_TYPE_TRANSCRIPTION",
       "files": [
@@ -1188,7 +1188,7 @@
       }
     },
     {
-      "friendly_name": "Whisper Large V3 Kotobav1 Japanese (Marksdo)",
+      "friendly_name": "Whisper Large V3 Japanese Kotobav1 (Marksdo)",
       "local_folder_name": "ggml-large-v3-kotobav1.ja",
       "type": "MODEL_TYPE_TRANSCRIPTION",
       "files": [
@@ -1204,7 +1204,7 @@
       }
     },
     {
-      "friendly_name": "Whisper Large V3 Liqi03 Thai (Marksdo)",
+      "friendly_name": "Whisper Large V3 Thai Liqi03 (Marksdo)",
       "local_folder_name": "ggml-large-v3-liqi03.th",
       "type": "MODEL_TYPE_TRANSCRIPTION",
       "files": [
@@ -1220,7 +1220,7 @@
       }
     },
     {
-      "friendly_name": "Whisper Large V3 Nsalahaddinov.az (Marksdo)",
+      "friendly_name": "Whisper Large V3 Azerbaijani Nsalahaddinov (Marksdo)",
       "local_folder_name": "ggml-large-v3-nsalahaddinov.az",
       "type": "MODEL_TYPE_TRANSCRIPTION",
       "files": [
@@ -1236,7 +1236,7 @@
       }
     },
     {
-      "friendly_name": "Whisper Large V3 Podlodka Russian (Marksdo)",
+      "friendly_name": "Whisper Large V3 Russian Podlodka (Marksdo)",
       "local_folder_name": "ggml-large-v3-podlodka.ru",
       "type": "MODEL_TYPE_TRANSCRIPTION",
       "files": [
@@ -1252,7 +1252,7 @@
       }
     },
     {
-      "friendly_name": "Whisper Large V3 Quinnb Hindi (Marksdo)",
+      "friendly_name": "Whisper Large V3 Hindi Quinnb (Marksdo)",
       "local_folder_name": "ggml-large-v3-quinnb.hi",
       "type": "MODEL_TYPE_TRANSCRIPTION",
       "files": [
@@ -1380,7 +1380,7 @@
       }
     },
     {
-      "friendly_name": "Whisper Large Voicelab Icelandic (Marksdo)",
+      "friendly_name": "Whisper Large Icelandic Voicelab (Marksdo)",
       "local_folder_name": "ggml-large-voicelab.is",
       "type": "MODEL_TYPE_TRANSCRIPTION",
       "files": [
@@ -1796,7 +1796,7 @@
       }
     },
     {
-      "friendly_name": "Whisper Medium 15k Sin2piusc Japanese (Marksdo)",
+      "friendly_name": "Whisper Medium Japanese 15k Sin2piusc (Marksdo)",
       "local_folder_name": "ggml-medium-15k-sin2piusc.ja",
       "type": "MODEL_TYPE_TRANSCRIPTION",
       "files": [
@@ -1812,7 +1812,7 @@
       }
     },
     {
-      "friendly_name": "Whisper Medium 22k 5k Sin2piusc Japanese (Marksdo)",
+      "friendly_name": "Whisper Medium Japanese 22k 5k Sin2piusc (Marksdo)",
       "local_folder_name": "ggml-medium-22k_5k-sin2piusc.ja",
       "type": "MODEL_TYPE_TRANSCRIPTION",
       "files": [
@@ -1828,7 +1828,7 @@
       }
     },
     {
-      "friendly_name": "Whisper Medium 240612 Indonesian (Marksdo)",
+      "friendly_name": "Whisper Medium Indonesian 240612 (Marksdo)",
       "local_folder_name": "ggml-medium-240612.id",
       "type": "MODEL_TYPE_TRANSCRIPTION",
       "files": [
@@ -1844,7 +1844,7 @@
       }
     },
     {
-      "friendly_name": "Whisper Medium Abosteet Arabic (Marksdo)",
+      "friendly_name": "Whisper Medium Arabic Abosteet (Marksdo)",
       "local_folder_name": "ggml-medium-Abosteet.ar",
       "type": "MODEL_TYPE_TRANSCRIPTION",
       "files": [
@@ -1860,7 +1860,7 @@
       }
     },
     {
-      "friendly_name": "Whisper Medium Hfsalai Actc0 English (Marksdo)",
+      "friendly_name": "Whisper Medium English Hfsalai Actc0 (Marksdo)",
       "local_folder_name": "ggml-medium-HFSaLAI-actc0.en",
       "type": "MODEL_TYPE_TRANSCRIPTION",
       "files": [
@@ -1876,7 +1876,7 @@
       }
     },
     {
-      "friendly_name": "Whisper Medium Jayyh Korean (Marksdo)",
+      "friendly_name": "Whisper Medium Korean Jayyh (Marksdo)",
       "local_folder_name": "ggml-medium-JayYH.ko",
       "type": "MODEL_TYPE_TRANSCRIPTION",
       "files": [
@@ -1892,7 +1892,7 @@
       }
     },
     {
-      "friendly_name": "Whisper Medium Aisha Uzbek (Marksdo)",
+      "friendly_name": "Whisper Medium Uzbek Aisha (Marksdo)",
       "local_folder_name": "ggml-medium-aisha.uz",
       "type": "MODEL_TYPE_TRANSCRIPTION",
       "files": [
@@ -1908,7 +1908,7 @@
       }
     },
     {
-      "friendly_name": "Whisper Medium Cahya Indonesian (Marksdo)",
+      "friendly_name": "Whisper Medium Indonesian Cahya (Marksdo)",
       "local_folder_name": "ggml-medium-cahya.id",
       "type": "MODEL_TYPE_TRANSCRIPTION",
       "files": [
@@ -1924,7 +1924,7 @@
       }
     },
     {
-      "friendly_name": "Whisper Medium Cankaracelebi Turkish (Marksdo)",
+      "friendly_name": "Whisper Medium Turkish Cankaracelebi (Marksdo)",
       "local_folder_name": "ggml-medium-cankaracelebi.tr",
       "type": "MODEL_TYPE_TRANSCRIPTION",
       "files": [
@@ -1940,7 +1940,7 @@
       }
     },
     {
-      "friendly_name": "Whisper Medium Hthierno Estonian (Marksdo)",
+      "friendly_name": "Whisper Medium Estonian Hthierno (Marksdo)",
       "local_folder_name": "ggml-medium-hthierno.et",
       "type": "MODEL_TYPE_TRANSCRIPTION",
       "files": [
@@ -1956,7 +1956,7 @@
       }
     },
     {
-      "friendly_name": "Whisper Medium Kid Children English (Marksdo)",
+      "friendly_name": "Whisper Medium English Kid Children (Marksdo)",
       "local_folder_name": "ggml-medium-kid-children.en",
       "type": "MODEL_TYPE_TRANSCRIPTION",
       "files": [
@@ -1972,7 +1972,7 @@
       }
     },
     {
-      "friendly_name": "Whisper Medium Kiranpantha Nepali (Marksdo)",
+      "friendly_name": "Whisper Medium Nepali Kiranpantha (Marksdo)",
       "local_folder_name": "ggml-medium-kiranpantha.np",
       "type": "MODEL_TYPE_TRANSCRIPTION",
       "files": [
@@ -1988,7 +1988,7 @@
       }
     },
     {
-      "friendly_name": "Whisper Medium Sin2piusc Japanese (Marksdo)",
+      "friendly_name": "Whisper Medium Japanese Sin2piusc (Marksdo)",
       "local_folder_name": "ggml-medium-sin2piusc.ja",
       "type": "MODEL_TYPE_TRANSCRIPTION",
       "files": [
@@ -2004,7 +2004,7 @@
       }
     },
     {
-      "friendly_name": "Whisper Medium Vasista22 Kannada (Marksdo)",
+      "friendly_name": "Whisper Medium Kannada Vasista22 (Marksdo)",
       "local_folder_name": "ggml-medium-vasista22.kn",
       "type": "MODEL_TYPE_TRANSCRIPTION",
       "files": [
@@ -2020,7 +2020,7 @@
       }
     },
     {
-      "friendly_name": "Whisper Medium Zeroth Seastar105 Korean (Marksdo)",
+      "friendly_name": "Whisper Medium Korean Zeroth Seastar105 (Marksdo)",
       "local_folder_name": "ggml-medium-zeroth-seastar105.ko",
       "type": "MODEL_TYPE_TRANSCRIPTION",
       "files": [
@@ -2036,7 +2036,7 @@
       }
     },
     {
-      "friendly_name": "Whisper Medium Zeroth Spow12 Korean (Marksdo)",
+      "friendly_name": "Whisper Medium Korean Zeroth Spow12 (Marksdo)",
       "local_folder_name": "ggml-medium-zeroth-spow12.ko",
       "type": "MODEL_TYPE_TRANSCRIPTION",
       "files": [
@@ -2484,7 +2484,7 @@
       }
     },
     {
-      "friendly_name": "Whisper Small Cptn Maazff37 Pashto (Marksdo)",
+      "friendly_name": "Whisper Small Pashto Cptn Maazff37 (Marksdo)",
       "local_folder_name": "ggml-small-Cptn-maazff37.ps",
       "type": "MODEL_TYPE_TRANSCRIPTION",
       "files": [
@@ -2500,7 +2500,7 @@
       }
     },
     {
-      "friendly_name": "Whisper Small Seyiclover Korean (Marksdo)",
+      "friendly_name": "Whisper Small Korean Seyiclover (Marksdo)",
       "local_folder_name": "ggml-small-SeyiClover.ko",
       "type": "MODEL_TYPE_TRANSCRIPTION",
       "files": [
@@ -2516,7 +2516,7 @@
       }
     },
     {
-      "friendly_name": "Whisper Small Alavardo Russian (Marksdo)",
+      "friendly_name": "Whisper Small Russian Alavardo (Marksdo)",
       "local_folder_name": "ggml-small-alavardo.ru",
       "type": "MODEL_TYPE_TRANSCRIPTION",
       "files": [
@@ -2532,7 +2532,7 @@
       }
     },
     {
-      "friendly_name": "Whisper Small Alm Italian (Marksdo)",
+      "friendly_name": "Whisper Small Italian Alm (Marksdo)",
       "local_folder_name": "ggml-small-alm.it",
       "type": "MODEL_TYPE_TRANSCRIPTION",
       "files": [
@@ -2548,7 +2548,7 @@
       }
     },
     {
-      "friendly_name": "Whisper Small Alvanlii Cantonese (Marksdo)",
+      "friendly_name": "Whisper Small Cantonese Alvanlii (Marksdo)",
       "local_folder_name": "ggml-small-alvanlii.cantonese",
       "type": "MODEL_TYPE_TRANSCRIPTION",
       "files": [
@@ -2564,7 +2564,7 @@
       }
     },
     {
-      "friendly_name": "Whisper Small Biodatlab Thai (Marksdo)",
+      "friendly_name": "Whisper Small Thai Biodatlab (Marksdo)",
       "local_folder_name": "ggml-small-biodatlab.th",
       "type": "MODEL_TYPE_TRANSCRIPTION",
       "files": [
@@ -2580,7 +2580,7 @@
       }
     },
     {
-      "friendly_name": "Whisper Small Byoussef Korean (Marksdo)",
+      "friendly_name": "Whisper Small Korean Byoussef (Marksdo)",
       "local_folder_name": "ggml-small-byoussef.ko",
       "type": "MODEL_TYPE_TRANSCRIPTION",
       "files": [
@@ -2596,7 +2596,7 @@
       }
     },
     {
-      "friendly_name": "Whisper Small Danielizham Spanish (Marksdo)",
+      "friendly_name": "Whisper Small Spanish Danielizham (Marksdo)",
       "local_folder_name": "ggml-small-danielizham.es",
       "type": "MODEL_TYPE_TRANSCRIPTION",
       "files": [
@@ -2612,7 +2612,7 @@
       }
     },
     {
-      "friendly_name": "Whisper Small Erenozaltun Turkish (Marksdo)",
+      "friendly_name": "Whisper Small Turkish Erenozaltun (Marksdo)",
       "local_folder_name": "ggml-small-erenozaltun.tr",
       "type": "MODEL_TYPE_TRANSCRIPTION",
       "files": [
@@ -2628,7 +2628,7 @@
       }
     },
     {
-      "friendly_name": "Whisper Small Fintuned Radio English (Marksdo)",
+      "friendly_name": "Whisper Small English Fintuned Radio (Marksdo)",
       "local_folder_name": "ggml-small-fintuned-radio.en",
       "type": "MODEL_TYPE_TRANSCRIPTION",
       "files": [
@@ -2644,7 +2644,7 @@
       }
     },
     {
-      "friendly_name": "Whisper Small Hamzamalik11 Arabic (Marksdo)",
+      "friendly_name": "Whisper Small Arabic Hamzamalik11 (Marksdo)",
       "local_folder_name": "ggml-small-hamzamalik11.ar",
       "type": "MODEL_TYPE_TRANSCRIPTION",
       "files": [
@@ -2660,7 +2660,7 @@
       }
     },
     {
-      "friendly_name": "Whisper Small Jensenlwt Singlish English (Marksdo)",
+      "friendly_name": "Whisper Small English Singlish Jensenlwt (Marksdo)",
       "local_folder_name": "ggml-small-jensenlwt-singlish.en",
       "type": "MODEL_TYPE_TRANSCRIPTION",
       "files": [
@@ -2676,7 +2676,7 @@
       }
     },
     {
-      "friendly_name": "Whisper Small Kannada Kannada (Marksdo)",
+      "friendly_name": "Whisper Small Kannada (Marksdo)",
       "local_folder_name": "ggml-small-kannada.kn",
       "type": "MODEL_TYPE_TRANSCRIPTION",
       "files": [
@@ -2692,7 +2692,7 @@
       }
     },
     {
-      "friendly_name": "Whisper Small Kiranpantha Nepali (Marksdo)",
+      "friendly_name": "Whisper Small Nepali Kiranpantha (Marksdo)",
       "local_folder_name": "ggml-small-kiranpantha.np",
       "type": "MODEL_TYPE_TRANSCRIPTION",
       "files": [
@@ -2708,7 +2708,7 @@
       }
     },
     {
-      "friendly_name": "Whisper Small Lorenzoncina Russian (Marksdo)",
+      "friendly_name": "Whisper Small Russian Lorenzoncina (Marksdo)",
       "local_folder_name": "ggml-small-lorenzoncina.ru",
       "type": "MODEL_TYPE_TRANSCRIPTION",
       "files": [
@@ -2724,7 +2724,7 @@
       }
     },
     {
-      "friendly_name": "Whisper Small Maxseats Set11 Korean (Marksdo)",
+      "friendly_name": "Whisper Small Korean Maxseats Set11 (Marksdo)",
       "local_folder_name": "ggml-small-maxseats-set11.ko",
       "type": "MODEL_TYPE_TRANSCRIPTION",
       "files": [
@@ -2740,7 +2740,7 @@
       }
     },
     {
-      "friendly_name": "Whisper Small Maxseats Set12 Korean (Marksdo)",
+      "friendly_name": "Whisper Small Korean Maxseats Set12 (Marksdo)",
       "local_folder_name": "ggml-small-maxseats-set12.ko",
       "type": "MODEL_TYPE_TRANSCRIPTION",
       "files": [
@@ -2756,7 +2756,7 @@
       }
     },
     {
-      "friendly_name": "Whisper Small Maxseats Set35 Korean (Marksdo)",
+      "friendly_name": "Whisper Small Korean Maxseats Set35 (Marksdo)",
       "local_folder_name": "ggml-small-maxseats-set35.ko",
       "type": "MODEL_TYPE_TRANSCRIPTION",
       "files": [
@@ -2772,7 +2772,7 @@
       }
     },
     {
-      "friendly_name": "Whisper Small Maxseats Set36 Korean (Marksdo)",
+      "friendly_name": "Whisper Small Korean Maxseats Set36 (Marksdo)",
       "local_folder_name": "ggml-small-maxseats-set36.ko",
       "type": "MODEL_TYPE_TRANSCRIPTION",
       "files": [
@@ -2788,7 +2788,7 @@
       }
     },
     {
-      "friendly_name": "Whisper Small Maxseats Set37 Korean (Marksdo)",
+      "friendly_name": "Whisper Small Korean Maxseats Set37 (Marksdo)",
       "local_folder_name": "ggml-small-maxseats-set37.ko",
       "type": "MODEL_TYPE_TRANSCRIPTION",
       "files": [
@@ -2804,7 +2804,7 @@
       }
     },
     {
-      "friendly_name": "Whisper Small Maxseats Set38 Korean (Marksdo)",
+      "friendly_name": "Whisper Small Korean Maxseats Set38 (Marksdo)",
       "local_folder_name": "ggml-small-maxseats-set38.ko",
       "type": "MODEL_TYPE_TRANSCRIPTION",
       "files": [
@@ -2820,7 +2820,7 @@
       }
     },
     {
-      "friendly_name": "Whisper Small Maxseats Set39 Korean (Marksdo)",
+      "friendly_name": "Whisper Small Korean Maxseats Set39 (Marksdo)",
       "local_folder_name": "ggml-small-maxseats-set39.ko",
       "type": "MODEL_TYPE_TRANSCRIPTION",
       "files": [
@@ -2836,7 +2836,7 @@
       }
     },
     {
-      "friendly_name": "Whisper Small Maxseats Set48 Korean (Marksdo)",
+      "friendly_name": "Whisper Small Korean Maxseats Set48 (Marksdo)",
       "local_folder_name": "ggml-small-maxseats-set48.ko",
       "type": "MODEL_TYPE_TRANSCRIPTION",
       "files": [
@@ -2852,7 +2852,7 @@
       }
     },
     {
-      "friendly_name": "Whisper Small Maxseats Set54 Korean (Marksdo)",
+      "friendly_name": "Whisper Small Korean Maxseats Set54 (Marksdo)",
       "local_folder_name": "ggml-small-maxseats-set54.ko",
       "type": "MODEL_TYPE_TRANSCRIPTION",
       "files": [
@@ -2868,7 +2868,7 @@
       }
     },
     {
-      "friendly_name": "Whisper Small Maxseats Set7 Korean (Marksdo)",
+      "friendly_name": "Whisper Small Korean Maxseats Set7 (Marksdo)",
       "local_folder_name": "ggml-small-maxseats-set7.ko",
       "type": "MODEL_TYPE_TRANSCRIPTION",
       "files": [
@@ -2884,7 +2884,7 @@
       }
     },
     {
-      "friendly_name": "Whisper Small Maxseats Set9 Korean (Marksdo)",
+      "friendly_name": "Whisper Small Korean Maxseats Set9 (Marksdo)",
       "local_folder_name": "ggml-small-maxseats-set9.ko",
       "type": "MODEL_TYPE_TRANSCRIPTION",
       "files": [
@@ -2900,7 +2900,7 @@
       }
     },
     {
-      "friendly_name": "Whisper Small Mizoru Russian (Marksdo)",
+      "friendly_name": "Whisper Small Russian Mizoru (Marksdo)",
       "local_folder_name": "ggml-small-mizoru.ru",
       "type": "MODEL_TYPE_TRANSCRIPTION",
       "files": [
@@ -2916,7 +2916,7 @@
       }
     },
     {
-      "friendly_name": "Whisper Small Mvbnh Korean (Marksdo)",
+      "friendly_name": "Whisper Small Korean Mvbnh (Marksdo)",
       "local_folder_name": "ggml-small-mvbnh.ko",
       "type": "MODEL_TYPE_TRANSCRIPTION",
       "files": [
@@ -2932,7 +2932,7 @@
       }
     },
     {
-      "friendly_name": "Whisper Small Mwrites Cantonese (Marksdo)",
+      "friendly_name": "Whisper Small Cantonese Mwrites (Marksdo)",
       "local_folder_name": "ggml-small-mwrites.cantonese",
       "type": "MODEL_TYPE_TRANSCRIPTION",
       "files": [
@@ -2948,7 +2948,7 @@
       }
     },
     {
-      "friendly_name": "Whisper Small Poppysmickarlili Cantonese (Marksdo)",
+      "friendly_name": "Whisper Small Cantonese Poppysmickarlili (Marksdo)",
       "local_folder_name": "ggml-small-poppysmickarlili.cantonese",
       "type": "MODEL_TYPE_TRANSCRIPTION",
       "files": [
@@ -2964,7 +2964,7 @@
       }
     },
     {
-      "friendly_name": "Whisper Small Pplantinga Swahili (Marksdo)",
+      "friendly_name": "Whisper Small Swahili Pplantinga (Marksdo)",
       "local_folder_name": "ggml-small-pplantinga.sw",
       "type": "MODEL_TYPE_TRANSCRIPTION",
       "files": [
@@ -2980,7 +2980,7 @@
       }
     },
     {
-      "friendly_name": "Whisper Small Rmacek Zib2 German (Marksdo)",
+      "friendly_name": "Whisper Small German Rmacek Zib2 (Marksdo)",
       "local_folder_name": "ggml-small-rmacek-zib2.de",
       "type": "MODEL_TYPE_TRANSCRIPTION",
       "files": [
@@ -2996,7 +2996,7 @@
       }
     },
     {
-      "friendly_name": "Whisper Small Singlespeaker Korean (Marksdo)",
+      "friendly_name": "Whisper Small Korean Singlespeaker (Marksdo)",
       "local_folder_name": "ggml-small-singlespeaker.ko",
       "type": "MODEL_TYPE_TRANSCRIPTION",
       "files": [
@@ -3012,7 +3012,7 @@
       }
     },
     {
-      "friendly_name": "Whisper Small Sinhala Sinhala (Marksdo)",
+      "friendly_name": "Whisper Small Sinhala (Marksdo)",
       "local_folder_name": "ggml-small-sinhala.si",
       "type": "MODEL_TYPE_TRANSCRIPTION",
       "files": [
@@ -3028,7 +3028,7 @@
       }
     },
     {
-      "friendly_name": "Whisper Small Sungbeom Korean (Marksdo)",
+      "friendly_name": "Whisper Small Korean Sungbeom (Marksdo)",
       "local_folder_name": "ggml-small-sungbeom.ko",
       "type": "MODEL_TYPE_TRANSCRIPTION",
       "files": [
@@ -3044,7 +3044,7 @@
       }
     },
     {
-      "friendly_name": "Whisper Small Vickyee Japanese (Marksdo)",
+      "friendly_name": "Whisper Small Japanese Vickyee (Marksdo)",
       "local_folder_name": "ggml-small-vickyee.ja",
       "type": "MODEL_TYPE_TRANSCRIPTION",
       "files": [
@@ -3060,7 +3060,7 @@
       }
     },
     {
-      "friendly_name": "Whisper Small Waveletdeboshir Russian (Marksdo)",
+      "friendly_name": "Whisper Small Russian Waveletdeboshir (Marksdo)",
       "local_folder_name": "ggml-small-waveletdeboshir.ru",
       "type": "MODEL_TYPE_TRANSCRIPTION",
       "files": [
@@ -3076,7 +3076,7 @@
       }
     },
     {
-      "friendly_name": "Whisper Small Whitemouse84 Russian (Marksdo)",
+      "friendly_name": "Whisper Small Russian Whitemouse84 (Marksdo)",
       "local_folder_name": "ggml-small-whitemouse84.ru",
       "type": "MODEL_TYPE_TRANSCRIPTION",
       "files": [
@@ -3092,7 +3092,7 @@
       }
     },
     {
-      "friendly_name": "Whisper Small Yehor Ukrainian (Marksdo)",
+      "friendly_name": "Whisper Small Ukrainian Yehor (Marksdo)",
       "local_folder_name": "ggml-small-yehor.uk",
       "type": "MODEL_TYPE_TRANSCRIPTION",
       "files": [
@@ -3476,7 +3476,7 @@
       }
     },
     {
-      "friendly_name": "Whisper Tiny Raivisdejus Latvian (Marksdo)",
+      "friendly_name": "Whisper Tiny Latvian Raivisdejus (Marksdo)",
       "local_folder_name": "ggml-tiny-RaivisDejus.lv",
       "type": "MODEL_TYPE_TRANSCRIPTION",
       "files": [
@@ -3492,7 +3492,7 @@
       }
     },
     {
-      "friendly_name": "Whisper Tiny Awareai German (Marksdo)",
+      "friendly_name": "Whisper Tiny German Awareai (Marksdo)",
       "local_folder_name": "ggml-tiny-awareai.de",
       "type": "MODEL_TYPE_TRANSCRIPTION",
       "files": [
@@ -3508,7 +3508,7 @@
       }
     },
     {
-      "friendly_name": "Whisper Tiny Juierror Thai (Marksdo)",
+      "friendly_name": "Whisper Tiny Thai Juierror (Marksdo)",
       "local_folder_name": "ggml-tiny-juierror.th",
       "type": "MODEL_TYPE_TRANSCRIPTION",
       "files": [
@@ -3524,7 +3524,7 @@
       }
     },
     {
-      "friendly_name": "Whisper Tiny Kaen2891 Korean (Marksdo)",
+      "friendly_name": "Whisper Tiny Korean Kaen2891 (Marksdo)",
       "local_folder_name": "ggml-tiny-kaen2891.ko",
       "type": "MODEL_TYPE_TRANSCRIPTION",
       "files": [
@@ -3540,7 +3540,7 @@
       }
     },
     {
-      "friendly_name": "Whisper Tiny Kuan2 Book English (Marksdo)",
+      "friendly_name": "Whisper Tiny English Kuan2 Book (Marksdo)",
       "local_folder_name": "ggml-tiny-kuan2-book.en",
       "type": "MODEL_TYPE_TRANSCRIPTION",
       "files": [
@@ -3556,7 +3556,7 @@
       }
     },
     {
-      "friendly_name": "Whisper Tiny Niko Japanese (Marksdo)",
+      "friendly_name": "Whisper Tiny Japanese Niko (Marksdo)",
       "local_folder_name": "ggml-tiny-niko.ja",
       "type": "MODEL_TYPE_TRANSCRIPTION",
       "files": [
@@ -3588,7 +3588,7 @@
       }
     },
     {
-      "friendly_name": "Whisper Tiny Spraveenkumar1318 English (Marksdo)",
+      "friendly_name": "Whisper Tiny English Spraveenkumar1318 (Marksdo)",
       "local_folder_name": "ggml-tiny-spraveenkumar1318.en",
       "type": "MODEL_TYPE_TRANSCRIPTION",
       "files": [
@@ -3604,7 +3604,7 @@
       }
     },
     {
-      "friendly_name": "Whisper Tiny Waveletdeboshir Russian (Marksdo)",
+      "friendly_name": "Whisper Tiny Russian Waveletdeboshir (Marksdo)",
       "local_folder_name": "ggml-tiny-waveletdeboshir.ru",
       "type": "MODEL_TYPE_TRANSCRIPTION",
       "files": [
@@ -3748,6 +3748,22 @@
       }
     },
     {
+      "friendly_name": "Whisper Large V3 Turbo Korean (royshilkrot)",
+      "local_folder_name": "training_args",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/royshilkrot/whisper-large-v3-turbo-korean-ggml/resolve/main/whisper-large-v3-turbo-korean.bin",
+          "sha256": null
+        }
+      ],
+      "extra": {
+        "language": "Korean",
+        "description": "Whisper GGML model",
+        "source": "Hugging Face"
+      }
+    },
+    {
       "friendly_name": "Whisper Base English (chatgpt-openai)",
       "local_folder_name": "ggml-base.en",
       "type": "MODEL_TYPE_TRANSCRIPTION",
@@ -3812,12 +3828,76 @@
       }
     },
     {
-      "friendly_name": "Whisper Base (danielus)",
+      "friendly_name": "Whisper Base FP16 (danielus)",
       "local_folder_name": "ggml-base-fp16",
       "type": "MODEL_TYPE_TRANSCRIPTION",
       "files": [
         {
           "url": "https://huggingface.co/danielus/ggml-whisper-models/resolve/main/ggml-base-fp16.bin",
+          "sha256": null
+        }
+      ],
+      "extra": {
+        "language": null,
+        "description": "Whisper GGML model",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Large V2 Q5 (danielus)",
+      "local_folder_name": "ggml-large-v2-q5_1",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/danielus/ggml-whisper-models/resolve/main/ggml-large-v2-q5_1.bin",
+          "sha256": null
+        }
+      ],
+      "extra": {
+        "language": null,
+        "description": "Whisper GGML model",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Medium Q4 (danielus)",
+      "local_folder_name": "ggml-medium-q4_2",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/danielus/ggml-whisper-models/resolve/main/ggml-medium-q4_2.bin",
+          "sha256": null
+        }
+      ],
+      "extra": {
+        "language": null,
+        "description": "Whisper GGML model",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Small FP16 (danielus)",
+      "local_folder_name": "ggml-small-fp16",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/danielus/ggml-whisper-models/resolve/main/ggml-small-fp16.bin",
+          "sha256": null
+        }
+      ],
+      "extra": {
+        "language": null,
+        "description": "Whisper GGML model",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Tiny FP16 (danielus)",
+      "local_folder_name": "ggml-tiny-fp16",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/danielus/ggml-whisper-models/resolve/main/ggml-tiny-fp16.bin",
           "sha256": null
         }
       ],
@@ -3876,7 +3956,7 @@
       }
     },
     {
-      "friendly_name": "Whisper Medium Q5 (mukowaty)",
+      "friendly_name": "Whisper Medium Czech Q5 (mukowaty)",
       "local_folder_name": "ggml-medium-cs-mikr-q5_0",
       "type": "MODEL_TYPE_TRANSCRIPTION",
       "files": [
@@ -4036,7 +4116,7 @@
       }
     },
     {
-      "friendly_name": "Whisper Large V2 Q5 (itayl)",
+      "friendly_name": "Whisper Large V2 Hebrew Q5 (itayl)",
       "local_folder_name": "ivrit-ai--whisper-large-v2-tuned-ggml-model-q5_1",
       "type": "MODEL_TYPE_TRANSCRIPTION",
       "files": [
@@ -4052,7 +4132,7 @@
       }
     },
     {
-      "friendly_name": "Whisper Kotoba V1.0 Q5 Japanese (kotoba-tech)",
+      "friendly_name": "Whisper Japanese Kotoba V1.0 Q5 (kotoba-tech)",
       "local_folder_name": "ggml-kotoba-whisper-v1.0-q5_0",
       "type": "MODEL_TYPE_TRANSCRIPTION",
       "files": [
@@ -4084,7 +4164,7 @@
       }
     },
     {
-      "friendly_name": "Whisper Ivrit V2 D3 E3 (ivrit-ai)",
+      "friendly_name": "Whisper Hebrew Ivrit V2 D3 E3 (ivrit-ai)",
       "local_folder_name": "ggml-ivrit-v2-d3-e3",
       "type": "MODEL_TYPE_TRANSCRIPTION",
       "files": [
@@ -4196,7 +4276,7 @@
       }
     },
     {
-      "friendly_name": "Whisper Ivrit V2 D4 (ivrit-ai)",
+      "friendly_name": "Whisper Hebrew Ivrit V2 D4 (ivrit-ai)",
       "local_folder_name": "ggml-ivrit-v2-d4",
       "type": "MODEL_TYPE_TRANSCRIPTION",
       "files": [
@@ -4212,7 +4292,7 @@
       }
     },
     {
-      "friendly_name": "Whisper Kotoba V2.0 Q5 (kotoba-tech)",
+      "friendly_name": "Whisper Japanese Kotoba V2.0 Q5 (kotoba-tech)",
       "local_folder_name": "ggml-kotoba-whisper-v2.0-q5_0",
       "type": "MODEL_TYPE_TRANSCRIPTION",
       "files": [
@@ -4240,6 +4320,598 @@
       "extra": {
         "language": null,
         "description": "Whisper GGML model",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Medium Czech Mikr (Mukowaty)",
+      "local_folder_name": "cs/ggml-medium-cs-mikr",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/mukowaty/ggml-whisper/resolve/main/cs/ggml-medium-cs-mikr.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Czech",
+        "description": "This model is from the mukowaty/ggml-whisper project on Hugging Face.",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Small Czech Mikr Q5 0 (Mukowaty)",
+      "local_folder_name": "cs/ggml-small-cs-mikr-q5_0",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/mukowaty/ggml-whisper/resolve/main/cs/ggml-small-cs-mikr-q5_0.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Czech",
+        "description": "This model is from the mukowaty/ggml-whisper project on Hugging Face.",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Small Czech Mikr (Mukowaty)",
+      "local_folder_name": "cs/ggml-small-cs-mikr",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/mukowaty/ggml-whisper/resolve/main/cs/ggml-small-cs-mikr.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Czech",
+        "description": "This model is from the mukowaty/ggml-whisper project on Hugging Face.",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Base English Q5 0 (Mukowaty)",
+      "local_folder_name": "en/ggml-base-en-q5_0",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/mukowaty/ggml-whisper/resolve/main/en/ggml-base-en-q5_0.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "English",
+        "description": "This model is from the mukowaty/ggml-whisper project on Hugging Face.",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Distil Large V2 English Q5 0 (Mukowaty)",
+      "local_folder_name": "en/ggml-distilled-large-v2-en-q5_0",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/mukowaty/ggml-whisper/resolve/main/en/ggml-distilled-large-v2-en-q5_0.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "English",
+        "description": "This model is from the mukowaty/ggml-whisper project on Hugging Face.",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Distil Large V3 English Q5 0 (Mukowaty)",
+      "local_folder_name": "en/ggml-distilled-large-v3-en-q5_0",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/mukowaty/ggml-whisper/resolve/main/en/ggml-distilled-large-v3-en-q5_0.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "English",
+        "description": "This model is from the mukowaty/ggml-whisper project on Hugging Face.",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Distil Medium English Q5 0 (Mukowaty)",
+      "local_folder_name": "en/ggml-distilled-medium-en-q5_0",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/mukowaty/ggml-whisper/resolve/main/en/ggml-distilled-medium-en-q5_0.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "English",
+        "description": "This model is from the mukowaty/ggml-whisper project on Hugging Face.",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Distil Small English Q5 0 (Mukowaty)",
+      "local_folder_name": "en/ggml-distilled-small-en-q5_0",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/mukowaty/ggml-whisper/resolve/main/en/ggml-distilled-small-en-q5_0.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "English",
+        "description": "This model is from the mukowaty/ggml-whisper project on Hugging Face.",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Medium English Q5 0 (Mukowaty)",
+      "local_folder_name": "en/ggml-medium-en-q5_0",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/mukowaty/ggml-whisper/resolve/main/en/ggml-medium-en-q5_0.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "English",
+        "description": "This model is from the mukowaty/ggml-whisper project on Hugging Face.",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Small English Q5 0 (Mukowaty)",
+      "local_folder_name": "en/ggml-small-en-q5_0",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/mukowaty/ggml-whisper/resolve/main/en/ggml-small-en-q5_0.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "English",
+        "description": "This model is from the mukowaty/ggml-whisper project on Hugging Face.",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Tiny English Q5 0 (Mukowaty)",
+      "local_folder_name": "en/ggml-tiny-en-q5_0",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/mukowaty/ggml-whisper/resolve/main/en/ggml-tiny-en-q5_0.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "English",
+        "description": "This model is from the mukowaty/ggml-whisper project on Hugging Face.",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Small Croatian Mikr Q5 0 (Mukowaty)",
+      "local_folder_name": "hr/ggml-small-hr-mikr-q5_0",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/mukowaty/ggml-whisper/resolve/main/hr/ggml-small-hr-mikr-q5_0.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Croatian",
+        "description": "This model is from the mukowaty/ggml-whisper project on Hugging Face.",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Small Croatian Mikr (Mukowaty)",
+      "local_folder_name": "hr/ggml-small-hr-mikr",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/mukowaty/ggml-whisper/resolve/main/hr/ggml-small-hr-mikr.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Croatian",
+        "description": "This model is from the mukowaty/ggml-whisper project on Hugging Face.",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Small Hungarian Mikr Q5 0 (Mukowaty)",
+      "local_folder_name": "hu/ggml-small-hu-mikr-q5_0",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/mukowaty/ggml-whisper/resolve/main/hu/ggml-small-hu-mikr-q5_0.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Hungarian",
+        "description": "This model is from the mukowaty/ggml-whisper project on Hugging Face.",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Small Hungarian Mikr (Mukowaty)",
+      "local_folder_name": "hu/ggml-small-hu-mikr",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/mukowaty/ggml-whisper/resolve/main/hu/ggml-small-hu-mikr.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Hungarian",
+        "description": "This model is from the mukowaty/ggml-whisper project on Hugging Face.",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Base Q5 0 (Mukowaty)",
+      "local_folder_name": "multilang/ggml-base-q5_0",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/mukowaty/ggml-whisper/resolve/main/multilang/ggml-base-q5_0.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": null,
+        "description": "This model is from the mukowaty/ggml-whisper project on Hugging Face.",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Distil Large V2 English Q5 0 (Mukowaty)",
+      "local_folder_name": "multilang/ggml-distilled-large-v2-q5_0",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/mukowaty/ggml-whisper/resolve/main/multilang/ggml-distilled-large-v2-q5_0.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": null,
+        "description": "This model is from the mukowaty/ggml-whisper project on Hugging Face.",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Large Q5 0 (Mukowaty)",
+      "local_folder_name": "multilang/ggml-large-q5_0",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/mukowaty/ggml-whisper/resolve/main/multilang/ggml-large-q5_0.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": null,
+        "description": "This model is from the mukowaty/ggml-whisper project on Hugging Face.",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Large V3 Q5 0 (Mukowaty)",
+      "local_folder_name": "multilang/ggml-large-v3-q5_0",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/mukowaty/ggml-whisper/resolve/main/multilang/ggml-large-v3-q5_0.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": null,
+        "description": "This model is from the mukowaty/ggml-whisper project on Hugging Face.",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Medium Q5 0 (Mukowaty)",
+      "local_folder_name": "multilang/ggml-medium-q5_0",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/mukowaty/ggml-whisper/resolve/main/multilang/ggml-medium-q5_0.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": null,
+        "description": "This model is from the mukowaty/ggml-whisper project on Hugging Face.",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Small Q5 0 (Mukowaty)",
+      "local_folder_name": "multilang/ggml-small-q5_0",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/mukowaty/ggml-whisper/resolve/main/multilang/ggml-small-q5_0.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": null,
+        "description": "This model is from the mukowaty/ggml-whisper project on Hugging Face.",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Tiny Q5 0 (Mukowaty)",
+      "local_folder_name": "multilang/ggml-tiny-q5_0",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/mukowaty/ggml-whisper/resolve/main/multilang/ggml-tiny-q5_0.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": null,
+        "description": "This model is from the mukowaty/ggml-whisper project on Hugging Face.",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Distil Large V3 Polish Aspik101 Q5 0 (Mukowaty)",
+      "local_folder_name": "pl/ggml-distilled-large-v3-aspik101-q5_0",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/mukowaty/ggml-whisper/resolve/main/pl/ggml-distilled-large-v3-aspik101-q5_0.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": null,
+        "description": "This model is from the mukowaty/ggml-whisper project on Hugging Face.",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Medium Polish Aspik101 Q5 0 (Mukowaty)",
+      "local_folder_name": "pl/ggml-medium-pl-aspik101-q5_0",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/mukowaty/ggml-whisper/resolve/main/pl/ggml-medium-pl-aspik101-q5_0.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Polish",
+        "description": "This model is from the mukowaty/ggml-whisper project on Hugging Face.",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Medium Polish Aspik101 (Mukowaty)",
+      "local_folder_name": "pl/ggml-medium-pl-aspik101",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/mukowaty/ggml-whisper/resolve/main/pl/ggml-medium-pl-aspik101.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Polish",
+        "description": "This model is from the mukowaty/ggml-whisper project on Hugging Face.",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Tiny Polish Aspik101 Q5 0 (Mukowaty)",
+      "local_folder_name": "pl/ggml-tiny-pl-aspik101-q5_0",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/mukowaty/ggml-whisper/resolve/main/pl/ggml-tiny-pl-aspik101-q5_0.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Polish",
+        "description": "This model is from the mukowaty/ggml-whisper project on Hugging Face.",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Tiny Polish Aspik101 (Mukowaty)",
+      "local_folder_name": "pl/ggml-tiny-pl-aspik101",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/mukowaty/ggml-whisper/resolve/main/pl/ggml-tiny-pl-aspik101.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Polish",
+        "description": "This model is from the mukowaty/ggml-whisper project on Hugging Face.",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Small Romanian Mikr Q5 0 (Mukowaty)",
+      "local_folder_name": "ro/ggml-small-ro-mikr-q5_0",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/mukowaty/ggml-whisper/resolve/main/ro/ggml-small-ro-mikr-q5_0.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Romanian",
+        "description": "This model is from the mukowaty/ggml-whisper project on Hugging Face.",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Small Romanian Mikr (Mukowaty)",
+      "local_folder_name": "ro/ggml-small-ro-mikr",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/mukowaty/ggml-whisper/resolve/main/ro/ggml-small-ro-mikr.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Romanian",
+        "description": "This model is from the mukowaty/ggml-whisper project on Hugging Face.",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Base Russian Artyomboyko Q5 0 (Mukowaty)",
+      "local_folder_name": "ru/ggml-base-ru-artyomboyko-q5_0",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/mukowaty/ggml-whisper/resolve/main/ru/ggml-base-ru-artyomboyko-q5_0.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Russian",
+        "description": "This model is from the mukowaty/ggml-whisper project on Hugging Face.",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Base Russian Artyomboyko (Mukowaty)",
+      "local_folder_name": "ru/ggml-base-ru-artyomboyko",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/mukowaty/ggml-whisper/resolve/main/ru/ggml-base-ru-artyomboyko.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Russian",
+        "description": "This model is from the mukowaty/ggml-whisper project on Hugging Face.",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Medium Slovak Mikr Q5 0 (Mukowaty)",
+      "local_folder_name": "sk/ggml-medium-sk-mikr-q5_0",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/mukowaty/ggml-whisper/resolve/main/sk/ggml-medium-sk-mikr-q5_0.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Slovak",
+        "description": "This model is from the mukowaty/ggml-whisper project on Hugging Face.",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Medium Slovak Mikr (Mukowaty)",
+      "local_folder_name": "sk/ggml-medium-sk-mikr",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/mukowaty/ggml-whisper/resolve/main/sk/ggml-medium-sk-mikr.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Slovak",
+        "description": "This model is from the mukowaty/ggml-whisper project on Hugging Face.",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Small Slovak Mikr Q5 0 (Mukowaty)",
+      "local_folder_name": "sk/ggml-small-sk-mikr-q5_0",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/mukowaty/ggml-whisper/resolve/main/sk/ggml-small-sk-mikr-q5_0.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Slovak",
+        "description": "This model is from the mukowaty/ggml-whisper project on Hugging Face.",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Small Slovak Mikr (Mukowaty)",
+      "local_folder_name": "sk/ggml-small-sk-mikr",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/mukowaty/ggml-whisper/resolve/main/sk/ggml-small-sk-mikr.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Slovak",
+        "description": "This model is from the mukowaty/ggml-whisper project on Hugging Face.",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Medium Slovenian Mikr Q5 0 (Mukowaty)",
+      "local_folder_name": "sl/ggml-medium-sl-mikr-q5_0",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/mukowaty/ggml-whisper/resolve/main/sl/ggml-medium-sl-mikr-q5_0.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Slovenian",
+        "description": "This model is from the mukowaty/ggml-whisper project on Hugging Face.",
+        "source": "Hugging Face"
+      }
+    },
+    {
+      "friendly_name": "Whisper Medium Slovenian Mikr (Mukowaty)",
+      "local_folder_name": "sl/ggml-medium-sl-mikr",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/mukowaty/ggml-whisper/resolve/main/sl/ggml-medium-sl-mikr.bin",
+          "sha256": ""
+        }
+      ],
+      "extra": {
+        "language": "Slovenian",
+        "description": "This model is from the mukowaty/ggml-whisper project on Hugging Face.",
         "source": "Hugging Face"
       }
     }

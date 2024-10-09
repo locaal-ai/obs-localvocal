@@ -31,7 +31,8 @@ bool translation_options_callback(obs_properties_t *props, obs_property_t *prope
 	     {"translate_add_context", "translate_input_tokenization_style",
 	      "translation_sampling_temperature", "translation_repetition_penalty",
 	      "translation_beam_size", "translation_max_decoding_length",
-	      "translation_no_repeat_ngram_size", "translation_max_input_length"}) {
+	      "translation_no_repeat_ngram_size", "translation_max_input_length",
+	      "translate_only_full_sentences"}) {
 		obs_property_set_visible(obs_properties_get(props, prop),
 					 translate_enabled && is_advanced);
 	}
