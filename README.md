@@ -36,9 +36,14 @@ Translation is done with [CTranslate2](https://github.com/OpenNMT/CTranslate2).
   <a href="https://youtu.be/4llyfNi9FGs" target="_blank">
     <img width="30%" src="https://github.com/user-attachments/assets/d50f8c8f-da7a-4054-a68b-6f7e3712b6c4" />
   </a>
+  &nbsp;
+  <a href="https://youtu.be/R04w02qG26o" target="_blank">
+    <img width="30%" src="https://github.com/user-attachments/assets/0b995c74-12e8-4216-8519-b26f3d69688f" />
+  </a>
   <br/>
   <a href="https://youtu.be/ns4cP9HFTxQ">https://youtu.be/ns4cP9HFTxQ</a>
   <a href="https://youtu.be/4llyfNi9FGs">https://youtu.be/4llyfNi9FGs</a>
+  <a href="https://youtu.be/R04w02qG26o">https://youtu.be/R04w02qG26o</a>
 </p>
 
 Do more with LocalVocal:
@@ -61,6 +66,7 @@ Current Features:
 - CUDA, hipBLAS (AMD ROCm), Apple Arm64, AVX & SSE acceleration support
 - Filter out or replace any part of the produced captions
 - Partial transcriptions for a streaming-captions experience
+- 100s of fine-tuned Whisper models for dozens of languages from HuggingFace
 
 Roadmap:
 - More robust built-in translation options
