@@ -82,13 +82,14 @@ elseif(MSVC)
   target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE Ort)
 
 else()
+  set(Onnxruntime_LINK_LIBS "${onnxruntime_SOURCE_DIR}/lib/libonnxruntime.so.${Onnxruntime_VERSION}")
+  set(Onnxruntime_ADDITIONAL_LIBS
+      "${onnxruntime_SOURCE_DIR}/lib/libonnxruntime_providers_shared.so"
+      "${onnxruntime_SOURCE_DIR}/lib/libonnxruntime.so" "${onnxruntime_SOURCE_DIR}/lib/libonnxruntime.so.1")
   if(CMAKE_SYSTEM_PROCESSOR STREQUAL "aarch64")
-    set(Onnxruntime_LINK_LIBS "${onnxruntime_SOURCE_DIR}/lib/libonnxruntime.so.${Onnxruntime_VERSION}")
-    set(Onnxruntime_INSTALL_LIBS ${Onnxruntime_LINK_LIBS})
+    set(Onnxruntime_INSTALL_LIBS ${Onnxruntime_LINK_LIBS} ${Onnxruntime_ADDITIONAL_LIBS})
   else()
-    set(Onnxruntime_LINK_LIBS "${onnxruntime_SOURCE_DIR}/lib/libonnxruntime.so.${Onnxruntime_VERSION}")
-    set(Onnxruntime_INSTALL_LIBS ${Onnxruntime_LINK_LIBS}
-                                 "${onnxruntime_SOURCE_DIR}/lib/libonnxruntime_providers_shared.so")
+    set(Onnxruntime_INSTALL_LIBS ${Onnxruntime_LINK_LIBS} ${Onnxruntime_ADDITIONAL_LIBS})
   endif()
   target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE ${Onnxruntime_LINK_LIBS})
   target_include_directories(${CMAKE_PROJECT_NAME} SYSTEM PUBLIC "${onnxruntime_SOURCE_DIR}/include")

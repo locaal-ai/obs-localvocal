@@ -38,9 +38,9 @@
     },
     "name": "obs-localvocal",
     "displayName": "OBS Localvocal",
-    "version": "0.3.5",
+    "version": "0.3.7",
     "author": "Roy Shilkrot",
-    "website": "https://github.com/occ-ai/obs-localvocal",
+    "website": "https://github.com/locaal-ai/obs-localvocal",
     "email": "roy.shil@gmail.com",
     "uuids": {
         "macosPackage": "CB66E5DF-FF45-4BEA-B38B-7AD3705860C9",

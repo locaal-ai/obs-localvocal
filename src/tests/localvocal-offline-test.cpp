@@ -21,6 +21,7 @@
 #include "audio-file-utils.h"
 #include "translation/language_codes.h"
 #include "ui/filter-replace-utils.h"
+#include "model-utils/model-downloader-types.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -82,6 +83,14 @@ void obs_log(int log_level, const char *format, ...)
 	va_end(args);
 
 	printf("\n");
+}
+
+const std::map<std::string, ModelInfo> &models_info()
+{
+	static const std::unique_ptr<const std::map<std::string, ModelInfo>> cached_models_info =
+		std::make_unique<const std::map<std::string, ModelInfo>>();
+
+	return *cached_models_info;
 }
 
 transcription_filter_data *
@@ -274,6 +283,21 @@ void json_segments_saver_thread_function()
 			obs_log(LOG_INFO, "Failed to open %s", segments_filename.c_str());
 		}
 	}
+}
+
+void clear_current_caption(transcription_filter_data *gf_)
+{
+	if (gf_->captions_monitor.isEnabled()) {
+		gf_->captions_monitor.clear();
+		gf_->translation_monitor.clear();
+	}
+	// reset translation context
+	gf_->last_text_for_translation = "";
+	gf_->last_text_translation = "";
+	gf_->translation_ctx.last_input_tokens.clear();
+	gf_->translation_ctx.last_translation_tokens.clear();
+	gf_->last_transcription_sentence.clear();
+	gf_->cleared_last_sub = true;
 }
 
 void set_text_callback(struct transcription_filter_data *gf,
