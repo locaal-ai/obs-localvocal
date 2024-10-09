@@ -7,6 +7,13 @@
 [![Total downloads](https://img.shields.io/github/downloads/locaal-ai/obs-localvocal/total)](https://github.com/locaal-ai/obs-localvocal/releases)
 [![GitHub release (latest by date)](https://img.shields.io/github/v/release/locaal-ai/obs-localvocal)](https://github.com/locaal-ai/obs-localvocal/releases)
 [![Discord](https://img.shields.io/discord/1200229425141252116)](https://discord.gg/KbjGU2vvUz)
+<br/>
+Download:</br>
+<a href="https://github.com/locaal-ai/obs-localvocal/releases/download/0.3.6/obs-localvocal-0.3.6-windows-x64-cuda-Installer.exe"><img src="https://img.shields.io/badge/Windows-0078D6?style=for-the-badge&logo=windows&logoColor=white" /></a>
+<a href="https://github.com/locaal-ai/obs-localvocal/releases/download/0.3.6/obs-localvocal-0.3.6-macos-x86_64.pkg"><img src="https://img.shields.io/badge/mac%20Intel-000000?style=for-the-badge" /></a>
+<a href="https://github.com/locaal-ai/obs-localvocal/releases/download/0.3.6/obs-localvocal-0.3.6-macos-arm64.pkg"><img src="https://img.shields.io/badge/mac%20M1/2/3-0a0a0a?style=for-the-badge&"/></a>
+<a href="https://github.com/locaal-ai/obs-localvocal/releases/download/0.3.6/obs-localvocal-0.3.6-x86_64-linux-gnu.deb"><img src="https://img.shields.io/badge/Linux-FCC624?style=for-the-badge&logo=linux&logoColor=black"/></a>
+
 
 </div>
 
