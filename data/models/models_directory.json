@@ -3748,7 +3748,7 @@
       }
     },
     {
-      "friendly_name": "Model Whisper (chatgpt-openai)",
+      "friendly_name": "Whisper Base English (chatgpt-openai)",
       "local_folder_name": "ggml-base.en",
       "type": "MODEL_TYPE_TRANSCRIPTION",
       "files": [
@@ -4052,7 +4052,7 @@
       }
     },
     {
-      "friendly_name": "Whisper V1.0 Q5 (kotoba-tech)",
+      "friendly_name": "Whisper Kotoba V1.0 Q5 Japanese (kotoba-tech)",
       "local_folder_name": "ggml-kotoba-whisper-v1.0-q5_0",
       "type": "MODEL_TYPE_TRANSCRIPTION",
       "files": [
@@ -4084,7 +4084,7 @@
       }
     },
     {
-      "friendly_name": "Whisper V2 D3 E3 (ivrit-ai)",
+      "friendly_name": "Whisper Ivrit V2 D3 E3 (ivrit-ai)",
       "local_folder_name": "ggml-ivrit-v2-d3-e3",
       "type": "MODEL_TYPE_TRANSCRIPTION",
       "files": [
@@ -4196,7 +4196,7 @@
       }
     },
     {
-      "friendly_name": "Whisper V2 D4 (ivrit-ai)",
+      "friendly_name": "Whisper Ivrit V2 D4 (ivrit-ai)",
       "local_folder_name": "ggml-ivrit-v2-d4",
       "type": "MODEL_TYPE_TRANSCRIPTION",
       "files": [
@@ -4212,7 +4212,7 @@
       }
     },
     {
-      "friendly_name": "Whisper V2.0 Q5 (kotoba-tech)",
+      "friendly_name": "Whisper Kotoba V2.0 Q5 (kotoba-tech)",
       "local_folder_name": "ggml-kotoba-whisper-v2.0-q5_0",
       "type": "MODEL_TYPE_TRANSCRIPTION",
       "files": [
@@ -4228,28 +4228,12 @@
       }
     },
     {
-      "friendly_name": "Whisper Bilingual V1.0 Q5 (kotoba-tech)",
+      "friendly_name": "Whisper Kotoba V1.0 Q5 Bilingual (kotoba-tech)",
       "local_folder_name": "ggml-kotoba-whisper-bilingual-v1.0-q5_0",
       "type": "MODEL_TYPE_TRANSCRIPTION",
       "files": [
         {
           "url": "https://huggingface.co/kotoba-tech/kotoba-whisper-bilingual-v1.0-ggml/resolve/main/ggml-kotoba-whisper-bilingual-v1.0-q5_0.bin",
-          "sha256": null
-        }
-      ],
-      "extra": {
-        "language": null,
-        "description": "Whisper GGML model",
-        "source": "Hugging Face"
-      }
-    },
-    {
-      "friendly_name": "Whisper Large V3 Turbo (royshilkrot)",
-      "local_folder_name": "whisper-large-v3-turbo-ggml",
-      "type": "MODEL_TYPE_TRANSCRIPTION",
-      "files": [
-        {
-          "url": "https://huggingface.co/royshilkrot/whisper-large-v3-turbo-gguf/resolve/main/whisper-large-v3-turbo-ggml.bin",
           "sha256": null
         }
       ],
