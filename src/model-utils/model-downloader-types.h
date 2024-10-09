@@ -16,13 +16,21 @@ struct ModelFileDownloadInfo {
 
 enum ModelType { MODEL_TYPE_TRANSCRIPTION, MODEL_TYPE_TRANSLATION };
 
+struct ExtraInfo {
+	std::string language;
+	std::string description;
+	std::string source;
+};
+
 struct ModelInfo {
 	std::string friendly_name;
 	std::string local_folder_name;
 	ModelType type;
 	std::vector<ModelFileDownloadInfo> files;
+	ExtraInfo extra;
 };
 
-extern std::map<std::string, ModelInfo> models_info;
+extern const std::map<std::string, ModelInfo> &models_info();
+extern const std::vector<ModelInfo> get_sorted_models_info();
 
 #endif /* MODEL_DOWNLOADER_TYPES_H */

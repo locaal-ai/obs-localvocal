@@ -22,7 +22,7 @@ void start_translation(struct transcription_filter_data *gf)
 		return;
 	}
 
-	const ModelInfo &translation_model_info = models_info[gf->translation_model_index];
+	const ModelInfo &translation_model_info = models_info().at(gf->translation_model_index);
 	std::string model_file_found = find_model_folder(translation_model_info);
 	if (model_file_found == "") {
 		obs_log(LOG_INFO, "Translation CT2 model does not exist. Downloading...");
