@@ -45,14 +45,14 @@ public:
 		  messageCallback(callback),
 		  running(false)
 	{
-		server.init_asio();
+		wsServer.init_asio();
 
-		server.set_open_handler([this](websocketpp::connection_hdl hdl) {
+		wsServer.set_open_handler([this](websocketpp::connection_hdl hdl) {
 			std::lock_guard<std::mutex> lock(mutex);
 			connection = hdl;
 		});
 
-		server.set_message_handler(
+		wsServer.set_message_handler(
 			[this](websocketpp::connection_hdl hdl, server::message_ptr msg) {
 				UNUSED_PARAMETER(hdl);
 				handleIncomingMessage(msg->get_payload());
@@ -69,9 +69,9 @@ public:
 		if (!running) {
 			running = true;
 			serverThread = std::async(std::launch::async, [this]() {
-				server.listen(9002);
-				server.start_accept();
-				server.run();
+				wsServer.listen(9002);
+				wsServer.start_accept();
+				wsServer.run();
 			});
 
 			processingThread =
@@ -83,7 +83,7 @@ public:
 	{
 		if (running) {
 			running = false;
-			server.stop();
+			wsServer.stop();
 			if (serverThread.valid())
 				serverThread.wait();
 			if (processingThread.valid())
@@ -93,7 +93,7 @@ public:
 
 private:
 	transcription_filter_data *gf;
-	server server;
+	server wsServer;
 	websocketpp::connection_hdl connection;
 	MessageCallback messageCallback;
 	std::queue<std::vector<int16_t>> audioQueue;
@@ -149,8 +149,8 @@ private:
 						       start_timestamp_offset_ns},
 						      {"end_timestamp", end_timestamp_offset_ns}};
 				if (connection.lock()) {
-					server.send(connection, timestampInfo.dump(),
-						    websocketpp::frame::opcode::text);
+					wsServer.send(connection, timestampInfo.dump(),
+						      websocketpp::frame::opcode::text);
 				}
 				sendAudioData(pcmData);
 			} else {
@@ -192,8 +192,8 @@ private:
 				std::memcpy(wavData.data() + sizeof(WAVHeader), audioBuffer.data(),
 					    wavHeader.data_size);
 
-				server.send(connection, wavData.data(), wavData.size(),
-					    websocketpp::frame::opcode::binary);
+				wsServer.send(connection, wavData.data(), wavData.size(),
+					      websocketpp::frame::opcode::binary);
 
 				audioBuffer.clear();
 			}
