@@ -8,9 +8,16 @@
 
 std::string find_model_folder(const ModelInfo &model_info)
 {
-	if (model_info.friendly_name.empty() || model_info.local_folder_name.empty() ||
-	    model_info.files.empty()) {
-		obs_log(LOG_ERROR, "Model info is invalid.");
+	if (model_info.friendly_name.empty()) {
+		obs_log(LOG_ERROR, "Model info is invalid. Friendly name is empty.");
+		return "";
+	}
+	if (model_info.local_folder_name.empty()) {
+		obs_log(LOG_ERROR, "Model info is invalid. Local folder name is empty.");
+		return "";
+	}
+	if (model_info.files.empty()) {
+		obs_log(LOG_ERROR, "Model info is invalid. Files list is empty.");
 		return "";
 	}
 

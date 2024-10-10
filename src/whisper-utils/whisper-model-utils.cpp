@@ -72,13 +72,13 @@ void update_whisper_model(struct transcription_filter_data *gf)
 			// new model is not external file
 			shutdown_whisper_thread(gf);
 
-			if (models_info.count(new_model_path) == 0) {
+			if (models_info().count(new_model_path) == 0) {
 				obs_log(LOG_WARNING, "Model '%s' does not exist",
 					new_model_path.c_str());
 				return;
 			}
 
-			const ModelInfo &model_info = models_info[new_model_path];
+			const ModelInfo &model_info = models_info().at(new_model_path);
 
 			// check if the model exists, if not, download it
 			std::string model_file_found = find_model_bin_file(model_info);
