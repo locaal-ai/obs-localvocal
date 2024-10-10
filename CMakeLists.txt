@@ -101,7 +101,7 @@ include(cmake/BuildICU.cmake)
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE ICU)
 target_include_directories(${CMAKE_PROJECT_NAME} SYSTEM PUBLIC ${ICU_INCLUDE_DIR})
 
-if(MSVC or APPLE)
+if(WIN32 OR APPLE)
   if(NOT buildspec)
     file(READ "${CMAKE_CURRENT_SOURCE_DIR}/buildspec.json" buildspec)
   endif()
@@ -124,6 +124,7 @@ if(MSVC or APPLE)
 else()
   include(cmake/FetchWebsocketpp.cmake)
   target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${websocketpp_SOURCE_DIR}/)
+  target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${asio_SOURCE_DIR}/)
 endif()
 
 target_sources(

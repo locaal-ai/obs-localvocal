@@ -21,6 +21,7 @@ set(_obs_gcc_c_options
     -Wformat-security
     -Wno-conversion
     -Wno-deprecated-declarations
+    -Wno-error=conversion
     -Wno-error=deprecated-declarations
     -Wno-float-conversion
     -Wno-implicit-fallthrough
@@ -42,14 +43,13 @@ set(_obs_gcc_c_options
     -Wvla)
 
 # gcc options for C++
-set(_obs_gcc_cxx_options
-    # cmake-format: sortable
-    ${_obs_gcc_c_options} -Wconversion -Wfloat-conversion -Winvalid-offsetof -Wno-overloaded-virtual)
+set(_obs_gcc_cxx_options # cmake-format: sortable
+                         ${_obs_gcc_c_options} -Winvalid-offsetof -Wno-overloaded-virtual)
 
 add_compile_options(
   -fopenmp-simd
   "$<$<COMPILE_LANG_AND_ID:C,GNU>:${_obs_gcc_c_options}>"
-  "$<$<COMPILE_LANG_AND_ID:C,GNU>:-Wint-conversion;-Wno-missing-prototypes;-Wno-strict-prototypes;-Wpointer-sign>"
+  "$<$<COMPILE_LANG_AND_ID:C,GNU>:-Wno-missing-prototypes;-Wno-strict-prototypes;-Wpointer-sign>"
   "$<$<COMPILE_LANG_AND_ID:CXX,GNU>:${_obs_gcc_cxx_options}>"
   "$<$<COMPILE_LANG_AND_ID:C,Clang>:${_obs_clang_c_options}>"
   "$<$<COMPILE_LANG_AND_ID:CXX,Clang>:${_obs_clang_cxx_options}>")

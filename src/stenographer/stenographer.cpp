@@ -8,9 +8,7 @@
 #define ASIO_STANDALONE
 #define _WEBSOCKETPP_CPP11_TYPE_TRAITS_
 
-#ifndef __linux__
 #include <websocketpp/config/asio_no_tls.hpp>
-#endif
 #include <websocketpp/server.hpp>
 #include <nlohmann/json.hpp>
 #include <queue>
