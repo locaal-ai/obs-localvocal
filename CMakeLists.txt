@@ -102,7 +102,7 @@ target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE ICU)
 target_include_directories(${CMAKE_PROJECT_NAME} SYSTEM PUBLIC ${ICU_INCLUDE_DIR})
 
 if(NOT buildspec)
-file(READ "${CMAKE_CURRENT_SOURCE_DIR}/buildspec.json" buildspec)
+  file(READ "${CMAKE_CURRENT_SOURCE_DIR}/buildspec.json" buildspec)
 endif()
 string(
   JSON
@@ -113,9 +113,9 @@ string(
   prebuilt
   version)
 if(MSVC)
-set(arch ${CMAKE_GENERATOR_PLATFORM})
+  set(arch ${CMAKE_GENERATOR_PLATFORM})
 elseif(APPLE)
-set(arch universal)
+  set(arch universal)
 endif()
 set(deps_root "${CMAKE_CURRENT_SOURCE_DIR}/.deps/obs-deps-${version}-${arch}")
 message(STATUS "deps_root: ${deps_root}")

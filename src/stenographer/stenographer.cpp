@@ -8,7 +8,9 @@
 #define ASIO_STANDALONE
 #define _WEBSOCKETPP_CPP11_TYPE_TRAITS_
 
+#ifndef __linux__
 #include <websocketpp/config/asio_no_tls.hpp>
+#endif
 #include <websocketpp/server.hpp>
 #include <nlohmann/json.hpp>
 #include <queue>
@@ -54,6 +56,7 @@ public:
 
 		server.set_message_handler(
 			[this](websocketpp::connection_hdl hdl, server::message_ptr msg) {
+				UNUSED_PARAMETER(hdl);
 				handleIncomingMessage(msg->get_payload());
 			});
 
