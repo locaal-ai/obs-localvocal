@@ -213,9 +213,7 @@ void set_text_callback(struct transcription_filter_data *gf,
 		str_copy = fix_utf8(str_copy);
 	} else {
 		// only remove leading and trailing non-alphanumeric characters if the output is English
-		obs_log(LOG_INFO, "before: %s", str_copy.c_str());
 		str_copy = remove_leading_trailing_nonalpha(str_copy);
-		obs_log(LOG_INFO, "after: %s", str_copy.c_str());
 	}
 
 	// if suppression is enabled, check if the text is in the suppression list

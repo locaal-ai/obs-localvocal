@@ -15,14 +15,18 @@
 </head>
 <body>
     <h1>Stenographer Interface</h1>
-    <button id="startButton">Start Audio</button>
+    <div>
+        <input type="text" id="wsUrl" value="ws://localhost:9002" placeholder="Enter WebSocket URL">
+        <button id="startButton">Start Audio</button>
+    </div>
     <canvas id="visualizer"></canvas>
-    <textarea id="captionInput" placeholder="Enter captions here..."></textarea>
+    <div>Timestamp (s): <span id="timestamp"></span></div>
+    <textarea id="captionInput" placeholder="Enter captions here... (Enter to commit)"></textarea>
     <div id="connectionStatus">Connection Status: <span id="statusText" class="status-disconnected">Disconnected</span></div>
     <div id="audioStatus">Audio Status: Not started</div>
 
     <script>
-        const WS_URL = 'ws://localhost:9002';
+        const WS_URL = document.getElementById('wsUrl').value;
         let ws;
         const captionInput = document.getElementById('captionInput');
         const audioStatus = document.getElementById('audioStatus');
@@ -41,7 +45,8 @@
         visualizer.width = visualizer.offsetWidth;
         visualizer.height = visualizer.offsetHeight;
 
-        let currentStartTimestamp = 0;
+        let currentTimestampNSRelative = 0;
+        let startTimestampNSRelative = 0;
 
         function connectWebSocket() {
             ws = new WebSocket(WS_URL);
@@ -63,7 +68,9 @@
                     // This is our timestamp information
                     try {
                         const timestampInfo = JSON.parse(event.data);
-                        currentStartTimestamp = timestampInfo.start_timestamp;
+                        currentTimestampNSRelative = timestampInfo.start_timestamp;
+                        const timestampInSeconds = (currentTimestampNSRelative / 1e9).toFixed(2);
+                        document.getElementById('timestamp').textContent = `${timestampInSeconds} seconds`;
                     } catch (error) {
                         console.error('Error parsing timestamp information:', error);
                     }
@@ -142,17 +149,16 @@
 
         function sendCaptionUpdate(type) {
             if (ws.readyState === WebSocket.OPEN) {
-                const now = Date.now(); // Keep in milliseconds
                 const message = JSON.stringify({
                     type: type,
                     text: captionInput.value,
-                    start_timestamp: currentStartTimestamp,
-                    end_timestamp: type === 'sentence' ? now : 0 // 0 for partial sentences
+                    start_timestamp: startTimestampNSRelative,
+                    end_timestamp: currentTimestampNSRelative
                 });
                 ws.send(message);
                 
                 if (type === 'sentence') {
-                    currentStartTimestamp = now; // Reset start timestamp for next sentence
+                    startTimestampNSRelative = currentTimestampNSRelative; // Reset start timestamp for next sentence
                 }
             } else {
                 console.warn('Cannot send caption update: WebSocket is not connected');

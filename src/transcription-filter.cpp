@@ -31,6 +31,7 @@
 #include "translation/translation-includes.h"
 #include "ui/filter-replace-dialog.h"
 #include "ui/filter-replace-utils.h"
+#include "stenographer/stenographer-util.h"
 
 void set_source_signals(transcription_filter_data *gf, obs_source_t *parent_source)
 {
@@ -116,50 +117,7 @@ struct obs_audio_data *transcription_filter_filter_audio(void *data, struct obs_
 
 	if (gf->stenographer_enabled) {
 		// Stenographer mode - apply delay.
-		// Store the audio data in a buffer and process it after the delay.
-		// push the data to the back of gf->stenographer_delay_buffer
-		for (size_t c = 0; c < gf->channels; c++) {
-			// take a audio->frames * sizeof(float) bytes chunk from audio->data[c] and push it
-			// to the back of the buffer as a float
-			std::vector<float> audio_data_chunk(
-				(float *)audio->data[c], ((float *)audio->data[c]) + audio->frames);
-			gf->stenographer_delay_buffers[c].insert(
-				gf->stenographer_delay_buffers[c].end(), audio_data_chunk.begin(),
-				audio_data_chunk.end());
-		}
-
-		// If the buffer is larger than the delay, emit the oldest data
-		// Take from the buffer as much as requested by the incoming audio data
-		size_t delay_frames = (size_t)((float)gf->sample_rate *
-					       (float)gf->stenographer_delay_ms / 1000.0f) +
-				      audio->frames;
-		if (gf->stenographer_delay_buffers[0].size() >= delay_frames) {
-			obs_log(LOG_INFO,
-				"Stenographer delay buffer filled %lu/%lu. Sending %lu frames",
-				gf->stenographer_delay_buffers[0].size(), delay_frames,
-				audio->frames);
-			// Replace data on the audio buffer with the delayed data
-			for (size_t c = 0; c < gf->channels; c++) {
-				// Take the oldest audio->frames from the buffer and put it in the audio buffer
-				// as bytes
-				std::vector<float> audio_data_chunk(
-					gf->stenographer_delay_buffers[c].begin(),
-					gf->stenographer_delay_buffers[c].begin() + audio->frames);
-				memcpy(audio->data[c], audio_data_chunk.data(),
-				       audio->frames * sizeof(float));
-				// Remove the oldest audio->frames from the buffer
-				gf->stenographer_delay_buffers[c].erase(
-					gf->stenographer_delay_buffers[c].begin(),
-					gf->stenographer_delay_buffers[c].begin() + audio->frames);
-			}
-		} else {
-			obs_log(LOG_INFO, "Stenographer delay buffer not filled yet %lu/%lu",
-				gf->stenographer_delay_buffers[0].size(), delay_frames);
-			// Fill the audio buffer with silence
-			for (size_t c = 0; c < gf->channels; c++) {
-				memset(audio->data[c], 0, audio->frames * sizeof(float));
-			}
-		}
+		return stenographer_simple_delay(gf, audio);
 	}
 
 	return audio;

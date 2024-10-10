@@ -515,7 +515,7 @@ void add_stenographer_group_properties(obs_properties_t *ppts)
 
 	// add delay amount for partial transcription
 	obs_properties_add_int_slider(stenographer_group, "stenographer_delay",
-				      MT_("stenographer_delay"), 1000, 12000, 100);
+				      MT_("stenographer_delay"), 0, 12000, 100);
 }
 
 void add_partial_group_properties(obs_properties_t *ppts)
@@ -610,7 +610,7 @@ void transcription_filter_defaults(obs_data_t *s)
 	obs_data_set_default_bool(s, "partial_group", false);
 	obs_data_set_default_int(s, "partial_latency", 1100);
 	obs_data_set_default_bool(s, "stenographer_group", false);
-	obs_data_set_default_int(s, "stenographer_delay", 10000);
+	obs_data_set_default_int(s, "stenographer_delay", 3000);
 
 	// translation options
 	obs_data_set_default_double(s, "translation_sampling_temperature", 0.1);
