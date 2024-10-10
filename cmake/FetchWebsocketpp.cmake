@@ -5,7 +5,15 @@ FetchContent_Declare(
   URL https://github.com/zaphoyd/websocketpp/archive/refs/tags/0.8.2.tar.gz
   URL_HASH SHA256=6ce889d85ecdc2d8fa07408d6787e7352510750daa66b5ad44aacb47bea76755)
 
-FetchContent_MakeAvailable(websocketpp)
+# Only download the content, don't configure or build it
+FetchContent_GetProperties(websocketpp)
+if(NOT websocketpp_POPULATED)
+  FetchContent_Populate(websocketpp)
+endif()
+
+# Add WebSocket++ as an interface library
+add_library(websocketpp INTERFACE)
+target_include_directories(websocketpp INTERFACE ${websocketpp_SOURCE_DIR})
 
 # Fetch ASIO
 FetchContent_Declare(
