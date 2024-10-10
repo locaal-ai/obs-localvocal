@@ -12,6 +12,7 @@
 #include <regex>
 #include <string>
 #include <vector>
+#include <filesystem>
 
 #include "transcription-filter-callbacks.h"
 #include "transcription-utils.h"
@@ -292,6 +293,23 @@ void set_text_callback(struct transcription_filter_data *gf,
 	}
 };
 
+/**
+ * @brief Callback function to handle recording state changes in OBS.
+ *
+ * This function is triggered by OBS frontend events related to recording state changes.
+ * It performs actions based on whether the recording is starting or stopping.
+ *
+ * @param event The OBS frontend event indicating the recording state change.
+ * @param data Pointer to user data, expected to be a struct transcription_filter_data.
+ *
+ * When the recording is starting:
+ * - If saving SRT files and saving only while recording is enabled, it resets the SRT file,
+ *   truncates the existing file, and initializes the sentence number and start timestamp.
+ *
+ * When the recording is stopping:
+ * - If saving only while recording or renaming the file to match the recording is not enabled, it returns immediately.
+ * - Otherwise, it renames the output file to match the recording file name with the appropriate extension.
+ */
 void recording_state_callback(enum obs_frontend_event event, void *data)
 {
 	struct transcription_filter_data *gf_ =
@@ -307,40 +325,35 @@ void recording_state_callback(enum obs_frontend_event event, void *data)
 			gf_->start_timestamp_ms = now_ms();
 		}
 	} else if (event == OBS_FRONTEND_EVENT_RECORDING_STOPPED) {
-		if (gf_->save_srt && gf_->save_only_while_recording &&
-		    gf_->rename_file_to_match_recording) {
-			obs_log(gf_->log_level, "Recording stopped. Rename srt file.");
-			// rename file to match the recording file name with .srt extension
-			// use obs_frontend_get_last_recording to get the last recording file name
-			std::string recording_file_name = obs_frontend_get_last_recording();
-			// remove the extension
-			recording_file_name = recording_file_name.substr(
-				0, recording_file_name.find_last_of("."));
-			std::string srt_file_name = recording_file_name + ".srt";
-			// rename the file
-			std::rename(gf_->output_file_path.c_str(), srt_file_name.c_str());
-		} else if (gf_->save_only_while_recording && gf_->rename_file_to_match_recording) {
-			obs_log(gf_->log_level, "Recording stopped. Rename transcript file.");
-			// use obs_frontend_get_last_recording to get the last recording file name
-			std::string recording_file_name = obs_frontend_get_last_recording();
-			// get the recording suffix, to ensure the new suffix doesn't match and overwrite the video
-			std::string recording_file_suffix = recording_file_name.substr(
-				recording_file_name.find_last_of(".") + 1);
-			// remove the recording extension
-			std::string recording_file_name_sans_suffix = recording_file_name.substr(
-				0, recording_file_name.find_last_of("."));
-			// keep the extension from the transcript file
-			std::string transcript_file_suffix = gf_->output_file_path.substr(
-				gf_->output_file_path.find_last_of(".") + 1);
-			std::string srt_file_name =
-				recording_file_name_sans_suffix + "." + transcript_file_suffix;
-			// ensure the user didn't originally name the transcript with a matching suffix to the video
-			if (transcript_file_suffix == recording_file_suffix) {
-				srt_file_name = srt_file_name + ".txt";
-			}
-			// rename the file
-			std::rename(gf_->output_file_path.c_str(), srt_file_name.c_str());
+		if (!gf_->save_only_while_recording || !gf_->rename_file_to_match_recording) {
+			return;
 		}
+
+		namespace fs = std::filesystem;
+
+		char *recordingFileName = obs_frontend_get_last_recording();
+		std::string recordingFileNameStr(recordingFileName);
+		bfree(recordingFileName);
+		fs::path recordingPath(recordingFileName);
+		fs::path outputPath(gf_->output_file_path);
+
+		fs::path newPath = recordingPath.stem();
+
+		if (gf_->save_srt) {
+			obs_log(gf_->log_level, "Recording stopped. Rename srt file.");
+			newPath.replace_extension(".srt");
+		} else {
+			obs_log(gf_->log_level, "Recording stopped. Rename transcript file.");
+			std::string newExtension = outputPath.extension().string();
+
+			if (newExtension == recordingPath.extension().string()) {
+				newExtension += ".txt";
+			}
+
+			newPath.replace_extension(newExtension);
+		}
+
+		fs::rename(outputPath, newPath);
 	}
 }
 
