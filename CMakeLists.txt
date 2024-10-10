@@ -101,6 +101,32 @@ include(cmake/BuildICU.cmake)
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE ICU)
 target_include_directories(${CMAKE_PROJECT_NAME} SYSTEM PUBLIC ${ICU_INCLUDE_DIR})
 
+if(WIN32 OR APPLE)
+  if(NOT buildspec)
+    file(READ "${CMAKE_CURRENT_SOURCE_DIR}/buildspec.json" buildspec)
+  endif()
+  string(
+    JSON
+    version
+    GET
+    ${buildspec}
+    dependencies
+    prebuilt
+    version)
+  if(MSVC)
+    set(arch ${CMAKE_GENERATOR_PLATFORM})
+  elseif(APPLE)
+    set(arch universal)
+  endif()
+  set(deps_root "${CMAKE_CURRENT_SOURCE_DIR}/.deps/obs-deps-${version}-${arch}")
+  message(STATUS "deps_root: ${deps_root}")
+  target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE "${deps_root}/include")
+else()
+  include(cmake/FetchWebsocketpp.cmake)
+  target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE websocketpp)
+  target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${asio_SOURCE_DIR}/asio/include/)
+endif()
+
 target_sources(
   ${CMAKE_PROJECT_NAME}
   PRIVATE src/plugin-main.c
@@ -120,12 +146,15 @@ target_sources(
           src/whisper-utils/silero-vad-onnx.cpp
           src/whisper-utils/token-buffer-thread.cpp
           src/whisper-utils/vad-processing.cpp
+          src/whisper-utils/resample-utils.cpp
           src/translation/language_codes.cpp
           src/translation/translation.cpp
           src/translation/translation-utils.cpp
           src/ui/filter-replace-utils.cpp
           src/translation/translation-language-utils.cpp
-          src/ui/filter-replace-dialog.cpp)
+          src/ui/filter-replace-dialog.cpp
+          src/stenographer/stenographer.cpp
+          src/stenographer/stenographer-util.cpp)
 
 set_target_properties_plugin(${CMAKE_PROJECT_NAME} PROPERTIES OUTPUT_NAME ${_name})
 
