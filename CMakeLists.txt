@@ -101,25 +101,30 @@ include(cmake/BuildICU.cmake)
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE ICU)
 target_include_directories(${CMAKE_PROJECT_NAME} SYSTEM PUBLIC ${ICU_INCLUDE_DIR})
 
-if(NOT buildspec)
-  file(READ "${CMAKE_CURRENT_SOURCE_DIR}/buildspec.json" buildspec)
+if(MSVC or APPLE)
+  if(NOT buildspec)
+    file(READ "${CMAKE_CURRENT_SOURCE_DIR}/buildspec.json" buildspec)
+  endif()
+  string(
+    JSON
+    version
+    GET
+    ${buildspec}
+    dependencies
+    prebuilt
+    version)
+  if(MSVC)
+    set(arch ${CMAKE_GENERATOR_PLATFORM})
+  elseif(APPLE)
+    set(arch universal)
+  endif()
+  set(deps_root "${CMAKE_CURRENT_SOURCE_DIR}/.deps/obs-deps-${version}-${arch}")
+  message(STATUS "deps_root: ${deps_root}")
+  target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE "${deps_root}/include")
+else()
+  include(cmake/FetchWebsocketpp.cmake)
+  target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${websocketpp_SOURCE_DIR}/)
 endif()
-string(
-  JSON
-  version
-  GET
-  ${buildspec}
-  dependencies
-  prebuilt
-  version)
-if(MSVC)
-  set(arch ${CMAKE_GENERATOR_PLATFORM})
-elseif(APPLE)
-  set(arch universal)
-endif()
-set(deps_root "${CMAKE_CURRENT_SOURCE_DIR}/.deps/obs-deps-${version}-${arch}")
-message(STATUS "deps_root: ${deps_root}")
-target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE "${deps_root}/include")
 
 target_sources(
   ${CMAKE_PROJECT_NAME}
