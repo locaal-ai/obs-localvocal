@@ -124,7 +124,7 @@ if(WIN32 OR APPLE)
 else()
   include(cmake/FetchWebsocketpp.cmake)
   target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${websocketpp_SOURCE_DIR}/)
-  target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${asio_SOURCE_DIR}/)
+  target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${asio_SOURCE_DIR}/asio/include/)
 endif()
 
 target_sources(
