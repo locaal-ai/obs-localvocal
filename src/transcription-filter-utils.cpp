@@ -28,7 +28,12 @@ void create_obs_text_source_if_needed()
 		// set source settings
 		obs_data_t *source_settings = obs_source_get_settings(source);
 		obs_data_set_bool(source_settings, "word_wrap", true);
-		obs_data_set_int(source_settings, "custom_width", 1760);
+		obs_data_set_bool(source_settings, "extents", true);
+		obs_data_set_bool(source_settings, "outline", true);
+		obs_data_set_int(source_settings, "outline_color", 4278190080);
+		obs_data_set_int(source_settings, "outline_size", 7);
+		obs_data_set_int(source_settings, "extents_cx", 1500);
+		obs_data_set_int(source_settings, "extents_cy", 230);
 		obs_data_t *font_data = obs_data_create();
 		obs_data_set_string(font_data, "face", "Arial");
 		obs_data_set_string(font_data, "style", "Regular");
@@ -62,7 +67,7 @@ void create_obs_text_source_if_needed()
 
 bool add_sources_to_list(void *list_property, obs_source_t *source)
 {
-	auto source_id = obs_source_get_id(source);
+	const char *source_id = obs_source_get_id(source);
 	if (strcmp(source_id, "text_ft2_source_v2") != 0 &&
 	    strcmp(source_id, "text_gdiplus_v3") != 0 &&
 	    strcmp(source_id, "text_gdiplus_v2") != 0) {

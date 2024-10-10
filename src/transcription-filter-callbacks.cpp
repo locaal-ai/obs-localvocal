@@ -353,6 +353,9 @@ void recording_state_callback(enum obs_frontend_event event, void *data)
 			newPath.replace_extension(newExtension);
 		}
 
+		// make sure newPath is next to the recording file
+		newPath = recordingPath.parent_path() / newPath.filename();
+
 		fs::rename(outputPath, newPath);
 	}
 }
