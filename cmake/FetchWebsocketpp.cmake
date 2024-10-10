@@ -11,6 +11,6 @@ FetchContent_MakeAvailable(websocketpp)
 FetchContent_Declare(
   asio
   URL https://github.com/chriskohlhoff/asio/archive/asio-1-28-0.tar.gz
-  URL_HASH SHA256=1ef87b17e5e32f1a1b4cd840acac6c2a8d0dcde365dde3f9dcd5d1eae0495290)
+  URL_HASH SHA256=226438b0798099ad2a202563a83571ce06dd13b570d8fded4840dbc1f97fa328)
 
 FetchContent_MakeAvailable(websocketpp asio)
