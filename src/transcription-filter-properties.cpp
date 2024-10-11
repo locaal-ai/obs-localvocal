@@ -594,7 +594,7 @@ void transcription_filter_defaults(obs_data_t *s)
 	obs_data_set_default_string(s, "translation_model_path_external", "");
 	obs_data_set_default_int(s, "translate_input_tokenization_style", INPUT_TOKENIZAION_M2M100);
 	obs_data_set_default_double(s, "sentence_psum_accept_thresh", 0.4);
-	obs_data_set_default_bool(s, "partial_group", false);
+	obs_data_set_default_bool(s, "partial_group", true);
 	obs_data_set_default_int(s, "partial_latency", 1100);
 
 	// translation options
