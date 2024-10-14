@@ -32,6 +32,34 @@ inline uint64_t now_ns()
 		.count();
 }
 
+/**
+ * @brief Calculates the elapsed time in nanoseconds since a given start time.
+ *
+ * This function takes a starting time in nanoseconds and returns the 
+ * difference between the current time and the starting time.
+ *
+ * @param start_ns The starting time in nanoseconds.
+ * @return The elapsed time in nanoseconds since the start time.
+ */
+inline uint64_t ns_since(uint64_t start_ns)
+{
+	return now_ns() - start_ns;
+}
+
+/**
+ * @brief Calculates the elapsed time in milliseconds since a given start time.
+ *
+ * This function takes a start time in milliseconds and returns the difference
+ * between the current time (in milliseconds) and the start time.
+ *
+ * @param start_ms The start time in milliseconds.
+ * @return The elapsed time in milliseconds since the start time.
+ */
+inline uint64_t ms_since(uint64_t start_ms)
+{
+	return now_ms() - start_ms;
+}
+
 // Split a string into words based on spaces
 std::vector<std::string> split_words(const std::string &str_copy);
 

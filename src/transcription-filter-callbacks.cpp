@@ -239,8 +239,10 @@ void set_text_callback(struct transcription_filter_data *gf,
 		gf->translate_only_full_sentences ? result.result == DETECTION_RESULT_SPEECH : true;
 
 	// send the sentence to translation (if enabled)
+	std::string source_language = result.language.empty() ? gf->whisper_params.language
+							      : result.language;
 	std::string translated_sentence =
-		should_translate ? send_sentence_to_translation(str_copy, gf, result.language) : "";
+		should_translate ? send_sentence_to_translation(str_copy, gf, source_language) : "";
 
 	if (gf->translate) {
 		if (gf->translation_output == "none") {
@@ -395,6 +397,7 @@ void reset_caption_state(transcription_filter_data *gf_)
 			if (gf_->input_buffers[c].data != nullptr) {
 				circlebuf_free(&gf_->input_buffers[c]);
 			}
+			gf_->stenographer_delay_buffers[c].clear();
 		}
 		if (gf_->info_buffer.data != nullptr) {
 			circlebuf_free(&gf_->info_buffer);
@@ -452,15 +455,16 @@ void enable_callback(void *data_, calldata_t *cd)
 {
 	transcription_filter_data *gf_ = static_cast<struct transcription_filter_data *>(data_);
 	bool enable = calldata_bool(cd, "enabled");
+	reset_caption_state(gf_);
 	if (enable) {
 		obs_log(gf_->log_level, "enable_callback: enable");
 		gf_->active = true;
-		reset_caption_state(gf_);
-		update_whisper_model(gf_);
+		if (!gf_->stenographer_enabled) {
+			update_whisper_model(gf_);
+		}
 	} else {
 		obs_log(gf_->log_level, "enable_callback: disable");
 		gf_->active = false;
-		reset_caption_state(gf_);
 		shutdown_whisper_thread(gf_);
 	}
 }
