@@ -104,7 +104,7 @@ struct obs_audio_data *transcription_filter_filter_audio(void *data, struct obs_
 			circlebuf_push_back(&gf->input_buffers[c], audio->data[c],
 					    audio->frames * sizeof(float));
 		}
-		obs_log(gf->log_level, "currently %lu bytes in the audio input buffer",
+		obs_log(LOG_DEBUG, "currently %lu bytes in the audio input buffer",
 			gf->input_buffers[0].size);
 		// push audio packet info (timestamp/frame count) to info circlebuf
 		struct transcription_filter_audio_info info = {0};
@@ -305,6 +305,9 @@ void transcription_filter_update(void *data, obs_data_t *s)
 	std::string new_translate_model_index = obs_data_get_string(s, "translate_model");
 	std::string new_translation_model_path_external =
 		obs_data_get_string(s, "translation_model_path_external");
+	gf->translation_ctx.remove_punctuation_from_start =
+		obs_data_get_bool(s, "translation_remove_punctuation_from_start");
+	gf->translation_ctx.log_level = gf->log_level;
 
 	if (new_translate) {
 		if (new_translate != gf->translate ||

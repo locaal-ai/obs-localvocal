@@ -16,8 +16,7 @@ int get_data_from_buf_and_resample(transcription_filter_data *gf,
 			return 1;
 		}
 
-		obs_log(gf->log_level,
-			"segmentation: currently %lu bytes in the audio input buffer",
+		obs_log(LOG_DEBUG, "segmentation: currently %lu bytes in the audio input buffer",
 			gf->input_buffers[0].size);
 
 		// max number of frames is 10 seconds worth of audio
@@ -68,7 +67,7 @@ int get_data_from_buf_and_resample(transcription_filter_data *gf,
 		}
 	}
 
-	obs_log(gf->log_level, "found %d frames from info buffer.", num_frames_from_infos);
+	obs_log(LOG_DEBUG, "found %d frames from info buffer.", num_frames_from_infos);
 	gf->last_num_frames = num_frames_from_infos;
 
 	{
@@ -87,7 +86,7 @@ int get_data_from_buf_and_resample(transcription_filter_data *gf,
 
 		circlebuf_push_back(&gf->resampled_buffer, resampled_16khz[0],
 				    resampled_16khz_frames * sizeof(float));
-		obs_log(gf->log_level,
+		obs_log(LOG_DEBUG,
 			"resampled: %d channels, %d frames, %f ms, current size: %lu bytes",
 			(int)gf->channels, (int)resampled_16khz_frames,
 			(float)resampled_16khz_frames / WHISPER_SAMPLE_RATE * 1000.0f,

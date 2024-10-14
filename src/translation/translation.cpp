@@ -117,6 +117,9 @@ int translate(struct translation_context &translation_ctx, const std::string &te
 			std::vector<std::string> input_tokens = {source_lang, "<s>"};
 			if (translation_ctx.add_context > 0 &&
 			    translation_ctx.last_input_tokens.size() > 0) {
+				obs_log(translation_ctx.log_level,
+					"Adding last input tokens to input tokens, size: %d",
+					(int)translation_ctx.last_input_tokens.size());
 				// add the last input tokens sentences to the input tokens
 				for (const auto &tokens : translation_ctx.last_input_tokens) {
 					input_tokens.insert(input_tokens.end(), tokens.begin(),
@@ -133,13 +136,24 @@ int translate(struct translation_context &translation_ctx, const std::string &te
 			for (const auto &token : input_tokens) {
 				input_tokens_str += token + ", ";
 			}
-			obs_log(LOG_INFO, "Input tokens: %s", input_tokens_str.c_str());
+			obs_log(translation_ctx.log_level, "Input tokens: %s",
+				input_tokens_str.c_str());
 
-			translation_ctx.last_input_tokens.push_back(new_input_tokens);
-			// remove the oldest input tokens
-			while (translation_ctx.last_input_tokens.size() >
-			       (size_t)translation_ctx.add_context) {
-				translation_ctx.last_input_tokens.pop_front();
+			if (translation_ctx.add_context > 0) {
+				translation_ctx.last_input_tokens.push_back(new_input_tokens);
+				obs_log(translation_ctx.log_level,
+					"Adding last input context. Last input tokens deque size: %d",
+					(int)translation_ctx.last_input_tokens.size());
+				// remove the oldest input tokens
+				while (translation_ctx.last_input_tokens.size() >
+				       (size_t)translation_ctx.add_context) {
+					obs_log(translation_ctx.log_level,
+						"Removing oldest input tokens context, size: %d",
+						(int)translation_ctx.last_input_tokens.size());
+					translation_ctx.last_input_tokens.pop_front();
+				}
+			} else {
+				translation_ctx.last_input_tokens.clear();
 			}
 
 			const std::vector<std::vector<std::string>> batch = {input_tokens};
@@ -149,6 +163,9 @@ int translate(struct translation_context &translation_ctx, const std::string &te
 			// add the last translation tokens to the target prefix
 			if (translation_ctx.add_context > 0 &&
 			    translation_ctx.last_translation_tokens.size() > 0) {
+				obs_log(translation_ctx.log_level,
+					"Adding last translation tokens to target prefix, size: %d",
+					(int)translation_ctx.last_translation_tokens.size());
 				for (const auto &tokens : translation_ctx.last_translation_tokens) {
 					target_prefix.insert(target_prefix.end(), tokens.begin(),
 							     tokens.end());
@@ -160,7 +177,8 @@ int translate(struct translation_context &translation_ctx, const std::string &te
 			for (const auto &token : target_prefix) {
 				target_prefix_str += token + ",";
 			}
-			obs_log(LOG_INFO, "Target prefix: %s", target_prefix_str.c_str());
+			obs_log(translation_ctx.log_level, "Target prefix: %s",
+				target_prefix_str.c_str());
 
 			const std::vector<std::vector<std::string>> target_prefix_batch = {
 				target_prefix};
@@ -189,22 +207,33 @@ int translate(struct translation_context &translation_ctx, const std::string &te
 		for (const auto &token : translation_tokens) {
 			translation_tokens_str += token + ", ";
 		}
-		obs_log(LOG_INFO, "Translation tokens: %s", translation_tokens_str.c_str());
+		obs_log(translation_ctx.log_level, "Translation tokens: %s",
+			translation_tokens_str.c_str());
 
-		// save the translation tokens
-		translation_ctx.last_translation_tokens.push_back(translation_tokens);
-		// remove the oldest translation tokens
-		while (translation_ctx.last_translation_tokens.size() >
-		       (size_t)translation_ctx.add_context) {
-			translation_ctx.last_translation_tokens.pop_front();
+		if (translation_ctx.add_context > 0) {
+			// save the translation tokens
+			translation_ctx.last_translation_tokens.push_back(translation_tokens);
+			// remove the oldest translation tokens
+			while (translation_ctx.last_translation_tokens.size() >
+			       (size_t)translation_ctx.add_context) {
+				obs_log(translation_ctx.log_level,
+					"Removing oldest translation tokens context, size: %d",
+					(int)translation_ctx.last_translation_tokens.size());
+				translation_ctx.last_translation_tokens.pop_front();
+			}
+			obs_log(translation_ctx.log_level, "Last translation tokens deque size: %d",
+				(int)translation_ctx.last_translation_tokens.size());
+		} else {
+			translation_ctx.last_translation_tokens.clear();
 		}
-		obs_log(LOG_INFO, "Last translation tokens deque size: %d",
-			(int)translation_ctx.last_translation_tokens.size());
 
 		// detokenize
 		const std::string result_ = translation_ctx.detokenizer(translation_tokens);
-		// result = remove_start_punctuation(result_);
-		result = result_;
+		if (translation_ctx.remove_punctuation_from_start) {
+			result = remove_start_punctuation(result_);
+		} else {
+			result = result_;
+		}
 	} catch (std::exception &e) {
 		obs_log(LOG_ERROR, "Error: %s", e.what());
 		return OBS_POLYGLOT_TRANSLATION_FAIL;

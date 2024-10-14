@@ -239,8 +239,10 @@ void set_text_callback(struct transcription_filter_data *gf,
 		gf->translate_only_full_sentences ? result.result == DETECTION_RESULT_SPEECH : true;
 
 	// send the sentence to translation (if enabled)
+	std::string source_language = result.language.empty() ? gf->whisper_params.language
+							      : result.language;
 	std::string translated_sentence =
-		should_translate ? send_sentence_to_translation(str_copy, gf, result.language) : "";
+		should_translate ? send_sentence_to_translation(str_copy, gf, source_language) : "";
 
 	if (gf->translate) {
 		if (gf->translation_output == "none") {

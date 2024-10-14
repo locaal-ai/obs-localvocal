@@ -31,6 +31,8 @@ struct translation_context {
 	// How many sentences to use as context for the next translation
 	int add_context;
 	InputTokenizationStyle input_tokenization_style;
+	bool remove_punctuation_from_start;
+	int log_level = 400;
 };
 
 int build_translation_context(struct translation_context &translation_ctx);

@@ -259,6 +259,9 @@ void add_translation_group_properties(obs_properties_t *ppts)
 				      MT_("translation_max_input_length"), 1, 100, 5);
 	obs_properties_add_int_slider(translation_group, "translation_no_repeat_ngram_size",
 				      MT_("translation_no_repeat_ngram_size"), 1, 10, 1);
+	// add remove_punctuation_from_start boolean
+	obs_properties_add_bool(translation_group, "translation_remove_punctuation_from_start",
+				MT_("translation_remove_punctuation_from_start"));
 }
 
 void add_file_output_group_properties(obs_properties_t *ppts)
@@ -619,6 +622,7 @@ void transcription_filter_defaults(obs_data_t *s)
 	obs_data_set_default_int(s, "translation_max_decoding_length", 65);
 	obs_data_set_default_int(s, "translation_no_repeat_ngram_size", 1);
 	obs_data_set_default_int(s, "translation_max_input_length", 65);
+	obs_data_set_default_bool(s, "translation_remove_punctuation_from_start", false);
 
 	// Whisper parameters
 	obs_data_set_default_int(s, "whisper_sampling_method", WHISPER_SAMPLING_BEAM_SEARCH);
