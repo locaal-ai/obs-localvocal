@@ -203,7 +203,8 @@ int translate(struct translation_context &translation_ctx, const std::string &te
 
 		// detokenize
 		const std::string result_ = translation_ctx.detokenizer(translation_tokens);
-		result = remove_start_punctuation(result_);
+		// result = remove_start_punctuation(result_);
+		result = result_;
 	} catch (std::exception &e) {
 		obs_log(LOG_ERROR, "Error: %s", e.what());
 		return OBS_POLYGLOT_TRANSLATION_FAIL;
