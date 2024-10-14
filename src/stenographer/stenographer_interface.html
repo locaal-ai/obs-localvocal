@@ -25,6 +25,7 @@
     <div id="connectionStatus">Connection Status: <span id="statusText" class="status-disconnected">Disconnected</span></div>
     <div id="audioStatus">Audio Status: Not started</div>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.21/lodash.min.js"></script>
     <script>
         const WS_URL = document.getElementById('wsUrl').value;
         let ws;
@@ -136,16 +137,18 @@
         }
 
         captionInput.addEventListener('input', () => {
-            sendCaptionUpdate('partial');
+            if (captionInput.value.trim() !== '') {
+                sendCaptionUpdate('partial');
+            }
         });
 
-        captionInput.addEventListener('keydown', (event) => {
-            if (event.key === 'Enter') {
+        captionInput.addEventListener('keydown', _.debounce((event) => {
+            if (event.key === 'Enter' && captionInput.value.trim() !== '') {
                 event.preventDefault();
                 sendCaptionUpdate('sentence');
                 captionInput.value = '';
             }
-        });
+        }, 100));
 
         function sendCaptionUpdate(type) {
             if (ws.readyState === WebSocket.OPEN) {

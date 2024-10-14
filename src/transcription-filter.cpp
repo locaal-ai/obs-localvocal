@@ -443,7 +443,7 @@ void transcription_filter_update(void *data, obs_data_t *s)
 			}
 		}
 	} else {
-		obs_log(LOG_INFO, "Filter not enabled, not updating whisper model.");
+		obs_log(LOG_INFO, "Transcription not enabled, not updating whisper model.");
 	}
 
 	if (new_stenographer_enabled != gf->stenographer_enabled) {
@@ -467,7 +467,7 @@ void transcription_filter_update(void *data, obs_data_t *s)
 				});
 			gf->transcription_handler->start();
 		} else {
-			obs_log(gf->log_level, "Stenographer disabled");
+			obs_log(gf->log_level, "Stenographer disabled, restarting whisper");
 			if (gf->transcription_handler) {
 				gf->transcription_handler->stop();
 				delete gf->transcription_handler;
