@@ -420,7 +420,7 @@ void transcription_filter_update(void *data, obs_data_t *s)
 	bool new_stenographer_enabled = obs_data_get_bool(s, "stenographer_group");
 
 	if (!new_stenographer_enabled && gf->context != nullptr &&
-	    obs_source_enabled(gf->context)) {
+	    (obs_source_enabled(gf->context) || gf->initial_creation)) {
 		if (gf->initial_creation) {
 			obs_log(LOG_INFO, "Initial filter creation and source enabled");
 
@@ -439,6 +439,8 @@ void transcription_filter_update(void *data, obs_data_t *s)
 				update_whisper_model(gf);
 			}
 		}
+	} else {
+		obs_log(LOG_INFO, "Filter not enabled, not updating whisper model.");
 	}
 
 	if (new_stenographer_enabled != gf->stenographer_enabled) {
@@ -496,6 +498,7 @@ void *transcription_filter_create(obs_data_t *settings, obs_source_t *filter)
 		obs_data_get_bool(settings, "rename_file_to_match_recording");
 	gf->process_while_muted = obs_data_get_bool(settings, "process_while_muted");
 	gf->buffered_output = obs_data_get_bool(settings, "buffered_output");
+	gf->initial_creation = true;
 
 	for (size_t i = 0; i < gf->channels; i++) {
 		circlebuf_init(&gf->input_buffers[i]);
