@@ -4,7 +4,7 @@ param(
     [string] $Target = 'x64',
     [ValidateSet('Debug', 'RelWithDebInfo', 'Release', 'MinSizeRel')]
     [string] $Configuration = 'RelWithDebInfo',
-    [ValidateSet('cpu', 'hipblas', 'cuda')]
+    [ValidateSet('cpu', 'hipblas', 'vulkan', 'cuda')]
     [string] $Acceleration = 'cpu',
     [switch] $BuildInstaller,
     [switch] $SkipDeps
