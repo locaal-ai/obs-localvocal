@@ -246,7 +246,7 @@ jobs:
     needs: check-event
     strategy:
       matrix:
-        acceleration: [cpu, cuda, hipblas]
+        acceleration: [cpu, cuda, vulkan, hipblas]
     defaults:
       run:
         shell: pwsh

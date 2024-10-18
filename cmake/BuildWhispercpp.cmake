@@ -47,7 +47,7 @@ if(APPLE)
 
 elseif(WIN32)
   if(NOT DEFINED ACCELERATION)
-    message(FATAL_ERROR "ACCELERATION is not set. Please set it to either `cpu`, `cuda` or `hipblas`")
+    message(FATAL_ERROR "ACCELERATION is not set. Please set it to either `cpu`, `cuda`, `vulkan` or `hipblas`")
   endif()
 
   set(ARCH_PREFIX ${ACCELERATION})
@@ -68,7 +68,7 @@ elseif(WIN32)
   else()
     message(
       FATAL_ERROR
-        "The ACCELERATION environment variable is not set to a valid value. Please set it to either `cpu` or `cuda` or `hipblas`"
+        "The ACCELERATION environment variable is not set to a valid value. Please set it to either `cpu` or `cuda` or `vulkan` or `hipblas`"
     )
   endif()
 
