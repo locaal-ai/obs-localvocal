@@ -1,16 +1,16 @@
 include(ExternalProject)
 include(FetchContent)
 
-set(PREBUILT_WHISPERCPP_VERSION "0.0.6")
+set(PREBUILT_WHISPERCPP_VERSION "0.0.7")
 set(PREBUILT_WHISPERCPP_URL_BASE
-    "https://github.com/occ-ai/occ-ai-dep-whispercpp/releases/download/${PREBUILT_WHISPERCPP_VERSION}")
+    "https://github.com/locaal-ai/occ-ai-dep-whispercpp/releases/download/${PREBUILT_WHISPERCPP_VERSION}")
 
 if(APPLE)
   # check the "MACOS_ARCH" env var to figure out if this is x86 or arm64
   if($ENV{MACOS_ARCH} STREQUAL "x86_64")
-    set(WHISPER_CPP_HASH "454abee900a96a0a10a91f631ff797bdbdf2df0d2a819479a409634c9be1e12c")
+    set(WHISPER_CPP_HASH "dc7fd5ff9c7fbb8623f8e14d9ff2872186cab4cd7a52066fcb2fab790d6092fc")
   elseif($ENV{MACOS_ARCH} STREQUAL "arm64")
-    set(WHISPER_CPP_HASH "f726388cc494f6fca864c860af6c1bc2932c3dc823ef92197b1e29f088425668")
+    set(WHISPER_CPP_HASH "ebed595ee431b182261bce41583993b149eed539e15ebf770d98a6bc85d53a92")
   else()
     message(
       FATAL_ERROR
@@ -54,14 +54,17 @@ elseif(WIN32)
   set(WHISPER_CPP_URL
       "${PREBUILT_WHISPERCPP_URL_BASE}/whispercpp-windows-${ARCH_PREFIX}-${PREBUILT_WHISPERCPP_VERSION}.zip")
   if(${ACCELERATION} STREQUAL "cpu")
-    set(WHISPER_CPP_HASH "126c5d859e902b4cd0f2cd09304a68750f1dbc6a7aa62e280cfd56c51a6a1c95")
+    set(WHISPER_CPP_HASH "c23862b4aac7d8448cf7de4d339a86498f88ecba6fa7d243bbd7fabdb13d4dd4")
     add_compile_definitions("LOCALVOCAL_WITH_CPU")
   elseif(${ACCELERATION} STREQUAL "cuda")
-    set(WHISPER_CPP_HASH "5b9592c311a7f1612894ca0b36f6bd4effb6a46acd03d33924df56c52f566779")
+    set(WHISPER_CPP_HASH "a0adeaccae76fab0678d016a62b79a19661ed34eb810d8bae3b610345ee9a405")
     add_compile_definitions("LOCALVOCAL_WITH_CUDA")
   elseif(${ACCELERATION} STREQUAL "hipblas")
-    set(WHISPER_CPP_HASH "c306ecce16cd10f377fdefbf7bb252abac8e6638a2637f82b1f1f32dd2cb4e39")
+    set(WHISPER_CPP_HASH "bbad0b4eec01c5a801d384c03745ef5e97061958f8cf8f7724281d433d7d92a1")
     add_compile_definitions("LOCALVOCAL_WITH_HIPBLAS")
+  elseif(${ACCELERATION} STREQUAL "vulkan")
+    set(WHISPER_CPP_HASH "12bb34821f9efcd31f04a487569abff2b669221f2706fe0d09c17883635ef58a")
+    add_compile_definitions("LOCALVOCAL_WITH_VULKAN")
   else()
     message(
       FATAL_ERROR
