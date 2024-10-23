@@ -33,8 +33,8 @@ Translation is done with [CTranslate2](https://github.com/OpenNMT/CTranslate2).
   <a href="https://youtu.be/ns4cP9HFTxQ" target="_blank">
     <img width="30%" src="https://github.com/user-attachments/assets/79ce3db6-b35f-4181-85d0-6c473b931418" />
   </a>&nbsp;
-  <a href="https://youtu.be/4llyfNi9FGs" target="_blank">
-    <img width="30%" src="https://github.com/user-attachments/assets/d50f8c8f-da7a-4054-a68b-6f7e3712b6c4" />
+  <a href="https://youtu.be/eTSDcNGsN00" target="_blank">
+    <img width="30%" src="https://github.com/user-attachments/assets/4483eb30-98de-4fcd-aa50-d9dbe70060b3" />
   </a>
   &nbsp;
   <a href="https://youtu.be/R04w02qG26o" target="_blank">
@@ -42,11 +42,12 @@ Translation is done with [CTranslate2](https://github.com/OpenNMT/CTranslate2).
   </a>
   <br/>
   <a href="https://youtu.be/ns4cP9HFTxQ">https://youtu.be/ns4cP9HFTxQ</a>
-  <a href="https://youtu.be/4llyfNi9FGs">https://youtu.be/4llyfNi9FGs</a>
+  <a href="https://youtu.be/eTSDcNGsN00">https://youtu.be/4llyfNi9FGs</a>
   <a href="https://youtu.be/R04w02qG26o">https://youtu.be/R04w02qG26o</a>
 </p>
 
 Do more with LocalVocal:
+- [RealTime Translation](https://youtu.be/4llyfNi9FGs) 
 - [Translate Caption any Application](https://youtu.be/qen7NC8kbEQ)
 - [Real-time Translation with DeepL](https://youtu.be/ryWBIEmVka4)
 - [Real-time Translation with OpenAI](https://youtu.be/Q34LQsx-nlg)
