@@ -77,6 +77,7 @@ jobs:
           variants=(
             'windows-x64-cpu;zip|exe'
             'windows-x64-hipblas;zip|exe'
+            'windows-x64-vulkan;zip|exe'
             'windows-x64-cuda;zip|exe'
             'macos-arm64;tar.xz|pkg'
             'macos-x86_64;tar.xz|pkg'
