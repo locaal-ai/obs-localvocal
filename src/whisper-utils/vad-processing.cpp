@@ -24,9 +24,11 @@ int get_data_from_buf_and_resample(transcription_filter_data *gf,
 			return 1;
 		}
 
+#ifdef LOCALVOCAL_EXTRA_VERBOSE
 		obs_log(gf->log_level,
 			"segmentation: currently %lu bytes in the audio input buffer",
 			gf->input_buffers[0].size);
+#endif
 
 		// max number of frames is 10 seconds worth of audio
 		const size_t max_num_frames = gf->sample_rate * 10;
@@ -76,8 +78,10 @@ int get_data_from_buf_and_resample(transcription_filter_data *gf,
 		}
 	}
 
+#ifdef LOCALVOCAL_EXTRA_VERBOSE
 	obs_log(gf->log_level, "found %d frames from info buffer.", num_frames_from_infos);
 	gf->last_num_frames = num_frames_from_infos;
+#endif
 
 	{
 		// resample to 16kHz
@@ -95,11 +99,13 @@ int get_data_from_buf_and_resample(transcription_filter_data *gf,
 
 		circlebuf_push_back(&gf->resampled_buffer, resampled_16khz[0],
 				    resampled_16khz_frames * sizeof(float));
+#ifdef LOCALVOCAL_EXTRA_VERBOSE
 		obs_log(gf->log_level,
 			"resampled: %d channels, %d frames, %f ms, current size: %lu bytes",
 			(int)gf->channels, (int)resampled_16khz_frames,
 			(float)resampled_16khz_frames / WHISPER_SAMPLE_RATE * 1000.0f,
 			gf->resampled_buffer.size);
+#endif
 	}
 
 	return 0;
@@ -129,8 +135,10 @@ vad_state vad_based_segmentation(transcription_filter_data *gf, vad_state last_v
 	circlebuf_pop_front(&gf->resampled_buffer, vad_input.data(),
 			    vad_input.size() * sizeof(float));
 
+#ifdef LOCALVOCAL_EXTRA_VERBOSE
 	obs_log(gf->log_level, "sending %d frames to vad, %d windows, reset state? %s",
 		vad_input.size(), vad_num_windows, (!last_vad_state.vad_on) ? "yes" : "no");
+#endif
 	{
 		ProfileScope("vad->process");
 		gf->vad->process(vad_input, !last_vad_state.vad_on);
@@ -144,7 +152,9 @@ vad_state vad_based_segmentation(transcription_filter_data *gf, vad_state last_v
 
 	std::vector<timestamp_t> stamps = gf->vad->get_speech_timestamps();
 	if (stamps.size() == 0) {
+#ifdef LOCALVOCAL_EXTRA_VERBOSE
 		obs_log(gf->log_level, "VAD detected no speech in %u frames", vad_input.size());
+#endif
 		if (last_vad_state.vad_on) {
 			obs_log(gf->log_level, "Last VAD was ON: segment end -> send to inference");
 			run_inference_and_callbacks(gf, last_vad_state.start_ts_offest_ms,

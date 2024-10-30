@@ -436,6 +436,116 @@
       ]
     },
     {
+      "friendly_name": "Whisper Base q8 (81Mb)",
+      "local_folder_name": "ggml-base-q8_0",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/ggerganov/whisper.cpp/blob/main/ggml-base-q8_0.bin",
+          "sha256": ""
+        }
+      ]
+    },
+    {
+      "friendly_name": "Whisper Base English q8 (81Mb)",
+      "local_folder_name": "ggml-base-en-q8_0",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/ggerganov/whisper.cpp/blob/main/ggml-base.en-q8_0.bin",
+          "sha256": ""
+        }
+      ]
+    },
+    {
+      "friendly_name": "Whisper Large v2 q8 (1.66Gb)",
+      "local_folder_name": "ggml-large-v2-q8_0",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/ggerganov/whisper.cpp/blob/main/ggml-large-v2-q8_0.bin",
+          "sha256": ""
+        }
+      ]
+    },
+    {
+      "friendly_name": "Whisper Medium q8 (823Mb)",
+      "local_folder_name": "ggml-medium-q8_0",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/ggerganov/whisper.cpp/blob/main/ggml-medium-q8_0.bin",
+          "sha256": ""
+        }
+      ]
+    },
+    {
+      "friendly_name": "Whisper Large v3 Trubo q8 (874Mb)",
+      "local_folder_name": "ggml-large-v3-turbo-q8_0",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/ggerganov/whisper.cpp/blob/main/ggml-large-v3-turbo-q8_0.bin",
+          "sha256": ""
+        }
+      ]
+    },
+    {
+      "friendly_name": "Whisper Small q8 (264Mb)",
+      "local_folder_name": "ggml-small-q8_0",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/ggerganov/whisper.cpp/blob/main/ggml-small-q8_0.bin",
+          "sha256": ""
+        }
+      ]
+    },
+    {
+      "friendly_name": "Whisper Medium English q8 (823Mb)",
+      "local_folder_name": "ggml-medium-en-q8_0",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/ggerganov/whisper.cpp/blob/main/ggml-medium.en-q8_0.bin",
+          "sha256": ""
+        }
+      ]
+    },
+    {
+      "friendly_name": "Whisper Small English q8 (264Mb)",
+      "local_folder_name": "ggml-small-en-q8_0",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/ggerganov/whisper.cpp/blob/main/ggml-small.en-q8_0.bin",
+          "sha256": ""
+        }
+      ]
+    },
+    {
+      "friendly_name": "Whisper Tiny q8 (43Mb)",
+      "local_folder_name": "ggml-tiny-q8_0",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/ggerganov/whisper.cpp/blob/main/ggml-tiny-q8_0.bin",
+          "sha256": ""
+        }
+      ]
+    },
+    {
+      "friendly_name": "Whisper Tiny English q8 (43Mb)",
+      "local_folder_name": "ggml-tiny-en-q8_0",
+      "type": "MODEL_TYPE_TRANSCRIPTION",
+      "files": [
+        {
+          "url": "https://huggingface.co/ggerganov/whisper.cpp/blob/main/ggml-tiny.en-q8_0.bin",
+          "sha256": ""
+        }
+      ]
+    },
+    {
       "friendly_name": "Whisper Base German Awareai (Marksdo)",
       "local_folder_name": "ggml-base-awareai.de",
       "type": "MODEL_TYPE_TRANSCRIPTION",
