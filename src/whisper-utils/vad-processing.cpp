@@ -80,8 +80,8 @@ int get_data_from_buf_and_resample(transcription_filter_data *gf,
 
 #ifdef LOCALVOCAL_EXTRA_VERBOSE
 	obs_log(gf->log_level, "found %d frames from info buffer.", num_frames_from_infos);
-	gf->last_num_frames = num_frames_from_infos;
 #endif
+	gf->last_num_frames = num_frames_from_infos;
 
 	{
 		// resample to 16kHz
