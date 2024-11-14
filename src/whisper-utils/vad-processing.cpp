@@ -111,6 +111,51 @@ int get_data_from_buf_and_resample(transcription_filter_data *gf,
 	return 0;
 }
 
+vad_state vad_disabled_segmentation(transcription_filter_data *gf, vad_state last_vad_state)
+{
+	// get data from buffer and resample
+	uint64_t start_timestamp_offset_ns = 0;
+	uint64_t end_timestamp_offset_ns = 0;
+
+	const int ret = get_data_from_buf_and_resample(gf, start_timestamp_offset_ns,
+						       end_timestamp_offset_ns);
+	if (ret != 0) {
+		return last_vad_state;
+	}
+
+	// push the data into gf-whisper_buffer
+	circlebuf_push_back(&gf->whisper_buffer, gf->resampled_buffer.data,
+			    gf->resampled_buffer.size);
+
+	const uint64_t whisper_buf_samples = gf->resampled_buffer.size / sizeof(float);
+
+	// if the segment is less than target segment length - this is a partial segment
+	VadState new_vad_state = (whisper_buf_samples < 10 * WHISPER_SAMPLE_RATE)
+					 ? VAD_STATE_PARTIAL
+					 : VAD_STATE_WAS_OFF;
+
+	// #ifdef LOCALVOCAL_EXTRA_VERBOSE
+	obs_log(gf->log_level,
+		"VAD disabled: pushed %d frames (%lu bytes) to whisper buffer, state was %s new state is %s",
+		whisper_buf_samples, gf->resampled_buffer.size,
+		last_vad_state.vad_on ? "ON" : "OFF",
+		new_vad_state == VAD_STATE_PARTIAL ? "PARTIAL" : "OFF");
+	// #endif
+
+	const uint64_t start_ts_offset_ms = start_timestamp_offset_ns / 1000000;
+	const uint64_t end_ts_offset_ms = end_timestamp_offset_ns / 1000000;
+
+	// Send to inference
+	run_inference_and_callbacks(gf, last_vad_state.start_ts_offest_ms, end_ts_offset_ms,
+				    new_vad_state);
+
+	return {false,
+		new_vad_state == VAD_STATE_IS_OFF ? start_ts_offset_ms
+						  : last_vad_state.start_ts_offest_ms,
+		end_ts_offset_ms,
+		new_vad_state == VAD_STATE_IS_OFF ? 0 : last_vad_state.last_partial_segment_end_ts};
+}
+
 vad_state vad_based_segmentation(transcription_filter_data *gf, vad_state last_vad_state)
 {
 	// get data from buffer and resample

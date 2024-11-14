@@ -355,6 +355,7 @@ void add_advanced_group_properties(obs_properties_t *ppts, struct transcription_
 	obs_property_t *vad_mode_list =
 		obs_properties_add_list(advanced_config_group, "vad_mode", MT_("vad_mode"),
 					OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_INT);
+	obs_property_list_add_int(vad_mode_list, MT_("No_VAD"), VAD_MODE_DISABLED);
 	obs_property_list_add_int(vad_mode_list, MT_("Active_VAD"), VAD_MODE_ACTIVE);
 	obs_property_list_add_int(vad_mode_list, MT_("Hybrid_VAD"), VAD_MODE_HYBRID);
 	// add vad threshold slider

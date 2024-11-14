@@ -11,6 +11,7 @@ struct vad_state {
 	uint64_t last_partial_segment_end_ts;
 };
 
+vad_state vad_disabled_segmentation(transcription_filter_data *gf, vad_state last_vad_state);
 vad_state vad_based_segmentation(transcription_filter_data *gf, vad_state last_vad_state);
 vad_state hybrid_vad_segmentation(transcription_filter_data *gf, vad_state last_vad_state);
 void initialize_vad(transcription_filter_data *gf, const char *silero_vad_model_file);
