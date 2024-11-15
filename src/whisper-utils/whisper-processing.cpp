@@ -198,6 +198,9 @@ struct DetectionResultWithText run_whisper_inference(struct transcription_filter
 		obs_log(gf->log_level, "Initial prompt: %s", gf->whisper_params.initial_prompt);
 	}
 
+	obs_log(gf->log_level, "Running whisper inference. single segment? %s",
+		gf->whisper_params.single_segment ? "yes" : "no");
+
 	// run the inference
 	int whisper_full_result = -1;
 	gf->whisper_params.duration_ms = (int)(whisper_duration_ms);
@@ -355,7 +358,7 @@ void whisper_loop(void *data)
 
 	obs_log(gf->log_level, "Starting whisper thread");
 
-	vad_state current_vad_state = {false, now_ms(), 0, 0};
+	vad_state current_vad_state = {false, 0, 0, 0};
 
 	const char *whisper_loop_name = "Whisper loop";
 	profile_register_root(whisper_loop_name, 50 * 1000 * 1000);

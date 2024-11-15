@@ -141,37 +141,47 @@ vad_state vad_disabled_segmentation(transcription_filter_data *gf, vad_state las
 	circlebuf_pop_front(&gf->resampled_buffer, nullptr, gf->resampled_buffer.size);
 
 	const uint64_t whisper_buf_samples = gf->whisper_buffer.size / sizeof(float);
+	const bool is_partial_segment = whisper_buf_samples <
+					gf->segment_duration * WHISPER_SAMPLE_RATE / 1000;
 
-	// if the segment is less than target segment length - this is a partial segment
-	VadState new_vad_state =
-		(whisper_buf_samples < gf->segment_duration * WHISPER_SAMPLE_RATE / 1000)
-			? VAD_STATE_PARTIAL
-			: VAD_STATE_WAS_OFF;
-
-	// #ifdef LOCALVOCAL_EXTRA_VERBOSE
+#ifdef LOCALVOCAL_EXTRA_VERBOSE
 	obs_log(gf->log_level,
 		"VAD disabled: total %d frames (%lu bytes) in whisper buffer, state was %s new state is %s",
 		whisper_buf_samples, gf->whisper_buffer.size, last_vad_state.vad_on ? "ON" : "OFF",
-		new_vad_state == VAD_STATE_PARTIAL ? "PARTIAL" : "OFF");
-	// #endif
+		is_partial_segment ? "PARTIAL" : "OFF");
+#endif
 
 	const uint64_t start_ts_offset_ms = start_timestamp_offset_ns / 1000000;
 	const uint64_t end_ts_offset_ms = end_timestamp_offset_ns / 1000000;
 
-	// TODO: check if we need to send the partial segment to inference based on
-	// the last partial segment end timestamp
-	const uint64_t current_length_ms = end_ts_offset_ms - last_vad_state.start_ts_offest_ms;
-	if (current_length_ms > (uint64_t)gf->partial_latency) {
-		// Send to inference
-		run_inference_and_callbacks(gf, last_vad_state.start_ts_offest_ms, end_ts_offset_ms,
-					    new_vad_state);
-	}
+	if (is_partial_segment) {
+		// check if we need to send the partial segment to inference based on
+		// the last partial segment end timestamp
+		const uint64_t unprocessed_length_ms =
+			end_ts_offset_ms - last_vad_state.last_partial_segment_end_ts;
+		if (unprocessed_length_ms > (uint64_t)gf->partial_latency) {
+			obs_log(gf->log_level,
+				"VAD disabled: partial segment with %lu ms unprocessed audio. start %lu, end %lu",
+				unprocessed_length_ms, last_vad_state.start_ts_offest_ms,
+				end_ts_offset_ms);
+			// Send to inference
+			run_inference_and_callbacks(gf, last_vad_state.start_ts_offest_ms,
+						    end_ts_offset_ms, VAD_STATE_PARTIAL);
+			// update the last partial segment end timestamp
+			last_vad_state.last_partial_segment_end_ts = end_ts_offset_ms;
+		}
 
-	return {false,
-		new_vad_state == VAD_STATE_IS_OFF ? start_ts_offset_ms
-						  : last_vad_state.start_ts_offest_ms,
-		end_ts_offset_ms,
-		new_vad_state == VAD_STATE_IS_OFF ? 0 : last_vad_state.last_partial_segment_end_ts};
+		return {false, last_vad_state.start_ts_offest_ms, end_ts_offset_ms,
+			last_vad_state.last_partial_segment_end_ts};
+	} else {
+		obs_log(gf->log_level,
+			"VAD disabled: full segment end -> send to inference. start %lu, end %lu",
+			last_vad_state.start_ts_offest_ms, end_ts_offset_ms);
+		// send the entire buffer to inference
+		run_inference_and_callbacks(gf, last_vad_state.start_ts_offest_ms, end_ts_offset_ms,
+					    VAD_STATE_WAS_OFF);
+		return {false, end_ts_offset_ms, end_ts_offset_ms, end_ts_offset_ms};
+	}
 }
 
 vad_state vad_based_segmentation(transcription_filter_data *gf, vad_state last_vad_state)
