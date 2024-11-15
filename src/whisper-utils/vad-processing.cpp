@@ -10,6 +10,17 @@
 #include <Windows.h>
 #endif
 
+/**
+ * @brief Extracts audio data from the buffer, resamples it, and updates timestamp offsets.
+ *
+ * This function extracts audio data from the input buffer, resamples it to 16kHz, and updates
+ * gf->resampled_buffer with the resampled data.
+ *
+ * @param gf Pointer to the transcription filter data structure.
+ * @param start_timestamp_offset_ns Reference to the start timestamp offset in nanoseconds.
+ * @param end_timestamp_offset_ns Reference to the end timestamp offset in nanoseconds.
+ * @return Returns 0 on success, 1 if the input buffer is empty.
+ */
 int get_data_from_buf_and_resample(transcription_filter_data *gf,
 				   uint64_t &start_timestamp_offset_ns,
 				   uint64_t &end_timestamp_offset_ns)
@@ -126,28 +137,35 @@ vad_state vad_disabled_segmentation(transcription_filter_data *gf, vad_state las
 	// push the data into gf-whisper_buffer
 	circlebuf_push_back(&gf->whisper_buffer, gf->resampled_buffer.data,
 			    gf->resampled_buffer.size);
+	// clear the resampled buffer
+	circlebuf_pop_front(&gf->resampled_buffer, nullptr, gf->resampled_buffer.size);
 
-	const uint64_t whisper_buf_samples = gf->resampled_buffer.size / sizeof(float);
+	const uint64_t whisper_buf_samples = gf->whisper_buffer.size / sizeof(float);
 
 	// if the segment is less than target segment length - this is a partial segment
-	VadState new_vad_state = (whisper_buf_samples < 10 * WHISPER_SAMPLE_RATE)
-					 ? VAD_STATE_PARTIAL
-					 : VAD_STATE_WAS_OFF;
+	VadState new_vad_state =
+		(whisper_buf_samples < gf->segment_duration * WHISPER_SAMPLE_RATE / 1000)
+			? VAD_STATE_PARTIAL
+			: VAD_STATE_WAS_OFF;
 
 	// #ifdef LOCALVOCAL_EXTRA_VERBOSE
 	obs_log(gf->log_level,
-		"VAD disabled: pushed %d frames (%lu bytes) to whisper buffer, state was %s new state is %s",
-		whisper_buf_samples, gf->resampled_buffer.size,
-		last_vad_state.vad_on ? "ON" : "OFF",
+		"VAD disabled: total %d frames (%lu bytes) in whisper buffer, state was %s new state is %s",
+		whisper_buf_samples, gf->whisper_buffer.size, last_vad_state.vad_on ? "ON" : "OFF",
 		new_vad_state == VAD_STATE_PARTIAL ? "PARTIAL" : "OFF");
 	// #endif
 
 	const uint64_t start_ts_offset_ms = start_timestamp_offset_ns / 1000000;
 	const uint64_t end_ts_offset_ms = end_timestamp_offset_ns / 1000000;
 
-	// Send to inference
-	run_inference_and_callbacks(gf, last_vad_state.start_ts_offest_ms, end_ts_offset_ms,
-				    new_vad_state);
+	// TODO: check if we need to send the partial segment to inference based on
+	// the last partial segment end timestamp
+	const uint64_t current_length_ms = end_ts_offset_ms - last_vad_state.start_ts_offest_ms;
+	if (current_length_ms > (uint64_t)gf->partial_latency) {
+		// Send to inference
+		run_inference_and_callbacks(gf, last_vad_state.start_ts_offest_ms, end_ts_offset_ms,
+					    new_vad_state);
+	}
 
 	return {false,
 		new_vad_state == VAD_STATE_IS_OFF ? start_ts_offset_ms
