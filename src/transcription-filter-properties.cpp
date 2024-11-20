@@ -406,52 +406,6 @@ void add_logging_group_properties(obs_properties_t *ppts)
 	obs_property_list_add_int(list, "WARNING", LOG_WARNING);
 }
 
-void add_whisper_params_group_properties(obs_properties_t *ppts)
-{
-	obs_properties_t *whisper_params_group = obs_properties_create();
-	obs_properties_add_group(ppts, "whisper_params_group", MT_("whisper_parameters"),
-				 OBS_GROUP_NORMAL, whisper_params_group);
-
-	obs_properties_add_list(whisper_params_group, "strategy", MT_("whisper_sampling_strategy"), OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_INT);
-    obs_properties_add_int(whisper_params_group, "n_threads",MT_("n_threads"), 1, 8, 1);
-    obs_properties_add_int(whisper_params_group, "n_max_text_ctx", MT_("n_max_text_ctx"), 1, 100, 1);
-    obs_properties_add_int(whisper_params_group, "offset_ms", MT_("offset_ms"), 0, 10000, 100);
-    obs_properties_add_int(whisper_params_group, "duration_ms", MT_("duration_ms"), 0, 30000, 500);
-    obs_properties_add_bool(whisper_params_group, "whisper_translate", MT_("whisper_translate"));
-    obs_properties_add_bool(whisper_params_group, "no_context", MT_("no_context"));
-    obs_properties_add_bool(whisper_params_group, "no_timestamps", MT_("no_timestamps"));
-    obs_properties_add_bool(whisper_params_group, "single_segment", MT_("single_segment"));
-    obs_properties_add_bool(whisper_params_group, "print_special", MT_("print_special"));
-    obs_properties_add_bool(whisper_params_group, "print_progress", MT_("print_progress"));
-    obs_properties_add_bool(whisper_params_group, "print_realtime", MT_("print_realtime"));
-    obs_properties_add_bool(whisper_params_group, "print_timestamps", MT_("print_timestamps"));
-    obs_properties_add_bool(whisper_params_group, "token_timestamps", MT_("token_timestamps"));
-    obs_properties_add_float(whisper_params_group, "thold_pt", MT_("thold_pt"), 0, 1, 0.05);
-    obs_properties_add_float(whisper_params_group, "thold_ptsum", MT_("thold_ptsum"), 0, 1, 0.05);
-    obs_properties_add_int(whisper_params_group, "max_len", MT_("max_len"), 0, 1000, 1);
-    obs_properties_add_bool(whisper_params_group, "split_on_word", MT_("split_on_word"));
-    obs_properties_add_int(whisper_params_group, "max_tokens", MT_("max_tokens"), 0, 1000, 1);
-    obs_properties_add_bool(whisper_params_group, "debug_mode", MT_("debug_mode"));
-    obs_properties_add_int(whisper_params_group, "audio_ctx", MT_("audio_ctx"), 0, 10, 1);
-    obs_properties_add_bool(whisper_params_group, "tdrz_enable", MT_("tdrz_enable"));
-    obs_properties_add_text(whisper_params_group, "suppress_regex", MT_("suppress_regex"), OBS_TEXT_DEFAULT);
-    obs_properties_add_text(whisper_params_group, "initial_prompt", MT_("initial_prompt"), OBS_TEXT_DEFAULT);
-    obs_properties_add_text(whisper_params_group, "language", MT_("language"), OBS_TEXT_DEFAULT);
-    obs_properties_add_bool(whisper_params_group, "detect_language", MT_("detect_language"));
-    obs_properties_add_bool(whisper_params_group, "suppress_blank", MT_("suppress_blank"));
-    obs_properties_add_bool(whisper_params_group, "suppress_non_speech_tokens", MT_("suppress_non_speech_tokens"));
-    obs_properties_add_float(whisper_params_group, "temperature", MT_("temperature"), 0, 1, 0.05);
-    obs_properties_add_float(whisper_params_group, "max_initial_ts", MT_("max_initial_ts"), 0, 100, 1);
-    obs_properties_add_float(whisper_params_group, "length_penalty", MT_("length_penalty"), 0, 1, 0.05);
-    obs_properties_add_float(whisper_params_group, "temperature_inc", MT_("temperature_inc"), 0, 1, 0.05);
-    obs_properties_add_float(whisper_params_group, "entropy_thold", MT_("entropy_thold"), 0, 1, 0.05);
-    obs_properties_add_float(whisper_params_group, "logprob_thold", MT_("logprob_thold"), 0, 1, 0.05);
-    obs_properties_add_float(whisper_params_group, "no_speech_thold", MT_("no_speech_thold"), 0, 1, 0.05);
-    obs_properties_add_int(whisper_params_group, "greedy.best_of", MT_("greedy.best_of"), 1, 10, 1);
-    obs_properties_add_int(whisper_params_group, "beam_search.beam_size", MT_("beam_search.beam_size"), 1, 10, 1);
-    obs_properties_add_float(whisper_params_group, "beam_search.patience", MT_("beam_search.patience"), 0, 1, 0.05);
-}
-
 void add_general_group_properties(obs_properties_t *ppts)
 {
 	// add "General" group

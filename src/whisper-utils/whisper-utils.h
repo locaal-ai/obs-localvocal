@@ -18,7 +18,7 @@
 #include <string>
 #include <vector>
 
- /**
+/**
  * @brief Shuts down the whisper thread.
  *
  * This function terminates the whisper thread associated with the given
@@ -39,7 +39,7 @@ void shutdown_whisper_thread(struct transcription_filter_data *gf);
  * @param silero_vad_model_file Pointer to a character array containing the Silero VAD model file.
  */
 void start_whisper_thread_with_path(struct transcription_filter_data *gf, const std::string &path,
-                    const char *silero_vad_model_file);
+				    const char *silero_vad_model_file);
 
 /**
  * @brief Finds the start of overlap between two sequences.
@@ -52,7 +52,7 @@ void start_whisper_thread_with_path(struct transcription_filter_data *gf, const 
  * @return std::pair<int, int> A pair of integers representing the starting indices of the overlap in seq1 and seq2.
  */
 std::pair<int, int> findStartOfOverlap(const std::vector<whisper_token_data> &seq1,
-                       const std::vector<whisper_token_data> &seq2);
+				       const std::vector<whisper_token_data> &seq2);
 
 /**
  * @brief Reconstructs a sentence from two sequences.
@@ -65,7 +65,7 @@ std::pair<int, int> findStartOfOverlap(const std::vector<whisper_token_data> &se
  * @return std::vector<whisper_token_data> A vector containing the reconstructed sentence.
  */
 std::vector<whisper_token_data> reconstructSentence(const std::vector<whisper_token_data> &seq1,
-                            const std::vector<whisper_token_data> &seq2);
+						    const std::vector<whisper_token_data> &seq2);
 
 /**
  * @brief Converts a timestamp in milliseconds to a string in the format "MM:SS.sss".
@@ -111,5 +111,17 @@ void apply_whisper_params_defaults_on_settings(obs_data_t *s);
  * @param settings A pointer to the `obs_data_t` settings object containing the parameters to apply.
  */
 void apply_whisper_params_from_settings(whisper_full_params &params, obs_data_t *settings);
+
+/**
+ * @brief Adds whisper parameters group properties to the given OBS properties object.
+ *
+ * This function adds a group of properties related to whisper parameters to the
+ * specified OBS properties object. These properties can be used to configure
+ * whisper-related settings in the OBS application.
+ *
+ * @param ppts A pointer to an OBS properties object where the whisper parameters
+ *             group properties will be added.
+ */
+void add_whisper_params_group_properties(obs_properties_t *ppts);
 
 #endif // WHISPER_UTILS_H
