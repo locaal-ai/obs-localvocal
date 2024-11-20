@@ -4,6 +4,8 @@
 extern "C" {
 #endif
 
+#define MT_ obs_module_text
+
 void transcription_filter_activate(void *data);
 void *transcription_filter_create(obs_data_t *settings, obs_source_t *filter);
 void transcription_filter_update(void *data, obs_data_t *s);

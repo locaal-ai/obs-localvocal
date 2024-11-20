@@ -131,6 +131,15 @@ vad_state vad_disabled_segmentation(transcription_filter_data *gf, vad_state las
 	const int ret = get_data_from_buf_and_resample(gf, start_timestamp_offset_ns,
 						       end_timestamp_offset_ns);
 	if (ret != 0) {
+		// if there's data on the whisper buffer - run inference as "final" segment
+		if (gf->whisper_buffer.size > 0) {
+			obs_log(gf->log_level,
+				"VAD disabled: no new input but whisper buffer has %lu bytes, run inference",
+				gf->whisper_buffer.size);
+			run_inference_and_callbacks(gf, last_vad_state.start_ts_offest_ms,
+						    last_vad_state.end_ts_offset_ms,
+						    VAD_STATE_WAS_OFF);
+		}
 		return last_vad_state;
 	}
 
@@ -141,8 +150,8 @@ vad_state vad_disabled_segmentation(transcription_filter_data *gf, vad_state las
 	circlebuf_pop_front(&gf->resampled_buffer, nullptr, gf->resampled_buffer.size);
 
 	const uint64_t whisper_buf_samples = gf->whisper_buffer.size / sizeof(float);
-	const bool is_partial_segment = whisper_buf_samples <
-					gf->segment_duration * WHISPER_SAMPLE_RATE / 1000;
+	const bool is_partial_segment =
+		whisper_buf_samples < (uint64_t)(gf->segment_duration * WHISPER_SAMPLE_RATE / 1000);
 
 #ifdef LOCALVOCAL_EXTRA_VERBOSE
 	obs_log(gf->log_level,
@@ -151,7 +160,6 @@ vad_state vad_disabled_segmentation(transcription_filter_data *gf, vad_state las
 		is_partial_segment ? "PARTIAL" : "OFF");
 #endif
 
-	const uint64_t start_ts_offset_ms = start_timestamp_offset_ns / 1000000;
 	const uint64_t end_ts_offset_ms = end_timestamp_offset_ns / 1000000;
 
 	if (is_partial_segment) {
@@ -160,13 +168,20 @@ vad_state vad_disabled_segmentation(transcription_filter_data *gf, vad_state las
 		const uint64_t unprocessed_length_ms =
 			end_ts_offset_ms - last_vad_state.last_partial_segment_end_ts;
 		if (unprocessed_length_ms > (uint64_t)gf->partial_latency) {
-			obs_log(gf->log_level,
-				"VAD disabled: partial segment with %lu ms unprocessed audio. start %lu, end %lu",
-				unprocessed_length_ms, last_vad_state.start_ts_offest_ms,
-				end_ts_offset_ms);
-			// Send to inference
-			run_inference_and_callbacks(gf, last_vad_state.start_ts_offest_ms,
-						    end_ts_offset_ms, VAD_STATE_PARTIAL);
+			if (gf->partial_transcription) {
+				obs_log(gf->log_level,
+					"VAD disabled: partial segment with %lu ms unprocessed audio. start %lu, end %lu",
+					unprocessed_length_ms, last_vad_state.start_ts_offest_ms,
+					end_ts_offset_ms);
+				// Send to inference
+				run_inference_and_callbacks(gf, last_vad_state.start_ts_offest_ms,
+							    end_ts_offset_ms, VAD_STATE_PARTIAL);
+			} else {
+				obs_log(gf->log_level,
+					"VAD disabled: partial segment with %lu ms unprocessed audio. start %lu, end %lu. Skipping.",
+					unprocessed_length_ms, last_vad_state.start_ts_offest_ms,
+					end_ts_offset_ms);
+			}
 			// update the last partial segment end timestamp
 			last_vad_state.last_partial_segment_end_ts = end_ts_offset_ms;
 		}

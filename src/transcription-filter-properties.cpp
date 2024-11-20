@@ -8,6 +8,7 @@
 #include "transcription-filter-utils.h"
 #include "whisper-utils/whisper-language.h"
 #include "whisper-utils/vad-processing.h"
+#include "whisper-utils/whisper-params.h"
 #include "model-utils/model-downloader-types.h"
 #include "translation/language_codes.h"
 #include "ui/filter-replace-dialog.h"

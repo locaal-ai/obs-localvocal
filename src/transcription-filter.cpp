@@ -25,6 +25,7 @@
 #include "whisper-utils/whisper-language.h"
 #include "whisper-utils/whisper-model-utils.h"
 #include "whisper-utils/whisper-utils.h"
+#include "whisper-utils/whisper-params.h"
 #include "translation/language_codes.h"
 #include "translation/translation-utils.h"
 #include "translation/translation.h"
@@ -357,17 +358,20 @@ void transcription_filter_update(void *data, obs_data_t *s)
 		if (!new_translate || gf->translation_model_index != "whisper-based-translation") {
 			const char *whisper_language_select =
 				obs_data_get_string(s, "whisper_language_select");
-			gf->whisper_params.language = (whisper_language_select != nullptr &&
-						       strlen(whisper_language_select) > 0)
-							      ? whisper_language_select
-							      : "auto";
+			const bool language_selected = whisper_language_select != nullptr &&
+						       strlen(whisper_language_select) > 0;
+			gf->whisper_params.language = (language_selected) ? whisper_language_select
+									  : "auto";
+			gf->whisper_params.detect_language = !language_selected;
 		} else {
 			// take the language from gf->target_lang
 			if (language_codes_to_whisper.count(gf->target_lang) > 0) {
 				gf->whisper_params.language =
 					language_codes_to_whisper[gf->target_lang].c_str();
+				gf->whisper_params.detect_language = false;
 			} else {
 				gf->whisper_params.language = "auto";
+				gf->whisper_params.detect_language = true;
 			}
 		}
 
