@@ -89,6 +89,14 @@ struct transcription_filter_data {
 	float duration_filter_threshold = 2.25f;
 	int segment_duration = 7000;
 
+	// Cloud translation options
+	bool translate_cloud = false;
+	std::string translate_cloud_provider;
+	std::string translate_cloud_target_language;
+	std::string translate_cloud_output;
+	std::string translate_cloud_api_key;
+	std::string translate_cloud_secret_key;
+
 	// Last transcription result
 	std::string last_text_for_translation;
 	std::string last_text_translation;

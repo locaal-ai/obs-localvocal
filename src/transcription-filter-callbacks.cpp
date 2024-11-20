@@ -21,6 +21,7 @@
 #include "whisper-utils/whisper-utils.h"
 #include "whisper-utils/whisper-model-utils.h"
 #include "translation/language_codes.h"
+#include "translation/cloud-translation/translation-cloud.h"
 
 void send_caption_to_source(const std::string &target_source_name, const std::string &caption,
 			    struct transcription_filter_data *gf)
@@ -67,6 +68,41 @@ std::string send_sentence_to_translation(const std::string &sentence,
 		if (translate(gf->translation_ctx, sentence,
 			      language_codes_from_whisper[source_language], gf->target_lang,
 			      translated_text) == OBS_POLYGLOT_TRANSLATION_SUCCESS) {
+			if (gf->log_words) {
+				obs_log(LOG_INFO, "Translation: '%s' -> '%s'", sentence.c_str(),
+					translated_text.c_str());
+			}
+			gf->last_text_translation = translated_text;
+			return translated_text;
+		} else {
+			obs_log(gf->log_level, "Failed to translate text");
+		}
+	}
+	return "";
+}
+
+std::string send_text_to_cloud_translation(const std::string &sentence,
+					   struct transcription_filter_data *gf,
+					   const std::string &source_language)
+{
+	const std::string last_text = gf->last_text_for_translation;
+	gf->last_text_for_translation = sentence;
+	if (gf->translate_cloud && !sentence.empty()) {
+		obs_log(gf->log_level, "Translating text with cloud provider. %s -> %s",
+			source_language.c_str(), gf->target_lang.c_str());
+		std::string translated_text;
+		if (sentence == last_text) {
+			// do not translate the same sentence twice
+			return gf->last_text_translation;
+		}
+		CloudTranslatorConfig config;
+		config.provider = gf->translate_cloud_provider;
+		config.access_key = gf->translate_cloud_api_key;
+		config.secret_key = gf->translate_cloud_secret_key;
+
+		translated_text = translate_cloud(
+			config, sentence, gf->translate_cloud_target_language, source_language);
+		if (!translated_text.empty()) {
 			if (gf->log_words) {
 				obs_log(LOG_INFO, "Translation: '%s' -> '%s'", sentence.c_str(),
 					translated_text.c_str());
