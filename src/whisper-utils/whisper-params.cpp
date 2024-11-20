@@ -103,10 +103,10 @@ void apply_whisper_params_from_settings(whisper_full_params &params, obs_data_t 
 {
 	params = whisper_full_default_params(
 		(whisper_sampling_strategy)obs_data_get_int(settings, "strategy"));
-	params.n_threads = obs_data_get_int(settings, "n_threads");
-	params.n_max_text_ctx = obs_data_get_int(settings, "n_max_text_ctx");
-	params.offset_ms = obs_data_get_int(settings, "offset_ms");
-	params.duration_ms = obs_data_get_int(settings, "duration_ms");
+	params.n_threads = (int)obs_data_get_int(settings, "n_threads");
+	params.n_max_text_ctx = (int)obs_data_get_int(settings, "n_max_text_ctx");
+	params.offset_ms = (int)obs_data_get_int(settings, "offset_ms");
+	params.duration_ms = (int)obs_data_get_int(settings, "duration_ms");
 	params.translate = obs_data_get_bool(settings, "whisper_translate");
 	params.no_context = obs_data_get_bool(settings, "no_context");
 	params.no_timestamps = obs_data_get_bool(settings, "no_timestamps");
@@ -116,13 +116,13 @@ void apply_whisper_params_from_settings(whisper_full_params &params, obs_data_t 
 	params.print_realtime = obs_data_get_bool(settings, "print_realtime");
 	params.print_timestamps = obs_data_get_bool(settings, "print_timestamps");
 	params.token_timestamps = obs_data_get_bool(settings, "token_timestamps");
-	params.thold_pt = obs_data_get_double(settings, "thold_pt");
-	params.thold_ptsum = obs_data_get_double(settings, "thold_ptsum");
-	params.max_len = obs_data_get_int(settings, "max_len");
+	params.thold_pt = (float)obs_data_get_double(settings, "thold_pt");
+	params.thold_ptsum = (float)obs_data_get_double(settings, "thold_ptsum");
+	params.max_len = (int)obs_data_get_int(settings, "max_len");
 	params.split_on_word = obs_data_get_bool(settings, "split_on_word");
-	params.max_tokens = obs_data_get_int(settings, "max_tokens");
+	params.max_tokens = (int)obs_data_get_int(settings, "max_tokens");
 	params.debug_mode = obs_data_get_bool(settings, "debug_mode");
-	params.audio_ctx = obs_data_get_int(settings, "audio_ctx");
+	params.audio_ctx = (int)obs_data_get_int(settings, "audio_ctx");
 	params.tdrz_enable = obs_data_get_bool(settings, "tdrz_enable");
 	params.suppress_regex = obs_data_get_string(settings, "suppress_regex");
 	params.initial_prompt = obs_data_get_string(settings, "initial_prompt");
@@ -131,16 +131,16 @@ void apply_whisper_params_from_settings(whisper_full_params &params, obs_data_t 
 	params.suppress_blank = obs_data_get_bool(settings, "suppress_blank");
 	params.suppress_non_speech_tokens =
 		obs_data_get_bool(settings, "suppress_non_speech_tokens");
-	params.temperature = obs_data_get_double(settings, "temperature");
-	params.max_initial_ts = obs_data_get_double(settings, "max_initial_ts");
-	params.length_penalty = obs_data_get_double(settings, "length_penalty");
-	params.temperature_inc = obs_data_get_double(settings, "temperature_inc");
-	params.entropy_thold = obs_data_get_double(settings, "entropy_thold");
-	params.logprob_thold = obs_data_get_double(settings, "logprob_thold");
-	params.no_speech_thold = obs_data_get_double(settings, "no_speech_thold");
-	params.greedy.best_of = obs_data_get_int(settings, "greedy.best_of");
-	params.beam_search.beam_size = obs_data_get_int(settings, "beam_search.beam_size");
-	params.beam_search.patience = obs_data_get_double(settings, "beam_search.patience");
+	params.temperature = (float)obs_data_get_double(settings, "temperature");
+	params.max_initial_ts = (float)obs_data_get_double(settings, "max_initial_ts");
+	params.length_penalty = (float)obs_data_get_double(settings, "length_penalty");
+	params.temperature_inc = (float)obs_data_get_double(settings, "temperature_inc");
+	params.entropy_thold = (float)obs_data_get_double(settings, "entropy_thold");
+	params.logprob_thold = (float)obs_data_get_double(settings, "logprob_thold");
+	params.no_speech_thold = (float)obs_data_get_double(settings, "no_speech_thold");
+	params.greedy.best_of = (int)obs_data_get_int(settings, "greedy.best_of");
+	params.beam_search.beam_size = (int)obs_data_get_int(settings, "beam_search.beam_size");
+	params.beam_search.patience = (float)obs_data_get_double(settings, "beam_search.patience");
 }
 
 void add_whisper_params_group_properties(obs_properties_t *ppts)
