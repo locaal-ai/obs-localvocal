@@ -45,7 +45,7 @@ std::string CurlHelper::urlEncode(CURL *curl, const std::string &value)
 	}
 
 	std::unique_ptr<char, decltype(&curl_free)> escaped(
-		curl_easy_escape(curl, value.c_str(), value.length()), curl_free);
+		curl_easy_escape(curl, value.c_str(), (int)value.length()), curl_free);
 
 	if (!escaped) {
 		throw TranslationError("Failed to URL encode string");
@@ -54,7 +54,7 @@ std::string CurlHelper::urlEncode(CURL *curl, const std::string &value)
 	return std::string(escaped.get());
 }
 
-struct curl_slist *CurlHelper::createBasicHeaders(CURL *curl, const std::string &content_type)
+struct curl_slist *CurlHelper::createBasicHeaders(const std::string &content_type)
 {
 	struct curl_slist *headers = nullptr;
 

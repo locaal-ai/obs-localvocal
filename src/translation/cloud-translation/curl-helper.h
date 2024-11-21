@@ -18,7 +18,7 @@ public:
 
 	// Common request builders
 	static struct curl_slist *
-	createBasicHeaders(CURL *curl, const std::string &content_type = "application/json");
+	createBasicHeaders(const std::string &content_type = "application/json");
 
 	// Verify HTTPS certificate
 	static void setSSLVerification(CURL *curl, bool verify = true);
