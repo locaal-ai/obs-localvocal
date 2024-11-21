@@ -37,7 +37,7 @@ std::unique_ptr<ITranslator> createTranslator(const CloudTranslatorConfig &confi
 			config.access_key,
 			config.model.empty() ? "gpt-4-turbo-preview" : config.model);
 	}
-	throw std::invalid_argument("Unknown translation provider: " + config.provider);
+	throw TranslationError("Unknown translation provider: " + config.provider);
 }
 
 std::string translate_cloud(const CloudTranslatorConfig &config, const std::string &text,
@@ -45,6 +45,8 @@ std::string translate_cloud(const CloudTranslatorConfig &config, const std::stri
 {
 	try {
 		auto translator = createTranslator(config);
+		obs_log(LOG_INFO, "translate with cloud provider %s. %s -> %s",
+			config.provider.c_str(), source_lang.c_str(), target_lang.c_str());
 		std::string result = translator->translate(text, target_lang, source_lang);
 		return result;
 	} catch (const TranslationError &e) {

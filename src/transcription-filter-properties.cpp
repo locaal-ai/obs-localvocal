@@ -49,8 +49,10 @@ bool translation_cloud_options_callback(obs_properties_t *props, obs_property_t 
 	UNUSED_PARAMETER(property);
 	// Show/Hide the cloud translation group options
 	const bool translate_enabled = obs_data_get_bool(settings, "translate_cloud");
-	for (const auto &prop : {"translate_cloud_provider", "translate_cloud_target_language",
-				 "translate_cloud_output", "translate_cloud_api_key"}) {
+	for (const auto &prop :
+	     {"translate_cloud_provider", "translate_cloud_target_language",
+	      "translate_cloud_output", "translate_cloud_api_key",
+	      "translate_cloud_only_full_sentences", "translate_cloud_secret_key"}) {
 		obs_property_set_visible(obs_properties_get(props, prop), translate_enabled);
 	}
 	return true;
@@ -209,9 +211,9 @@ void add_translation_cloud_group_properties(obs_properties_t *ppts)
 		MT_("translate_cloud_provider"), OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_STRING);
 	// Populate the dropdown with the cloud translation service providers
 	obs_property_list_add_string(prop_translate_cloud_provider, MT_("Google-Cloud-Translation"),
-				     "google-cloud-translation");
+				     "google");
 	obs_property_list_add_string(prop_translate_cloud_provider, MT_("Microsoft-Translator"),
-				     "microsoft-translator");
+				     "azure");
 	// obs_property_list_add_string(prop_translate_cloud_provider, MT_("Amazon-Translate"),
 	// 			     "amazon-translate");
 	// obs_property_list_add_string(prop_translate_cloud_provider, MT_("IBM-Watson-Translate"),
@@ -229,13 +231,13 @@ void add_translation_cloud_group_properties(obs_properties_t *ppts)
 	// obs_property_list_add_string(prop_translate_cloud_provider, MT_("Kakao-Translate"),
 	// 			     "kakao-translate");
 	obs_property_list_add_string(prop_translate_cloud_provider, MT_("Papago-Translate"),
-				     "papago-translate");
+				     "papago");
 	obs_property_list_add_string(prop_translate_cloud_provider, MT_("Deepl-Translate"),
-				     "deepl-translate");
+				     "deepl");
 	obs_property_list_add_string(prop_translate_cloud_provider, MT_("OpenAI-Translate"),
-				     "openai-translate");
+				     "openai");
 	obs_property_list_add_string(prop_translate_cloud_provider, MT_("Claude-Translate"),
-				     "claude-translate");
+				     "claude");
 
 	// add target language selection
 	obs_property_t *prop_tgt = obs_properties_add_list(
@@ -252,6 +254,10 @@ void add_translation_cloud_group_properties(obs_properties_t *ppts)
 		OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_STRING);
 	obs_property_list_add_string(prop_output, "Write to captions output", "none");
 	obs_enum_sources(add_sources_to_list, prop_output);
+
+	// add boolean option for only full sentences
+	obs_properties_add_bool(translation_cloud_group, "translate_cloud_only_full_sentences",
+				MT_("translate_cloud_only_full_sentences"));
 
 	// add input for API Key
 	obs_properties_add_text(translation_cloud_group, "translate_cloud_api_key",
@@ -695,10 +701,12 @@ void transcription_filter_defaults(obs_data_t *s)
 
 	// cloud translation options
 	obs_data_set_default_bool(s, "translate_cloud", false);
-	obs_data_set_default_string(s, "translate_cloud_provider", "google-cloud-translation");
+	obs_data_set_default_string(s, "translate_cloud_provider", "google");
 	obs_data_set_default_string(s, "translate_cloud_target_language", "en");
 	obs_data_set_default_string(s, "translate_cloud_output", "none");
+	obs_data_set_default_bool(s, "translate_cloud_only_full_sentences", true);
 	obs_data_set_default_string(s, "translate_cloud_api_key", "");
+	obs_data_set_default_string(s, "translate_cloud_secret_key", "");
 
 	// Whisper parameters
 	obs_data_set_default_int(s, "whisper_sampling_method", WHISPER_SAMPLING_BEAM_SEARCH);

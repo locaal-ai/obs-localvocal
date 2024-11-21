@@ -81,39 +81,46 @@ std::string send_sentence_to_translation(const std::string &sentence,
 	return "";
 }
 
-std::string send_text_to_cloud_translation(const std::string &sentence,
-					   struct transcription_filter_data *gf,
-					   const std::string &source_language)
+void send_sentence_to_cloud_translation_async(const std::string &sentence,
+					      struct transcription_filter_data *gf,
+					      const std::string &source_language,
+					      std::function<void(const std::string &)> callback)
 {
-	const std::string last_text = gf->last_text_for_translation;
-	gf->last_text_for_translation = sentence;
-	if (gf->translate_cloud && !sentence.empty()) {
-		obs_log(gf->log_level, "Translating text with cloud provider. %s -> %s",
-			source_language.c_str(), gf->target_lang.c_str());
-		std::string translated_text;
-		if (sentence == last_text) {
-			// do not translate the same sentence twice
-			return gf->last_text_translation;
-		}
-		CloudTranslatorConfig config;
-		config.provider = gf->translate_cloud_provider;
-		config.access_key = gf->translate_cloud_api_key;
-		config.secret_key = gf->translate_cloud_secret_key;
-
-		translated_text = translate_cloud(
-			config, sentence, gf->translate_cloud_target_language, source_language);
-		if (!translated_text.empty()) {
-			if (gf->log_words) {
-				obs_log(LOG_INFO, "Translation: '%s' -> '%s'", sentence.c_str(),
-					translated_text.c_str());
+	std::thread([sentence, gf, source_language, callback]() {
+		const std::string last_text = gf->last_text_for_cloud_translation;
+		gf->last_text_for_cloud_translation = sentence;
+		if (gf->translate_cloud && !sentence.empty()) {
+			obs_log(gf->log_level, "Translating text with cloud provider %s. %s -> %s",
+				gf->translate_cloud_provider.c_str(), source_language.c_str(),
+				gf->translate_cloud_target_language.c_str());
+			std::string translated_text;
+			if (sentence == last_text) {
+				// do not translate the same sentence twice
+				callback(gf->last_text_cloud_translation);
+				return;
 			}
-			gf->last_text_translation = translated_text;
-			return translated_text;
-		} else {
-			obs_log(gf->log_level, "Failed to translate text");
+			CloudTranslatorConfig config;
+			config.provider = gf->translate_cloud_provider;
+			config.access_key = gf->translate_cloud_api_key;
+			config.secret_key = gf->translate_cloud_secret_key;
+
+			translated_text = translate_cloud(config, sentence,
+							  gf->translate_cloud_target_language,
+							  source_language);
+			if (!translated_text.empty()) {
+				if (gf->log_words) {
+					obs_log(LOG_INFO, "Cloud Translation: '%s' -> '%s'",
+						sentence.c_str(), translated_text.c_str());
+				}
+				gf->last_text_translation = translated_text;
+				callback(translated_text);
+				return;
+			} else {
+				obs_log(gf->log_level, "Failed to translate text");
+			}
 		}
-	}
-	return "";
+		callback("");
+	}).detach();
 }
 
 void send_sentence_to_file(struct transcription_filter_data *gf,
@@ -271,31 +278,48 @@ void set_text_callback(struct transcription_filter_data *gf,
 		}
 	}
 
-	bool should_translate =
+	bool should_translate_local =
 		gf->translate_only_full_sentences ? result.result == DETECTION_RESULT_SPEECH : true;
 
 	// send the sentence to translation (if enabled)
-	std::string translated_sentence =
-		should_translate ? send_sentence_to_translation(str_copy, gf, result.language) : "";
+	std::string translated_sentence_local =
+		should_translate_local ? send_sentence_to_translation(str_copy, gf, result.language)
+				       : "";
 
 	if (gf->translate) {
 		if (gf->translation_output == "none") {
 			// overwrite the original text with the translated text
-			str_copy = translated_sentence;
+			str_copy = translated_sentence_local;
 		} else {
 			if (gf->buffered_output) {
 				// buffered output - add the sentence to the monitor
 				gf->translation_monitor.addSentenceFromStdString(
-					translated_sentence,
+					translated_sentence_local,
 					get_time_point_from_ms(result.start_timestamp_ms),
 					get_time_point_from_ms(result.end_timestamp_ms),
 					result.result == DETECTION_RESULT_PARTIAL);
 			} else {
 				// non-buffered output - send the sentence to the selected source
-				send_caption_to_source(gf->translation_output, translated_sentence,
-						       gf);
+				send_caption_to_source(gf->translation_output,
+						       translated_sentence_local, gf);
 			}
 		}
+	}
+
+	bool should_translate_cloud = (gf->translate_cloud_only_full_sentences
+					       ? result.result == DETECTION_RESULT_SPEECH
+					       : true) &&
+				      gf->translate_cloud;
+
+	if (should_translate_cloud) {
+		send_sentence_to_cloud_translation_async(
+			str_copy, gf, result.language,
+			[gf](const std::string &translated_sentence_cloud) {
+				if (gf->translate_cloud_output != "none") {
+					send_caption_to_source(gf->translate_cloud_output,
+							       translated_sentence_cloud, gf);
+				}
+			});
 	}
 
 	if (gf->buffered_output) {
@@ -315,7 +339,7 @@ void set_text_callback(struct transcription_filter_data *gf,
 
 	if (gf->save_to_file && gf->output_file_path != "" &&
 	    result.result == DETECTION_RESULT_SPEECH) {
-		send_sentence_to_file(gf, result, str_copy, translated_sentence);
+		send_sentence_to_file(gf, result, str_copy, translated_sentence_local);
 	}
 
 	if (!result.text.empty() && (result.result == DETECTION_RESULT_SPEECH ||

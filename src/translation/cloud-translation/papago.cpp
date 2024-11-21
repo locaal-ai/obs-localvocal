@@ -136,8 +136,13 @@ std::string PapagoTranslator::translate(const std::string &text, const std::stri
 		throw TranslationError("Text exceeds maximum length of 5000 characters");
 	}
 
+	std::string target_lang_valid = target_lang;
+	target_lang_valid.erase(std::remove(target_lang_valid.begin(), target_lang_valid.end(),
+					    '_'),
+				target_lang_valid.end());
+
 	std::string papago_source = mapLanguageCode(source_lang);
-	std::string papago_target = mapLanguageCode(target_lang);
+	std::string papago_target = mapLanguageCode(target_lang_valid);
 
 	if (!isLanguagePairSupported(papago_source, papago_target)) {
 		throw TranslationError("Unsupported language pair: " + source_lang + " to " +
