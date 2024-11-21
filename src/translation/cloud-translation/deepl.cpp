@@ -31,9 +31,9 @@ std::string DeepLTranslator::translate(const std::string &text, const std::strin
 		std::string upperTarget = target_lang;
 		std::string upperSource = source_lang;
 		for (char &c : upperTarget)
-			c = std::toupper(c);
+			c = (char)std::toupper((int)c);
 		for (char &c : upperSource)
-			c = std::toupper(c);
+			c = (char)std::toupper((int)c);
 
 		std::stringstream url;
 		url << "https://api-free.deepl.com/v2/translate"
