@@ -1,5 +1,5 @@
 #pragma once
-#include "iTranslator.h"
+#include "ITranslator.h"
 #include <memory>
 
 class CurlHelper; // Forward declaration

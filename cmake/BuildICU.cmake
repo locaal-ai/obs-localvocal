@@ -66,8 +66,10 @@ else()
     DOWNLOAD_EXTRACT_TIMESTAMP true
     GIT_REPOSITORY "https://github.com/unicode-org/icu.git"
     GIT_TAG "release-${ICU_VERSION_DASH}"
-    CONFIGURE_COMMAND ${CMAKE_COMMAND} -E env ${ICU_BUILD_ENV_VARS} <SOURCE_DIR>/icu4c/source/runConfigureICU
-                      ${ICU_PLATFORM} --prefix=<INSTALL_DIR> --enable-static --disable-shared
+    CONFIGURE_COMMAND
+      ${CMAKE_COMMAND} -E env ${ICU_BUILD_ENV_VARS} <SOURCE_DIR>/icu4c/source/runConfigureICU ${ICU_PLATFORM}
+      --prefix=<INSTALL_DIR> --enable-static --disable-shared --disable-tools --disable-samples --disable-layout
+      --disable-layoutex --disable-tests --disable-draft --disable-extras --disable-icuio
     BUILD_COMMAND make -j4
     BUILD_BYPRODUCTS
       <INSTALL_DIR>/lib/${CMAKE_STATIC_LIBRARY_PREFIX}icudata${CMAKE_STATIC_LIBRARY_SUFFIX}
