@@ -48,6 +48,14 @@ if(WIN32)
                                                                                        "${ICU_LIB_${lib}}")
   endforeach()
 else()
+  # Add ccache detection at the start
+  find_program(CCACHE_PROGRAM ccache)
+  if(CCACHE_PROGRAM)
+    message(STATUS "Found ccache: ${CCACHE_PROGRAM}")
+    set(CMAKE_C_COMPILER_LAUNCHER "${CCACHE_PROGRAM}")
+    set(CMAKE_CXX_COMPILER_LAUNCHER "${CCACHE_PROGRAM}")
+  endif()
+
   set(ICU_URL
       "https://github.com/unicode-org/icu/releases/download/release-${ICU_VERSION_DASH}/icu4c-${ICU_VERSION_UNDERSCORE}-src.tgz"
   )
@@ -55,10 +63,20 @@ else()
   if(APPLE)
     set(ICU_PLATFORM "MacOSX")
     set(TARGET_ARCH -arch\ $ENV{MACOS_ARCH})
-    set(ICU_BUILD_ENV_VARS CFLAGS=${TARGET_ARCH} CXXFLAGS=${TARGET_ARCH} LDFLAGS=${TARGET_ARCH})
+    set(ICU_BUILD_ENV_VARS
+        CFLAGS=${TARGET_ARCH}
+        CXXFLAGS=${TARGET_ARCH}
+        LDFLAGS=${TARGET_ARCH}
+        CC="${CMAKE_C_COMPILER_LAUNCHER} ${CMAKE_C_COMPILER}"
+        CXX="${CMAKE_CXX_COMPILER_LAUNCHER} ${CMAKE_CXX_COMPILER}")
   else()
     set(ICU_PLATFORM "Linux")
-    set(ICU_BUILD_ENV_VARS CFLAGS=-fPIC CXXFLAGS=-fPIC LDFLAGS=-fPIC)
+    set(ICU_BUILD_ENV_VARS
+        CFLAGS=-fPIC
+        CXXFLAGS=-fPIC
+        LDFLAGS=-fPIC
+        CC="${CMAKE_C_COMPILER_LAUNCHER} ${CMAKE_C_COMPILER}"
+        CXX="${CMAKE_CXX_COMPILER_LAUNCHER} ${CMAKE_CXX_COMPILER}")
   endif()
 
   ExternalProject_Add(
