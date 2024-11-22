@@ -124,27 +124,13 @@ void send_sentence_to_cloud_translation_async(const std::string &sentence,
 }
 
 void send_sentence_to_file(struct transcription_filter_data *gf,
-			   const DetectionResultWithText &result, const std::string &str_copy,
-			   const std::string &translated_sentence)
+			   const DetectionResultWithText &result, const std::string &sentence,
+			   const std::string &file_path, bool bump_sentence_number)
 {
 	// Check if we should save the sentence
 	if (gf->save_only_while_recording && !obs_frontend_recording_active()) {
 		// We are not recording, do not save the sentence to file
 		return;
-	}
-
-	std::string translated_file_path = "";
-	bool write_translations = gf->translate && !translated_sentence.empty();
-
-	// if translation is enabled, save the translated sentence to another file
-	if (write_translations) {
-		// add a postfix to the file name (without extension) with the translation target language
-		std::string output_file_path = gf->output_file_path;
-		std::string file_extension =
-			output_file_path.substr(output_file_path.find_last_of(".") + 1);
-		std::string file_name =
-			output_file_path.substr(0, output_file_path.find_last_of("."));
-		translated_file_path = file_name + "_" + gf->target_lang + "." + file_extension;
 	}
 
 	// should the file be truncated?
@@ -157,15 +143,9 @@ void send_sentence_to_file(struct transcription_filter_data *gf,
 	if (!gf->save_srt) {
 		// Write raw sentence to file
 		try {
-			std::ofstream output_file(gf->output_file_path, openmode);
-			output_file << str_copy << std::endl;
+			std::ofstream output_file(file_path, openmode);
+			output_file << sentence << std::endl;
 			output_file.close();
-			if (write_translations) {
-				std::ofstream translated_output_file(translated_file_path,
-								     openmode);
-				translated_output_file << translated_sentence << std::endl;
-				translated_output_file.close();
-			}
 		} catch (const std::ofstream::failure &e) {
 			obs_log(LOG_ERROR, "Exception opening/writing/closing file: %s", e.what());
 		}
@@ -176,9 +156,9 @@ void send_sentence_to_file(struct transcription_filter_data *gf,
 		}
 
 		obs_log(gf->log_level, "Saving sentence to file %s, sentence #%d",
-			gf->output_file_path.c_str(), gf->sentence_number);
+			file_path.c_str(), gf->sentence_number);
 		// Append sentence to file in .srt format
-		std::ofstream output_file(gf->output_file_path, openmode);
+		std::ofstream output_file(file_path, openmode);
 		output_file << gf->sentence_number << std::endl;
 		// use the start and end timestamps to calculate the start and end time in srt format
 		auto format_ts_for_srt = [](std::ofstream &output_stream, uint64_t ts) {
@@ -199,28 +179,34 @@ void send_sentence_to_file(struct transcription_filter_data *gf,
 		format_ts_for_srt(output_file, result.end_timestamp_ms);
 		output_file << std::endl;
 
-		output_file << str_copy << std::endl;
+		output_file << sentence << std::endl;
 		output_file << std::endl;
 		output_file.close();
 
-		if (write_translations) {
-			obs_log(gf->log_level, "Saving translation to file %s, sentence #%d",
-				translated_file_path.c_str(), gf->sentence_number);
-
-			// Append translated sentence to file in .srt format
-			std::ofstream translated_output_file(translated_file_path, openmode);
-			translated_output_file << gf->sentence_number << std::endl;
-			format_ts_for_srt(translated_output_file, result.start_timestamp_ms);
-			translated_output_file << " --> ";
-			format_ts_for_srt(translated_output_file, result.end_timestamp_ms);
-			translated_output_file << std::endl;
-
-			translated_output_file << translated_sentence << std::endl;
-			translated_output_file << std::endl;
-			translated_output_file.close();
+		if (bump_sentence_number) {
+			gf->sentence_number++;
 		}
+	}
+}
 
-		gf->sentence_number++;
+void send_translated_sentence_to_file(struct transcription_filter_data *gf,
+				      const DetectionResultWithText &result,
+				      const std::string &translated_sentence,
+				      const std::string &target_lang)
+{
+	// if translation is enabled, save the translated sentence to another file
+	if (translated_sentence.empty()) {
+		obs_log(gf->log_level, "Translation is empty, not saving to file");
+	} else {
+		// add a postfix to the file name (without extension) with the translation target language
+		std::string translated_file_path = "";
+		std::string output_file_path = gf->output_file_path;
+		std::string file_extension =
+			output_file_path.substr(output_file_path.find_last_of(".") + 1);
+		std::string file_name =
+			output_file_path.substr(0, output_file_path.find_last_of("."));
+		translated_file_path = file_name + "_" + target_lang + "." + file_extension;
+		send_sentence_to_file(gf, result, translated_sentence, translated_file_path, false);
 	}
 }
 
@@ -304,6 +290,10 @@ void set_text_callback(struct transcription_filter_data *gf,
 						       translated_sentence_local, gf);
 			}
 		}
+		if (gf->save_to_file && gf->output_file_path != "") {
+			send_translated_sentence_to_file(gf, result, translated_sentence_local,
+							 gf->target_lang);
+		}
 	}
 
 	bool should_translate_cloud = (gf->translate_cloud_only_full_sentences
@@ -314,22 +304,36 @@ void set_text_callback(struct transcription_filter_data *gf,
 	if (should_translate_cloud) {
 		send_sentence_to_cloud_translation_async(
 			str_copy, gf, result.language,
-			[gf](const std::string &translated_sentence_cloud) {
+			[gf, result](const std::string &translated_sentence_cloud) {
 				if (gf->translate_cloud_output != "none") {
 					send_caption_to_source(gf->translate_cloud_output,
 							       translated_sentence_cloud, gf);
+				} else {
+					// overwrite the original text with the translated text
+					send_caption_to_source(gf->text_source_name,
+							       translated_sentence_cloud, gf);
+				}
+				if (gf->save_to_file && gf->output_file_path != "") {
+					send_translated_sentence_to_file(
+						gf, result, translated_sentence_cloud,
+						gf->translate_cloud_target_language);
 				}
 			});
 	}
 
-	if (gf->buffered_output) {
-		gf->captions_monitor.addSentenceFromStdString(
-			str_copy, get_time_point_from_ms(result.start_timestamp_ms),
-			get_time_point_from_ms(result.end_timestamp_ms),
-			result.result == DETECTION_RESULT_PARTIAL);
-	} else {
-		// non-buffered output - send the sentence to the selected source
-		send_caption_to_source(gf->text_source_name, str_copy, gf);
+	// send the original text to the output
+	// unless the translation is enabled and set to overwrite the original text
+	if (!((should_translate_cloud && gf->translate_cloud_output == "none") ||
+	      (should_translate_local && gf->translation_output == "none"))) {
+		if (gf->buffered_output) {
+			gf->captions_monitor.addSentenceFromStdString(
+				str_copy, get_time_point_from_ms(result.start_timestamp_ms),
+				get_time_point_from_ms(result.end_timestamp_ms),
+				result.result == DETECTION_RESULT_PARTIAL);
+		} else {
+			// non-buffered output - send the sentence to the selected source
+			send_caption_to_source(gf->text_source_name, str_copy, gf);
+		}
 	}
 
 	if (gf->caption_to_stream && result.result == DETECTION_RESULT_SPEECH) {
@@ -339,7 +343,7 @@ void set_text_callback(struct transcription_filter_data *gf,
 
 	if (gf->save_to_file && gf->output_file_path != "" &&
 	    result.result == DETECTION_RESULT_SPEECH) {
-		send_sentence_to_file(gf, result, str_copy, translated_sentence_local);
+		send_sentence_to_file(gf, result, str_copy, gf->output_file_path, true);
 	}
 
 	if (!result.text.empty() && (result.result == DETECTION_RESULT_SPEECH ||
