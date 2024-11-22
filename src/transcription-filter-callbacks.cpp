@@ -103,6 +103,8 @@ void send_sentence_to_cloud_translation_async(const std::string &sentence,
 			config.provider = gf->translate_cloud_provider;
 			config.access_key = gf->translate_cloud_api_key;
 			config.secret_key = gf->translate_cloud_secret_key;
+			config.free = gf->translate_cloud_deepl_free;
+			config.region = gf->translate_cloud_region;
 
 			translated_text = translate_cloud(config, sentence,
 							  gf->translate_cloud_target_language,

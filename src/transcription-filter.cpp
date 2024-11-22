@@ -340,6 +340,8 @@ void transcription_filter_update(void *data, obs_data_t *s)
 		obs_data_get_bool(s, "translate_cloud_only_full_sentences");
 	gf->translate_cloud_api_key = obs_data_get_string(s, "translate_cloud_api_key");
 	gf->translate_cloud_secret_key = obs_data_get_string(s, "translate_cloud_secret_key");
+	gf->translate_cloud_deepl_free = obs_data_get_bool(s, "translate_cloud_deepl_free");
+	gf->translate_cloud_region = obs_data_get_string(s, "translate_cloud_region");
 
 	obs_log(gf->log_level, "update text source");
 	// update the text source

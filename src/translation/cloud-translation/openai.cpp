@@ -5,6 +5,8 @@
 #include <unordered_map>
 #include <unordered_set>
 
+#include "translation/language_codes.h"
+
 using json = nlohmann::json;
 
 OpenAITranslator::OpenAITranslator(const std::string &api_key, const std::string &model)
@@ -15,50 +17,6 @@ OpenAITranslator::OpenAITranslator(const std::string &api_key, const std::string
 }
 
 OpenAITranslator::~OpenAITranslator() = default;
-
-std::string OpenAITranslator::getLanguageName(const std::string &lang_code) const
-{
-	static const std::unordered_map<std::string, std::string> language_names = {
-		{"auto", "auto-detected language"},
-		{"en", "English"},
-		{"es", "Spanish"},
-		{"fr", "French"},
-		{"de", "German"},
-		{"it", "Italian"},
-		{"pt", "Portuguese"},
-		{"nl", "Dutch"},
-		{"pl", "Polish"},
-		{"ru", "Russian"},
-		{"ja", "Japanese"},
-		{"ko", "Korean"},
-		{"zh", "Chinese"},
-		{"ar", "Arabic"},
-		{"hi", "Hindi"},
-		{"bn", "Bengali"},
-		{"uk", "Ukrainian"},
-		{"vi", "Vietnamese"},
-		{"th", "Thai"},
-		{"tr", "Turkish"},
-		// Add more languages as needed
-	};
-
-	auto it = language_names.find(lang_code);
-	if (it != language_names.end()) {
-		return it->second;
-	}
-	return lang_code; // Return the code itself if no mapping exists
-}
-
-bool OpenAITranslator::isLanguageSupported(const std::string &lang_code) const
-{
-	static const std::unordered_set<std::string> supported_languages = {
-		"auto", "en", "es", "fr", "de", "it", "pt", "nl", "pl", "ru", "ja",
-		"ko",   "zh", "ar", "hi", "bn", "uk", "vi", "th", "tr"
-		// Add more supported languages as needed
-	};
-
-	return supported_languages.find(lang_code) != supported_languages.end();
-}
 
 std::string OpenAITranslator::createSystemPrompt(const std::string &target_lang) const
 {

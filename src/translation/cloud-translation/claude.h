@@ -16,8 +16,6 @@ public:
 private:
 	std::string parseResponse(const std::string &response_str);
 	std::string createSystemPrompt(const std::string &target_lang) const;
-	std::string getLanguageName(const std::string &lang_code) const;
-	bool isLanguageSupported(const std::string &lang_code) const;
 
 	std::string api_key_;
 	std::string model_;

@@ -22,3 +22,15 @@ public:
 std::unique_ptr<ITranslator> createTranslator(const std::string &provider,
 					      const std::string &api_key,
 					      const std::string &location = "");
+
+inline std::string sanitize_language_code(const std::string &lang_code)
+{
+	// Remove all non-alphabetic characters
+	std::string sanitized_code;
+	for (const char &c : lang_code) {
+		if (isalpha((int)c)) {
+			sanitized_code += c;
+		}
+	}
+	return sanitized_code;
+}

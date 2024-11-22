@@ -32,10 +32,10 @@ std::string AzureTranslator::translate(const std::string &text, const std::strin
 		// Construct the route
 		std::stringstream route;
 		route << "/translate?api-version=3.0"
-		      << "&to=" << target_lang;
+		      << "&to=" << sanitize_language_code(target_lang);
 
 		if (source_lang != "auto") {
-			route << "&from=" << source_lang;
+			route << "&from=" << sanitize_language_code(source_lang);
 		}
 
 		// Create the request body

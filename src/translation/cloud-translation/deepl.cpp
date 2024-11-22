@@ -5,8 +5,9 @@
 
 using json = nlohmann::json;
 
-DeepLTranslator::DeepLTranslator(const std::string &api_key)
+DeepLTranslator::DeepLTranslator(const std::string &api_key, bool free)
 	: api_key_(api_key),
+	  free_(free),
 	  curl_helper_(std::make_unique<CurlHelper>())
 {
 }
@@ -20,7 +21,7 @@ std::string DeepLTranslator::translate(const std::string &text, const std::strin
 								 curl_easy_cleanup);
 
 	if (!curl) {
-		throw TranslationError("Failed to initialize CURL session");
+		throw TranslationError("DeepL Failed to initialize CURL session");
 	}
 
 	std::string response;
@@ -28,35 +29,39 @@ std::string DeepLTranslator::translate(const std::string &text, const std::strin
 	try {
 		// Construct URL with parameters
 		// Note: DeepL uses uppercase language codes
-		std::string upperTarget = target_lang;
-		std::string upperSource = source_lang;
+		std::string upperTarget = sanitize_language_code(target_lang);
+		std::string upperSource = sanitize_language_code(source_lang);
 		for (char &c : upperTarget)
 			c = (char)std::toupper((int)c);
 		for (char &c : upperSource)
 			c = (char)std::toupper((int)c);
 
-		std::stringstream url;
-		url << "https://api-free.deepl.com/v2/translate"
-		    << "?auth_key=" << api_key_
-		    << "&text=" << CurlHelper::urlEncode(curl.get(), text)
-		    << "&target_lang=" << upperTarget;
+		json body = {{"text", {text}},
+			     {"target_lang", upperTarget},
+			     {"source_lang", upperSource}};
+		const std::string body_str = body.dump();
 
-		if (upperSource != "AUTO") {
-			url << "&source_lang=" << upperSource;
+		std::string url = "https://api.deepl.com/v2/translate";
+		if (free_) {
+			url = "https://api-free.deepl.com/v2/translate";
 		}
 
 		// Set up curl options
-		curl_easy_setopt(curl.get(), CURLOPT_URL, url.str().c_str());
+		curl_easy_setopt(curl.get(), CURLOPT_URL, url.c_str());
 		curl_easy_setopt(curl.get(), CURLOPT_WRITEFUNCTION, CurlHelper::WriteCallback);
 		curl_easy_setopt(curl.get(), CURLOPT_WRITEDATA, &response);
 		curl_easy_setopt(curl.get(), CURLOPT_SSL_VERIFYPEER, 1L);
 		curl_easy_setopt(curl.get(), CURLOPT_SSL_VERIFYHOST, 2L);
 		curl_easy_setopt(curl.get(), CURLOPT_TIMEOUT, 30L);
+		curl_easy_setopt(curl.get(), CURLOPT_POSTFIELDS, body_str.c_str());
+		curl_easy_setopt(curl.get(), CURLOPT_POSTFIELDSIZE, body_str.size());
+		curl_easy_setopt(curl.get(), CURLOPT_POST, 1L);
 
 		// DeepL requires specific headers
 		struct curl_slist *headers = nullptr;
+		headers = curl_slist_append(headers, "Content-Type: application/json");
 		headers = curl_slist_append(headers,
-					    "Content-Type: application/x-www-form-urlencoded");
+					    ("Authorization: DeepL-Auth-Key " + api_key_).c_str());
 		curl_easy_setopt(curl.get(), CURLOPT_HTTPHEADER, headers);
 
 		CURLcode res = curl_easy_perform(curl.get());
@@ -65,32 +70,46 @@ std::string DeepLTranslator::translate(const std::string &text, const std::strin
 		curl_slist_free_all(headers);
 
 		if (res != CURLE_OK) {
-			throw TranslationError(std::string("CURL request failed: ") +
+			throw TranslationError(std::string("DeepL: CURL request failed: ") +
 					       curl_easy_strerror(res));
 		}
 
 		return parseResponse(response);
 
 	} catch (const json::exception &e) {
-		throw TranslationError(std::string("JSON parsing error: ") + e.what());
+		throw TranslationError(std::string("DeepL JSON parsing error: ") + e.what() +
+				       ". Response: " + response);
 	}
 }
 
 std::string DeepLTranslator::parseResponse(const std::string &response_str)
 {
+	// Handle rate limiting errors
+	long response_code;
+	curl_easy_getinfo(curl_easy_init(), CURLINFO_RESPONSE_CODE, &response_code);
+	if (response_code == 429) {
+		throw TranslationError("DeepL API Error: Rate limit exceeded");
+	}
+	if (response_code == 456) {
+		throw TranslationError("DeepL API Error: Quota exceeded");
+	}
+
+	/*
+    {
+        "translations": [
+            {
+            "detected_source_language": "EN",
+            "text": "Hallo, Welt!"
+            }
+        ]
+    }
+    */
 	json response = json::parse(response_str);
 
 	// Check for API errors
 	if (response.contains("message")) {
 		throw TranslationError("DeepL API Error: " +
 				       response["message"].get<std::string>());
-	}
-
-	// Handle rate limiting errors
-	long response_code;
-	curl_easy_getinfo(curl_easy_init(), CURLINFO_RESPONSE_CODE, &response_code);
-	if (response_code == 429) {
-		throw TranslationError("DeepL API Error: Rate limit exceeded");
 	}
 
 	try {
@@ -104,6 +123,6 @@ std::string DeepLTranslator::parseResponse(const std::string &response_str)
 
 		return translation["text"].get<std::string>();
 	} catch (const json::exception &) {
-		throw TranslationError("Unexpected response format from DeepL API");
+		throw TranslationError("DeepL: Unexpected response format from DeepL API");
 	}
 }

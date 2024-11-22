@@ -21,9 +21,9 @@ std::unique_ptr<ITranslator> createTranslator(const CloudTranslatorConfig &confi
 	if (config.provider == "google") {
 		return std::make_unique<GoogleTranslator>(config.access_key);
 	} else if (config.provider == "deepl") {
-		return std::make_unique<DeepLTranslator>(config.access_key);
+		return std::make_unique<DeepLTranslator>(config.access_key, config.free);
 	} else if (config.provider == "azure") {
-		return std::make_unique<AzureTranslator>(config.access_key, config.location);
+		return std::make_unique<AzureTranslator>(config.access_key, config.region);
 		// } else if (config.provider == "aws") {
 		//     return std::make_unique<AWSTranslator>(config.access_key, config.secret_key, config.region);
 	} else if (config.provider == "papago") {

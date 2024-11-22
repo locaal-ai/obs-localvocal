@@ -30,10 +30,10 @@ std::string GoogleTranslator::translate(const std::string &text, const std::stri
 		std::stringstream url;
 		url << "https://translation.googleapis.com/language/translate/v2"
 		    << "?key=" << api_key_ << "&q=" << CurlHelper::urlEncode(curl.get(), text)
-		    << "&target=" << target_lang;
+		    << "&target=" << sanitize_language_code(target_lang);
 
 		if (source_lang != "auto") {
-			url << "&source=" << source_lang;
+			url << "&source=" << sanitize_language_code(source_lang);
 		}
 
 		// Set up curl options
