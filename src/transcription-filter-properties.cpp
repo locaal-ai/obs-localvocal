@@ -50,6 +50,9 @@ bool translation_cloud_provider_selection_callback(obs_properties_t *props, obs_
 {
 	UNUSED_PARAMETER(p);
 	const char *provider = obs_data_get_string(s, "translate_cloud_provider");
+	// show the access key for all except the custom provider
+	obs_property_set_visible(obs_properties_get(props, "translate_cloud_api_key"),
+				 strcmp(provider, "api") != 0);
 	obs_property_set_visible(obs_properties_get(props, "translate_cloud_deepl_free"),
 				 strcmp(provider, "deepl") == 0);
 	// show the secret key input for the papago provider only
@@ -58,6 +61,14 @@ bool translation_cloud_provider_selection_callback(obs_properties_t *props, obs_
 	// show the region input for the azure provider only
 	obs_property_set_visible(obs_properties_get(props, "translate_cloud_region"),
 				 strcmp(provider, "azure") == 0);
+	// show the endpoint and body input for the custom provider only
+	obs_property_set_visible(obs_properties_get(props, "translate_cloud_endpoint"),
+				 strcmp(provider, "api") == 0);
+	obs_property_set_visible(obs_properties_get(props, "translate_cloud_body"),
+				 strcmp(provider, "api") == 0);
+	// show the response json path input for the custom provider only
+	obs_property_set_visible(obs_properties_get(props, "translate_cloud_response_json_path"),
+				 strcmp(provider, "api") == 0);
 	return true;
 }
 
@@ -67,10 +78,12 @@ bool translation_cloud_options_callback(obs_properties_t *props, obs_property_t 
 	UNUSED_PARAMETER(property);
 	// Show/Hide the cloud translation group options
 	const bool translate_enabled = obs_data_get_bool(settings, "translate_cloud");
-	for (const auto &prop : {"translate_cloud_provider", "translate_cloud_target_language",
-				 "translate_cloud_output", "translate_cloud_api_key",
-				 "translate_cloud_only_full_sentences",
-				 "translate_cloud_secret_key", "translate_cloud_deepl_free"}) {
+	for (const auto &prop :
+	     {"translate_cloud_provider", "translate_cloud_target_language",
+	      "translate_cloud_output", "translate_cloud_api_key",
+	      "translate_cloud_only_full_sentences", "translate_cloud_secret_key",
+	      "translate_cloud_deepl_free", "translate_cloud_region", "translate_cloud_endpoint",
+	      "translate_cloud_body", "translate_cloud_response_json_path"}) {
 		obs_property_set_visible(obs_properties_get(props, prop), translate_enabled);
 	}
 	if (translate_enabled) {
@@ -259,6 +272,7 @@ void add_translation_cloud_group_properties(obs_properties_t *ppts)
 				     "openai");
 	obs_property_list_add_string(prop_translate_cloud_provider, MT_("Claude-Translate"),
 				     "claude");
+	obs_property_list_add_string(prop_translate_cloud_provider, MT_("API-Translate"), "api");
 
 	// add callback to show/hide the free API option for deepl
 	obs_property_set_modified_callback(prop_translate_cloud_provider,
@@ -298,6 +312,16 @@ void add_translation_cloud_group_properties(obs_properties_t *ppts)
 	// add translate_cloud_region for azure
 	obs_properties_add_text(translation_cloud_group, "translate_cloud_region",
 				MT_("translate_cloud_region"), OBS_TEXT_DEFAULT);
+
+	// add input for API endpoint
+	obs_properties_add_text(translation_cloud_group, "translate_cloud_endpoint",
+				MT_("translate_cloud_endpoint"), OBS_TEXT_DEFAULT);
+	// add input for API body
+	obs_properties_add_text(translation_cloud_group, "translate_cloud_body",
+				MT_("translate_cloud_body"), OBS_TEXT_MULTILINE);
+	// add input for json response path
+	obs_properties_add_text(translation_cloud_group, "translate_cloud_response_json_path",
+				MT_("translate_cloud_response_json_path"), OBS_TEXT_DEFAULT);
 }
 
 void add_translation_group_properties(obs_properties_t *ppts)
@@ -667,6 +691,12 @@ void transcription_filter_defaults(obs_data_t *s)
 	obs_data_set_default_string(s, "translate_cloud_secret_key", "");
 	obs_data_set_default_bool(s, "translate_cloud_deepl_free", true);
 	obs_data_set_default_string(s, "translate_cloud_region", "eastus");
+	obs_data_set_default_string(s, "translate_cloud_endpoint",
+				    "http://localhost:5000/translate");
+	obs_data_set_default_string(
+		s, "translate_cloud_body",
+		"{\n\t\"text\":\"{{sentence}}\",\n\t\"target\":\"{{target_language}}\"\n}");
+	obs_data_set_default_string(s, "translate_cloud_response_json_path", "translations.0.text");
 
 	// Whisper parameters
 	apply_whisper_params_defaults_on_settings(s);

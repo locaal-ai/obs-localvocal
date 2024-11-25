@@ -115,9 +115,9 @@ jobs:
         id: ccache-cache
         with:
           path: ${{ github.workspace }}/.ccache
-          key: ${{ runner.os }}-ccache-${{ needs.check-event.outputs.config }}
+          key: ${{ runner.os }}-ccache-${{ needs.check-event.outputs.config }}-${{ matrix.architecture }}
           restore-keys: |
-            ${{ runner.os }}-ccache-
+            ${{ runner.os }}-ccache-${{ matrix.architecture }}-
 
       - name: Set Up Codesigning 🔑
         uses: ./.github/actions/setup-macos-codesigning

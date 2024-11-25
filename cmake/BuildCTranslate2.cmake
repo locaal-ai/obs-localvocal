@@ -50,6 +50,14 @@ elseif(WIN32)
   file(GLOB CT2_DLLS ${ctranslate2_fetch_SOURCE_DIR}/bin/*.dll)
   install(FILES ${CT2_DLLS} DESTINATION "obs-plugins/64bit")
 else()
+  # Enable ccache if available
+  find_program(CCACHE_PROGRAM ccache)
+  if(CCACHE_PROGRAM)
+    message(STATUS "Found ccache: ${CCACHE_PROGRAM}")
+    set(CMAKE_C_COMPILER_LAUNCHER ${CCACHE_PROGRAM})
+    set(CMAKE_CXX_COMPILER_LAUNCHER ${CCACHE_PROGRAM})
+  endif()
+
   # build cpu_features from source
   set(CPU_FEATURES_VERSION "0.9.0")
   set(CPU_FEATURES_URL "https://github.com/google/cpu_features.git")

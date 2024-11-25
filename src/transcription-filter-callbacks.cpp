@@ -91,7 +91,8 @@ void send_sentence_to_cloud_translation_async(const std::string &sentence,
 		gf->last_text_for_cloud_translation = sentence;
 		if (gf->translate_cloud && !sentence.empty()) {
 			obs_log(gf->log_level, "Translating text with cloud provider %s. %s -> %s",
-				gf->translate_cloud_provider.c_str(), source_language.c_str(),
+				gf->translate_cloud_config.provider.c_str(),
+				source_language.c_str(),
 				gf->translate_cloud_target_language.c_str());
 			std::string translated_text;
 			if (sentence == last_text) {
@@ -99,14 +100,8 @@ void send_sentence_to_cloud_translation_async(const std::string &sentence,
 				callback(gf->last_text_cloud_translation);
 				return;
 			}
-			CloudTranslatorConfig config;
-			config.provider = gf->translate_cloud_provider;
-			config.access_key = gf->translate_cloud_api_key;
-			config.secret_key = gf->translate_cloud_secret_key;
-			config.free = gf->translate_cloud_deepl_free;
-			config.region = gf->translate_cloud_region;
 
-			translated_text = translate_cloud(config, sentence,
+			translated_text = translate_cloud(gf->translate_cloud_config, sentence,
 							  gf->translate_cloud_target_language,
 							  source_language);
 			if (!translated_text.empty()) {

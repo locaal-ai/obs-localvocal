@@ -27,6 +27,14 @@ elseif(WIN32)
 
 else()
 
+  # Enable ccache if available
+  find_program(CCACHE_PROGRAM ccache)
+  if(CCACHE_PROGRAM)
+    message(STATUS "Found ccache: ${CCACHE_PROGRAM}")
+    set(CMAKE_C_COMPILER_LAUNCHER ${CCACHE_PROGRAM})
+    set(CMAKE_CXX_COMPILER_LAUNCHER ${CCACHE_PROGRAM})
+  endif()
+
   set(SP_URL
       "https://github.com/google/sentencepiece.git"
       CACHE STRING "URL of sentencepiece repository")

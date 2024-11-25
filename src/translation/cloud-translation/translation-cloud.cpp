@@ -10,6 +10,7 @@
 #include "papago.h"
 #include "claude.h"
 #include "openai.h"
+#include "custom-api.h"
 
 #include "plugin-support.h"
 #include <util/base.h>
@@ -36,6 +37,9 @@ std::unique_ptr<ITranslator> createTranslator(const CloudTranslatorConfig &confi
 		return std::make_unique<OpenAITranslator>(
 			config.access_key,
 			config.model.empty() ? "gpt-4-turbo-preview" : config.model);
+	} else if (config.provider == "api") {
+		return std::make_unique<CustomApiTranslator>(config.endpoint, config.body,
+							     config.response_json_path);
 	}
 	throw TranslationError("Unknown translation provider: " + config.provider);
 }
