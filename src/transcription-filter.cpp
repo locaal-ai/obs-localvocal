@@ -25,6 +25,7 @@
 #include "whisper-utils/whisper-language.h"
 #include "whisper-utils/whisper-model-utils.h"
 #include "whisper-utils/whisper-utils.h"
+#include "whisper-utils/whisper-params.h"
 #include "translation/language_codes.h"
 #include "translation/translation-utils.h"
 #include "translation/translation.h"
@@ -364,51 +365,27 @@ void transcription_filter_update(void *data, obs_data_t *s)
 		gf->sentence_psum_accept_thresh =
 			(float)obs_data_get_double(s, "sentence_psum_accept_thresh");
 
-		gf->whisper_params = whisper_full_default_params(
-			(whisper_sampling_strategy)obs_data_get_int(s, "whisper_sampling_method"));
-		gf->whisper_params.duration_ms = (int)obs_data_get_int(s, "buffer_size_msec");
+		apply_whisper_params_from_settings(gf->whisper_params, s);
+
 		if (!new_translate || gf->translation_model_index != "whisper-based-translation") {
 			const char *whisper_language_select =
 				obs_data_get_string(s, "whisper_language_select");
-			gf->whisper_params.language = (whisper_language_select != nullptr &&
-						       strlen(whisper_language_select) > 0)
-							      ? whisper_language_select
-							      : "auto";
+			const bool language_selected = whisper_language_select != nullptr &&
+						       strlen(whisper_language_select) > 0;
+			gf->whisper_params.language = (language_selected) ? whisper_language_select
+									  : "auto";
+			gf->whisper_params.detect_language = !language_selected;
 		} else {
 			// take the language from gf->target_lang
 			if (language_codes_to_whisper.count(gf->target_lang) > 0) {
 				gf->whisper_params.language =
 					language_codes_to_whisper[gf->target_lang].c_str();
+				gf->whisper_params.detect_language = false;
 			} else {
 				gf->whisper_params.language = "auto";
+				gf->whisper_params.detect_language = true;
 			}
 		}
-		gf->whisper_params.initial_prompt =
-			obs_data_get_string(s, "initial_prompt") != nullptr
-				? obs_data_get_string(s, "initial_prompt")
-				: "";
-		gf->whisper_params.n_threads = (int)obs_data_get_int(s, "n_threads");
-		gf->whisper_params.n_max_text_ctx = (int)obs_data_get_int(s, "n_max_text_ctx");
-		gf->whisper_params.translate = obs_data_get_bool(s, "whisper_translate");
-		gf->whisper_params.no_context = obs_data_get_bool(s, "no_context");
-		gf->whisper_params.single_segment = obs_data_get_bool(s, "single_segment");
-		gf->whisper_params.print_special = obs_data_get_bool(s, "print_special");
-		gf->whisper_params.print_progress = obs_data_get_bool(s, "print_progress");
-		gf->whisper_params.print_realtime = obs_data_get_bool(s, "print_realtime");
-		gf->whisper_params.print_timestamps = obs_data_get_bool(s, "print_timestamps");
-		gf->whisper_params.token_timestamps = obs_data_get_bool(s, "token_timestamps");
-		gf->whisper_params.thold_pt = (float)obs_data_get_double(s, "thold_pt");
-		gf->whisper_params.thold_ptsum = (float)obs_data_get_double(s, "thold_ptsum");
-		gf->whisper_params.max_len = (int)obs_data_get_int(s, "max_len");
-		gf->whisper_params.split_on_word = obs_data_get_bool(s, "split_on_word");
-		gf->whisper_params.max_tokens = (int)obs_data_get_int(s, "max_tokens");
-		gf->whisper_params.suppress_blank = obs_data_get_bool(s, "suppress_blank");
-		gf->whisper_params.suppress_non_speech_tokens =
-			obs_data_get_bool(s, "suppress_non_speech_tokens");
-		gf->whisper_params.temperature = (float)obs_data_get_double(s, "temperature");
-		gf->whisper_params.max_initial_ts = (float)obs_data_get_double(s, "max_initial_ts");
-		gf->whisper_params.length_penalty = (float)obs_data_get_double(s, "length_penalty");
-		gf->whisper_params.no_timestamps = true;
 
 		if (gf->vad) {
 			const float vad_threshold = (float)obs_data_get_double(s, "vad_threshold");

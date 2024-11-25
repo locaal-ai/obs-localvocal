@@ -8,6 +8,7 @@
 #include "transcription-filter-utils.h"
 #include "whisper-utils/whisper-language.h"
 #include "whisper-utils/vad-processing.h"
+#include "whisper-utils/whisper-params.h"
 #include "model-utils/model-downloader-types.h"
 #include "translation/language_codes.h"
 #include "ui/filter-replace-dialog.h"
@@ -15,6 +16,7 @@
 
 #include <string>
 #include <vector>
+#include "whisper-utils/whisper-utils.h"
 
 bool translation_options_callback(obs_properties_t *props, obs_property_t *property,
 				  obs_data_t *settings)
@@ -479,6 +481,7 @@ void add_advanced_group_properties(obs_properties_t *ppts, struct transcription_
 	obs_property_t *vad_mode_list =
 		obs_properties_add_list(advanced_config_group, "vad_mode", MT_("vad_mode"),
 					OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_INT);
+	obs_property_list_add_int(vad_mode_list, MT_("No_VAD"), VAD_MODE_DISABLED);
 	obs_property_list_add_int(vad_mode_list, MT_("Active_VAD"), VAD_MODE_ACTIVE);
 	obs_property_list_add_int(vad_mode_list, MT_("Hybrid_VAD"), VAD_MODE_HYBRID);
 	// add vad threshold slider
@@ -526,82 +529,6 @@ void add_logging_group_properties(obs_properties_t *ppts)
 	obs_property_list_add_int(list, "DEBUG (Won't show)", LOG_DEBUG);
 	obs_property_list_add_int(list, "INFO", LOG_INFO);
 	obs_property_list_add_int(list, "WARNING", LOG_WARNING);
-}
-
-void add_whisper_params_group_properties(obs_properties_t *ppts)
-{
-	obs_properties_t *whisper_params_group = obs_properties_create();
-	obs_properties_add_group(ppts, "whisper_params_group", MT_("whisper_parameters"),
-				 OBS_GROUP_NORMAL, whisper_params_group);
-
-	obs_property_t *whisper_sampling_method_list = obs_properties_add_list(
-		whisper_params_group, "whisper_sampling_method", MT_("whisper_sampling_method"),
-		OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_INT);
-	obs_property_list_add_int(whisper_sampling_method_list, "Beam search",
-				  WHISPER_SAMPLING_BEAM_SEARCH);
-	obs_property_list_add_int(whisper_sampling_method_list, "Greedy", WHISPER_SAMPLING_GREEDY);
-
-	// add int slider for context sentences
-	obs_properties_add_int_slider(whisper_params_group, "n_context_sentences",
-				      MT_("n_context_sentences"), 0, 5, 1);
-
-	// int n_threads;
-	obs_properties_add_int_slider(whisper_params_group, "n_threads", MT_("n_threads"), 1, 8, 1);
-	// int n_max_text_ctx;     // max tokens to use from past text as prompt for the decoder
-	obs_properties_add_int_slider(whisper_params_group, "n_max_text_ctx", MT_("n_max_text_ctx"),
-				      0, 16384, 100);
-	// int offset_ms;          // start offset in ms
-	// int duration_ms;        // audio duration to process in ms
-	// bool translate;
-	obs_properties_add_bool(whisper_params_group, "whisper_translate",
-				MT_("whisper_translate"));
-	// bool no_context;        // do not use past transcription (if any) as initial prompt for the decoder
-	obs_properties_add_bool(whisper_params_group, "no_context", MT_("no_context"));
-	// bool single_segment;    // force single segment output (useful for streaming)
-	obs_properties_add_bool(whisper_params_group, "single_segment", MT_("single_segment"));
-	// bool print_special;     // print special tokens (e.g. <SOT>, <EOT>, <BEG>, etc.)
-	obs_properties_add_bool(whisper_params_group, "print_special", MT_("print_special"));
-	// bool print_progress;    // print progress information
-	obs_properties_add_bool(whisper_params_group, "print_progress", MT_("print_progress"));
-	// bool print_realtime;    // print results from within whisper.cpp (avoid it, use callback instead)
-	obs_properties_add_bool(whisper_params_group, "print_realtime", MT_("print_realtime"));
-	// bool print_timestamps;  // print timestamps for each text segment when printing realtime
-	obs_properties_add_bool(whisper_params_group, "print_timestamps", MT_("print_timestamps"));
-	// bool  token_timestamps; // enable token-level timestamps
-	obs_properties_add_bool(whisper_params_group, "token_timestamps", MT_("token_timestamps"));
-	// enable DTW timestamps
-	obs_properties_add_bool(whisper_params_group, "dtw_token_timestamps",
-				MT_("dtw_token_timestamps"));
-	// float thold_pt;         // timestamp token probability threshold (~0.01)
-	obs_properties_add_float_slider(whisper_params_group, "thold_pt", MT_("thold_pt"), 0.0f,
-					1.0f, 0.05f);
-	// float thold_ptsum;      // timestamp token sum probability threshold (~0.01)
-	obs_properties_add_float_slider(whisper_params_group, "thold_ptsum", MT_("thold_ptsum"),
-					0.0f, 1.0f, 0.05f);
-	// int   max_len;          // max segment length in characters
-	obs_properties_add_int_slider(whisper_params_group, "max_len", MT_("max_len"), 0, 100, 1);
-	// bool  split_on_word;    // split on word rather than on token (when used with max_len)
-	obs_properties_add_bool(whisper_params_group, "split_on_word", MT_("split_on_word"));
-	// int   max_tokens;       // max tokens per segment (0 = no limit)
-	obs_properties_add_int_slider(whisper_params_group, "max_tokens", MT_("max_tokens"), 0, 100,
-				      1);
-	// const char * initial_prompt;
-	obs_properties_add_text(whisper_params_group, "initial_prompt", MT_("initial_prompt"),
-				OBS_TEXT_DEFAULT);
-	// bool suppress_blank
-	obs_properties_add_bool(whisper_params_group, "suppress_blank", MT_("suppress_blank"));
-	// bool suppress_non_speech_tokens
-	obs_properties_add_bool(whisper_params_group, "suppress_non_speech_tokens",
-				MT_("suppress_non_speech_tokens"));
-	// float temperature
-	obs_properties_add_float_slider(whisper_params_group, "temperature", MT_("temperature"),
-					0.0f, 1.0f, 0.05f);
-	// float max_initial_ts
-	obs_properties_add_float_slider(whisper_params_group, "max_initial_ts",
-					MT_("max_initial_ts"), 0.0f, 1.0f, 0.05f);
-	// float length_penalty
-	obs_properties_add_float_slider(whisper_params_group, "length_penalty",
-					MT_("length_penalty"), -1.0f, 1.0f, 0.1f);
 }
 
 void add_general_group_properties(obs_properties_t *ppts)
@@ -742,28 +669,5 @@ void transcription_filter_defaults(obs_data_t *s)
 	obs_data_set_default_string(s, "translate_cloud_region", "eastus");
 
 	// Whisper parameters
-	obs_data_set_default_int(s, "whisper_sampling_method", WHISPER_SAMPLING_BEAM_SEARCH);
-	obs_data_set_default_int(s, "n_context_sentences", 0);
-	obs_data_set_default_string(s, "initial_prompt", "");
-	obs_data_set_default_int(s, "n_threads", 4);
-	obs_data_set_default_int(s, "n_max_text_ctx", 16384);
-	obs_data_set_default_bool(s, "whisper_translate", false);
-	obs_data_set_default_bool(s, "no_context", true);
-	obs_data_set_default_bool(s, "single_segment", true);
-	obs_data_set_default_bool(s, "print_special", false);
-	obs_data_set_default_bool(s, "print_progress", false);
-	obs_data_set_default_bool(s, "print_realtime", false);
-	obs_data_set_default_bool(s, "print_timestamps", false);
-	obs_data_set_default_bool(s, "token_timestamps", false);
-	obs_data_set_default_bool(s, "dtw_token_timestamps", false);
-	obs_data_set_default_double(s, "thold_pt", 0.01);
-	obs_data_set_default_double(s, "thold_ptsum", 0.01);
-	obs_data_set_default_int(s, "max_len", 0);
-	obs_data_set_default_bool(s, "split_on_word", true);
-	obs_data_set_default_int(s, "max_tokens", 50);
-	obs_data_set_default_bool(s, "suppress_blank", false);
-	obs_data_set_default_bool(s, "suppress_non_speech_tokens", false);
-	obs_data_set_default_double(s, "temperature", 0.1);
-	obs_data_set_default_double(s, "max_initial_ts", 1.0);
-	obs_data_set_default_double(s, "length_penalty", -1.0);
+	apply_whisper_params_defaults_on_settings(s);
 }

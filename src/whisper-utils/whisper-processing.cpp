@@ -198,10 +198,23 @@ struct DetectionResultWithText run_whisper_inference(struct transcription_filter
 		obs_log(gf->log_level, "Initial prompt: %s", gf->whisper_params.initial_prompt);
 	}
 
+	obs_log(gf->log_level, "Running whisper inference. single segment? %s",
+		gf->whisper_params.single_segment ? "yes" : "no");
+
 	// run the inference
 	int whisper_full_result = -1;
 	gf->whisper_params.duration_ms = (int)(whisper_duration_ms);
 	try {
+		// whisper_full_params whisper_params_tmp = whisper_full_default_params(whisper_sampling_strategy::WHISPER_SAMPLING_BEAM_SEARCH);
+		// whisper_params_tmp.language = gf->whisper_params.language;
+		// gf->whisper_params.no_timestamps = false;
+		// whisper_params_tmp.print_progress = false;
+		// whisper_params_tmp.print_timestamps = false;
+		// whisper_params_tmp.split_on_word = true;
+		// whisper_params_tmp.max_tokens = 100;
+		// whisper_params_tmp.suppress_blank = false;
+		// whisper_params_pretty_print(gf->whisper_params);
+		// whisper_params_pretty_print(whisper_params_tmp);
 		whisper_full_result = whisper_full(gf->whisper_context, gf->whisper_params,
 						   pcm32f_data, (int)pcm32f_size);
 	} catch (const std::exception &e) {
@@ -355,7 +368,7 @@ void whisper_loop(void *data)
 
 	obs_log(gf->log_level, "Starting whisper thread");
 
-	vad_state current_vad_state = {false, now_ms(), 0, 0};
+	vad_state current_vad_state = {false, 0, 0, 0};
 
 	const char *whisper_loop_name = "Whisper loop";
 	profile_register_root(whisper_loop_name, 50 * 1000 * 1000);
@@ -377,6 +390,8 @@ void whisper_loop(void *data)
 			current_vad_state = hybrid_vad_segmentation(gf, current_vad_state);
 		} else if (gf->vad_mode == VAD_MODE_ACTIVE) {
 			current_vad_state = vad_based_segmentation(gf, current_vad_state);
+		} else if (gf->vad_mode == VAD_MODE_DISABLED) {
+			current_vad_state = vad_disabled_segmentation(gf, current_vad_state);
 		}
 
 		if (!gf->cleared_last_sub) {
@@ -399,7 +414,7 @@ void whisper_loop(void *data)
 		// or if the whisper context is null
 		std::unique_lock<std::mutex> lock(gf->whisper_ctx_mutex);
 		if (gf->input_buffers->size == 0) {
-			gf->wshiper_thread_cv.wait_for(lock, std::chrono::milliseconds(50));
+			gf->wshiper_thread_cv.wait_for(lock, std::chrono::milliseconds(250));
 		}
 	}
 

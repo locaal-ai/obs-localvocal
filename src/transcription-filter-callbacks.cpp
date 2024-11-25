@@ -143,7 +143,9 @@ void send_sentence_to_file(struct transcription_filter_data *gf,
 		openmode |= std::ios::app;
 	}
 	if (!gf->save_srt) {
-		// Write raw sentence to file
+		obs_log(gf->log_level, "Saving sentence '%s' to file %s", sentence.c_str(),
+			gf->output_file_path.c_str());
+		// Write raw sentence to text file (non-srt format)
 		try {
 			std::ofstream output_file(file_path, openmode);
 			output_file << sentence << std::endl;

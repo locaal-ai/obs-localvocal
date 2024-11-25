@@ -59,7 +59,7 @@ if(WIN32)
         "cpu"
         CACHE STRING "Acceleration to use")
   endif()
-  set_property(CACHE ACCELERATION PROPERTY STRINGS "cpu" "hipblas" "cuda")
+  set_property(CACHE ACCELERATION PROPERTY STRINGS "cpu" "hipblas" "cuda" "vulkan")
 endif()
 
 include(cmake/BuildWhispercpp.cmake)
@@ -101,6 +101,11 @@ include(cmake/BuildICU.cmake)
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE ICU)
 target_include_directories(${CMAKE_PROJECT_NAME} SYSTEM PUBLIC ${ICU_INCLUDE_DIR})
 
+# check env var for extra verbose logging
+if(DEFINED ENV{LOCALVOCAL_EXTRA_VERBOSE})
+  target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE LOCALVOCAL_EXTRA_VERBOSE)
+endif()
+
 target_sources(
   ${CMAKE_PROJECT_NAME}
   PRIVATE src/plugin-main.c
@@ -117,6 +122,7 @@ target_sources(
           src/whisper-utils/whisper-processing.cpp
           src/whisper-utils/whisper-utils.cpp
           src/whisper-utils/whisper-model-utils.cpp
+          src/whisper-utils/whisper-params.cpp
           src/whisper-utils/silero-vad-onnx.cpp
           src/whisper-utils/token-buffer-thread.cpp
           src/whisper-utils/vad-processing.cpp
