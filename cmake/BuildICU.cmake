@@ -48,6 +48,15 @@ if(WIN32)
                                                                                        "${ICU_LIB_${lib}}")
   endforeach()
 else()
+  # Add ccache detection at the start
+  find_program(CCACHE_PROGRAM ccache)
+  if(CCACHE_PROGRAM)
+    message(STATUS "Found ccache: ${CCACHE_PROGRAM}")
+    # Create compiler wrapper commands
+    set(C_LAUNCHER "${CCACHE_PROGRAM} ${CMAKE_C_COMPILER}")
+    set(CXX_LAUNCHER "${CCACHE_PROGRAM} ${CMAKE_CXX_COMPILER}")
+  endif()
+
   set(ICU_URL
       "https://github.com/unicode-org/icu/releases/download/release-${ICU_VERSION_DASH}/icu4c-${ICU_VERSION_UNDERSCORE}-src.tgz"
   )
@@ -55,10 +64,11 @@ else()
   if(APPLE)
     set(ICU_PLATFORM "MacOSX")
     set(TARGET_ARCH -arch\ $ENV{MACOS_ARCH})
-    set(ICU_BUILD_ENV_VARS CFLAGS=${TARGET_ARCH} CXXFLAGS=${TARGET_ARCH} LDFLAGS=${TARGET_ARCH})
+    set(ICU_BUILD_ENV_VARS CFLAGS=${TARGET_ARCH} CXXFLAGS=${TARGET_ARCH} LDFLAGS=${TARGET_ARCH} CC=${C_LAUNCHER}
+                           CXX=${CXX_LAUNCHER})
   else()
     set(ICU_PLATFORM "Linux")
-    set(ICU_BUILD_ENV_VARS CFLAGS=-fPIC CXXFLAGS=-fPIC LDFLAGS=-fPIC)
+    set(ICU_BUILD_ENV_VARS CFLAGS=-fPIC CXXFLAGS=-fPIC LDFLAGS=-fPIC CC=${C_LAUNCHER} CXX=${CXX_LAUNCHER})
   endif()
 
   ExternalProject_Add(
@@ -66,8 +76,10 @@ else()
     DOWNLOAD_EXTRACT_TIMESTAMP true
     GIT_REPOSITORY "https://github.com/unicode-org/icu.git"
     GIT_TAG "release-${ICU_VERSION_DASH}"
-    CONFIGURE_COMMAND ${CMAKE_COMMAND} -E env ${ICU_BUILD_ENV_VARS} <SOURCE_DIR>/icu4c/source/runConfigureICU
-                      ${ICU_PLATFORM} --prefix=<INSTALL_DIR> --enable-static --disable-shared
+    CONFIGURE_COMMAND
+      ${CMAKE_COMMAND} -E env ${ICU_BUILD_ENV_VARS} <SOURCE_DIR>/icu4c/source/runConfigureICU ${ICU_PLATFORM}
+      --prefix=<INSTALL_DIR> --enable-static --disable-shared --disable-tools --disable-samples --disable-layout
+      --disable-layoutex --disable-tests --disable-draft --disable-extras --disable-icuio
     BUILD_COMMAND make -j4
     BUILD_BYPRODUCTS
       <INSTALL_DIR>/lib/${CMAKE_STATIC_LIBRARY_PREFIX}icudata${CMAKE_STATIC_LIBRARY_SUFFIX}
