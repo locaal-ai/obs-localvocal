@@ -10,10 +10,10 @@
 [![Discord](https://img.shields.io/discord/1200229425141252116)](https://discord.gg/KbjGU2vvUz)
 <br/>
 Download:</br>
-<a href="https://github.com/locaal-ai/obs-localvocal/releases/download/0.3.8/obs-localvocal-0.3.8-windows-x64-cuda-Installer.exe"><img src="https://img.shields.io/badge/Windows-0078D6?style=for-the-badge&logo=windows&logoColor=white" /></a>
-<a href="https://github.com/locaal-ai/obs-localvocal/releases/download/0.3.8/obs-localvocal-0.3.8-macos-x86_64.pkg"><img src="https://img.shields.io/badge/mac%20Intel-000000?style=for-the-badge" /></a>
-<a href="https://github.com/locaal-ai/obs-localvocal/releases/download/0.3.8/obs-localvocal-0.3.8-macos-arm64.pkg"><img src="https://img.shields.io/badge/mac%20M1/2/3-0a0a0a?style=for-the-badge&"/></a>
-<a href="https://github.com/locaal-ai/obs-localvocal/releases/download/0.3.8/obs-localvocal-0.3.8-x86_64-linux-gnu.deb"><img src="https://img.shields.io/badge/Linux-FCC624?style=for-the-badge&logo=linux&logoColor=black"/></a>
+<a href="https://github.com/locaal-ai/obs-localvocal/releases/download/0.3.9/obs-localvocal-0.3.9-windows-x64-cuda-Installer.exe"><img src="https://img.shields.io/badge/Windows-0078D6?style=for-the-badge&logo=windows&logoColor=white" /></a>
+<a href="https://github.com/locaal-ai/obs-localvocal/releases/download/0.3.9/obs-localvocal-0.3.9-macos-x86_64.pkg"><img src="https://img.shields.io/badge/mac%20Intel-000000?style=for-the-badge" /></a>
+<a href="https://github.com/locaal-ai/obs-localvocal/releases/download/0.3.9/obs-localvocal-0.3.9-macos-arm64.pkg"><img src="https://img.shields.io/badge/mac%20M1/2/3-0a0a0a?style=for-the-badge&"/></a>
+<a href="https://github.com/locaal-ai/obs-localvocal/releases/download/0.3.9/obs-localvocal-0.3.9-x86_64-linux-gnu.deb"><img src="https://img.shields.io/badge/Linux-FCC624?style=for-the-badge&logo=linux&logoColor=black"/></a>
 
 
 </div>
@@ -84,6 +84,20 @@ Check out our other plugins:
 
 ## Download
 Check out the [latest releases](https://github.com/locaal-ai/obs-localvocal/releases) for downloads and install instructions.
+
+### Available Versions
+
+LocalVocal is available in multiple versions to cater to different hardware configurations and operating systems. Below is a brief explanation of the different versions you can download:
+
+- **Windows CUDA**: This version is optimized for systems with NVIDIA GPUs and utilizes CUDA for accelerated performance. Make sure you have the latest NVidia GPU drivers installed.
+- **Windows CPU**: This version is designed for systems without dedicated GPUs, running solely on the CPU.
+- **Windows HIPBLAS**: This version utilizes the HIP framework from AMD that accelerates computation on AMD GPUs. (⚠️ Experimental ⚠️ Please provide feedback)
+- **Windows Vulkan**: This version uses Vulkan for GPU-based acceleration across many vendors like NVidia, AMD, and Intel. (⚠️ Experimental ⚠️ Please provide feedback)
+- **macOS Intel (x86_64)**: This version is for Mac computers with Intel processors.
+- **macOS Apple Silicon (arm64)**: This version is optimized for Mac computers with Apple Silicon (M1, M2, etc.) processors.
+- **Linux x86_64**: This version is for Linux systems with x86_64 architecture.
+
+Make sure to download the version that matches your system's hardware and operating system for the best performance.
 
 ### Models
 The plugin ships with the Tiny.en model, and will autonomously download other Whisper models through a dropdown.
