@@ -89,9 +89,18 @@ struct transcription_filter_data {
 	float duration_filter_threshold = 2.25f;
 	int segment_duration = 7000;
 
-	// Last transcription result
-	std::string last_text_for_translation;
-	std::string last_text_translation;
+	// Cloud translation options
+	bool translate_cloud = false;
+	std::string translate_cloud_provider;
+	std::string translate_cloud_target_language;
+	std::string translate_cloud_output;
+	std::string translate_cloud_api_key;
+	std::string translate_cloud_secret_key;
+	bool translate_cloud_only_full_sentences = true;
+	std::string last_text_for_cloud_translation;
+	std::string last_text_cloud_translation;
+	bool translate_cloud_deepl_free;
+	std::string translate_cloud_region;
 
 	// Transcription context sentences
 	int n_context_sentences;
@@ -119,6 +128,9 @@ struct transcription_filter_data {
 	std::string translation_model_index;
 	std::string translation_model_path_external;
 	bool translate_only_full_sentences;
+	// Last transcription result
+	std::string last_text_for_translation;
+	std::string last_text_translation;
 
 	bool buffered_output = false;
 	TokenBufferThread captions_monitor;

@@ -127,6 +127,8 @@ target_sources(
           src/translation/translation-language-utils.cpp
           src/ui/filter-replace-dialog.cpp)
 
+add_subdirectory(src/translation/cloud-translation)
+
 set_target_properties_plugin(${CMAKE_PROJECT_NAME} PROPERTIES OUTPUT_NAME ${_name})
 
 if(ENABLE_TESTS)

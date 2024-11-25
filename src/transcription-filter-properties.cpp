@@ -43,6 +43,40 @@ bool translation_options_callback(obs_properties_t *props, obs_property_t *prope
 	return true;
 }
 
+bool translation_cloud_provider_selection_callback(obs_properties_t *props, obs_property_t *p,
+						   obs_data_t *s)
+{
+	UNUSED_PARAMETER(p);
+	const char *provider = obs_data_get_string(s, "translate_cloud_provider");
+	obs_property_set_visible(obs_properties_get(props, "translate_cloud_deepl_free"),
+				 strcmp(provider, "deepl") == 0);
+	// show the secret key input for the papago provider only
+	obs_property_set_visible(obs_properties_get(props, "translate_cloud_secret_key"),
+				 strcmp(provider, "papago") == 0);
+	// show the region input for the azure provider only
+	obs_property_set_visible(obs_properties_get(props, "translate_cloud_region"),
+				 strcmp(provider, "azure") == 0);
+	return true;
+}
+
+bool translation_cloud_options_callback(obs_properties_t *props, obs_property_t *property,
+					obs_data_t *settings)
+{
+	UNUSED_PARAMETER(property);
+	// Show/Hide the cloud translation group options
+	const bool translate_enabled = obs_data_get_bool(settings, "translate_cloud");
+	for (const auto &prop : {"translate_cloud_provider", "translate_cloud_target_language",
+				 "translate_cloud_output", "translate_cloud_api_key",
+				 "translate_cloud_only_full_sentences",
+				 "translate_cloud_secret_key", "translate_cloud_deepl_free"}) {
+		obs_property_set_visible(obs_properties_get(props, prop), translate_enabled);
+	}
+	if (translate_enabled) {
+		translation_cloud_provider_selection_callback(props, NULL, settings);
+	}
+	return true;
+}
+
 bool advanced_settings_callback(obs_properties_t *props, obs_property_t *property,
 				obs_data_t *settings)
 {
@@ -55,6 +89,7 @@ bool advanced_settings_callback(obs_properties_t *props, obs_property_t *propert
 		obs_property_set_visible(obs_properties_get(props, prop_name.c_str()), show_hide);
 	}
 	translation_options_callback(props, NULL, settings);
+	translation_cloud_options_callback(props, NULL, settings);
 	return true;
 }
 
@@ -174,12 +209,101 @@ void add_transcription_group_properties(obs_properties_t *ppts,
 	obs_property_set_modified_callback2(whisper_models_list, external_model_file_selection, gf);
 }
 
+void add_translation_cloud_group_properties(obs_properties_t *ppts)
+{
+	// add translation cloud group
+	obs_properties_t *translation_cloud_group = obs_properties_create();
+	obs_property_t *translation_cloud_group_prop =
+		obs_properties_add_group(ppts, "translate_cloud", MT_("translate_cloud"),
+					 OBS_GROUP_CHECKABLE, translation_cloud_group);
+
+	obs_property_set_modified_callback(translation_cloud_group_prop,
+					   translation_cloud_options_callback);
+
+	// add explaination text
+	obs_properties_add_text(translation_cloud_group, "translate_cloud_explaination",
+				MT_("translate_cloud_explaination"), OBS_TEXT_INFO);
+
+	// add cloud translation service provider selection
+	obs_property_t *prop_translate_cloud_provider = obs_properties_add_list(
+		translation_cloud_group, "translate_cloud_provider",
+		MT_("translate_cloud_provider"), OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_STRING);
+	// Populate the dropdown with the cloud translation service providers
+	obs_property_list_add_string(prop_translate_cloud_provider, MT_("Google-Cloud-Translation"),
+				     "google");
+	obs_property_list_add_string(prop_translate_cloud_provider, MT_("Microsoft-Translator"),
+				     "azure");
+	// obs_property_list_add_string(prop_translate_cloud_provider, MT_("Amazon-Translate"),
+	// 			     "amazon-translate");
+	// obs_property_list_add_string(prop_translate_cloud_provider, MT_("IBM-Watson-Translate"),
+	// 			     "ibm-watson-translate");
+	// obs_property_list_add_string(prop_translate_cloud_provider, MT_("Yandex-Translate"),
+	// 			     "yandex-translate");
+	// obs_property_list_add_string(prop_translate_cloud_provider, MT_("Baidu-Translate"),
+	// 			     "baidu-translate");
+	// obs_property_list_add_string(prop_translate_cloud_provider, MT_("Tencent-Translate"),
+	// 			     "tencent-translate");
+	// obs_property_list_add_string(prop_translate_cloud_provider, MT_("Alibaba-Translate"),
+	// 			     "alibaba-translate");
+	// obs_property_list_add_string(prop_translate_cloud_provider, MT_("Naver-Translate"),
+	// 			     "naver-translate");
+	// obs_property_list_add_string(prop_translate_cloud_provider, MT_("Kakao-Translate"),
+	// 			     "kakao-translate");
+	obs_property_list_add_string(prop_translate_cloud_provider, MT_("Papago-Translate"),
+				     "papago");
+	obs_property_list_add_string(prop_translate_cloud_provider, MT_("Deepl-Translate"),
+				     "deepl");
+	obs_property_list_add_string(prop_translate_cloud_provider, MT_("OpenAI-Translate"),
+				     "openai");
+	obs_property_list_add_string(prop_translate_cloud_provider, MT_("Claude-Translate"),
+				     "claude");
+
+	// add callback to show/hide the free API option for deepl
+	obs_property_set_modified_callback(prop_translate_cloud_provider,
+					   translation_cloud_provider_selection_callback);
+
+	// add target language selection
+	obs_property_t *prop_tgt = obs_properties_add_list(
+		translation_cloud_group, "translate_cloud_target_language", MT_("target_language"),
+		OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_STRING);
+	// Populate the dropdown with the language codes
+	for (const auto &language : language_codes) {
+		obs_property_list_add_string(prop_tgt, language.second.c_str(),
+					     language.first.c_str());
+	}
+	// add option for routing the translation to an output source
+	obs_property_t *prop_output = obs_properties_add_list(
+		translation_cloud_group, "translate_cloud_output", MT_("translate_output"),
+		OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_STRING);
+	obs_property_list_add_string(prop_output, "Write to captions output", "none");
+	obs_enum_sources(add_sources_to_list, prop_output);
+
+	// add boolean option for only full sentences
+	obs_properties_add_bool(translation_cloud_group, "translate_cloud_only_full_sentences",
+				MT_("translate_cloud_only_full_sentences"));
+
+	// add input for API Key
+	obs_properties_add_text(translation_cloud_group, "translate_cloud_api_key",
+				MT_("translate_cloud_api_key"), OBS_TEXT_DEFAULT);
+	// add input for secret key
+	obs_properties_add_text(translation_cloud_group, "translate_cloud_secret_key",
+				MT_("translate_cloud_secret_key"), OBS_TEXT_PASSWORD);
+
+	// add boolean option for free API from deepl
+	obs_properties_add_bool(translation_cloud_group, "translate_cloud_deepl_free",
+				MT_("translate_cloud_deepl_free"));
+
+	// add translate_cloud_region for azure
+	obs_properties_add_text(translation_cloud_group, "translate_cloud_region",
+				MT_("translate_cloud_region"), OBS_TEXT_DEFAULT);
+}
+
 void add_translation_group_properties(obs_properties_t *ppts)
 {
 	// add translation option group
 	obs_properties_t *translation_group = obs_properties_create();
 	obs_property_t *translation_group_prop = obs_properties_add_group(
-		ppts, "translate", MT_("translate"), OBS_GROUP_CHECKABLE, translation_group);
+		ppts, "translate", MT_("translate_local"), OBS_GROUP_CHECKABLE, translation_group);
 
 	// add explaination text
 	obs_properties_add_text(translation_group, "translate_explaination",
@@ -541,6 +665,7 @@ obs_properties_t *transcription_filter_properties(void *data)
 	add_general_group_properties(ppts);
 	add_transcription_group_properties(ppts, gf);
 	add_translation_group_properties(ppts);
+	add_translation_cloud_group_properties(ppts);
 	add_file_output_group_properties(ppts);
 	add_buffered_output_group_properties(ppts);
 	add_advanced_group_properties(ppts, gf);
@@ -586,6 +711,11 @@ void transcription_filter_defaults(obs_data_t *s)
 	obs_data_set_default_int(s, "min_sub_duration", 1000);
 	obs_data_set_default_int(s, "max_sub_duration", 3000);
 	obs_data_set_default_bool(s, "advanced_settings", false);
+	obs_data_set_default_double(s, "sentence_psum_accept_thresh", 0.4);
+	obs_data_set_default_bool(s, "partial_group", true);
+	obs_data_set_default_int(s, "partial_latency", 1100);
+
+	// translation options
 	obs_data_set_default_bool(s, "translate", false);
 	obs_data_set_default_string(s, "translate_target_language", "__es__");
 	obs_data_set_default_int(s, "translate_add_context", 1);
@@ -593,17 +723,23 @@ void transcription_filter_defaults(obs_data_t *s)
 	obs_data_set_default_string(s, "translate_model", "whisper-based-translation");
 	obs_data_set_default_string(s, "translation_model_path_external", "");
 	obs_data_set_default_int(s, "translate_input_tokenization_style", INPUT_TOKENIZAION_M2M100);
-	obs_data_set_default_double(s, "sentence_psum_accept_thresh", 0.4);
-	obs_data_set_default_bool(s, "partial_group", true);
-	obs_data_set_default_int(s, "partial_latency", 1100);
-
-	// translation options
 	obs_data_set_default_double(s, "translation_sampling_temperature", 0.1);
 	obs_data_set_default_double(s, "translation_repetition_penalty", 2.0);
 	obs_data_set_default_int(s, "translation_beam_size", 1);
 	obs_data_set_default_int(s, "translation_max_decoding_length", 65);
 	obs_data_set_default_int(s, "translation_no_repeat_ngram_size", 1);
 	obs_data_set_default_int(s, "translation_max_input_length", 65);
+
+	// cloud translation options
+	obs_data_set_default_bool(s, "translate_cloud", false);
+	obs_data_set_default_string(s, "translate_cloud_provider", "google");
+	obs_data_set_default_string(s, "translate_cloud_target_language", "en");
+	obs_data_set_default_string(s, "translate_cloud_output", "none");
+	obs_data_set_default_bool(s, "translate_cloud_only_full_sentences", true);
+	obs_data_set_default_string(s, "translate_cloud_api_key", "");
+	obs_data_set_default_string(s, "translate_cloud_secret_key", "");
+	obs_data_set_default_bool(s, "translate_cloud_deepl_free", true);
+	obs_data_set_default_string(s, "translate_cloud_region", "eastus");
 
 	// Whisper parameters
 	obs_data_set_default_int(s, "whisper_sampling_method", WHISPER_SAMPLING_BEAM_SEARCH);
