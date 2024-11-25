@@ -333,16 +333,21 @@ void transcription_filter_update(void *data, obs_data_t *s)
 	}
 
 	gf->translate_cloud = obs_data_get_bool(s, "translate_cloud");
-	gf->translate_cloud_provider = obs_data_get_string(s, "translate_cloud_provider");
+	gf->translate_cloud_config.provider = obs_data_get_string(s, "translate_cloud_provider");
 	gf->translate_cloud_target_language =
 		obs_data_get_string(s, "translate_cloud_target_language");
 	gf->translate_cloud_output = obs_data_get_string(s, "translate_cloud_output");
 	gf->translate_cloud_only_full_sentences =
 		obs_data_get_bool(s, "translate_cloud_only_full_sentences");
-	gf->translate_cloud_api_key = obs_data_get_string(s, "translate_cloud_api_key");
-	gf->translate_cloud_secret_key = obs_data_get_string(s, "translate_cloud_secret_key");
-	gf->translate_cloud_deepl_free = obs_data_get_bool(s, "translate_cloud_deepl_free");
-	gf->translate_cloud_region = obs_data_get_string(s, "translate_cloud_region");
+	gf->translate_cloud_config.access_key = obs_data_get_string(s, "translate_cloud_api_key");
+	gf->translate_cloud_config.secret_key =
+		obs_data_get_string(s, "translate_cloud_secret_key");
+	gf->translate_cloud_config.free = obs_data_get_bool(s, "translate_cloud_deepl_free");
+	gf->translate_cloud_config.region = obs_data_get_string(s, "translate_cloud_region");
+	gf->translate_cloud_config.endpoint = obs_data_get_string(s, "translate_cloud_endpoint");
+	gf->translate_cloud_config.body = obs_data_get_string(s, "translate_cloud_body");
+	gf->translate_cloud_config.response_json_path =
+		obs_data_get_string(s, "translate_cloud_response_json_path");
 
 	obs_log(gf->log_level, "update text source");
 	// update the text source
