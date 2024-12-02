@@ -480,7 +480,7 @@
       ]
     },
     {
-      "friendly_name": "Whisper Large v3 Trubo q8 (874Mb)",
+      "friendly_name": "Whisper Large v3 Turbo q8 (874Mb)",
       "local_folder_name": "ggml-large-v3-turbo-q8_0",
       "type": "MODEL_TYPE_TRANSCRIPTION",
       "files": [
