@@ -1,5 +1,6 @@
 #include <obs-module.h>
 #include <obs-frontend-api.h>
+#include <util/platform.h>
 
 #include <algorithm>
 #include <fstream>
@@ -132,6 +133,12 @@ void transcription_filter_remove(void *data, obs_source_t *source)
 	disconnect_source_signals(gf, source);
 }
 
+#ifdef ENABLE_WEBVTT
+
+void remove_all_webvtt_outputs(std::unique_lock<std::mutex> &active_outputs_lock,
+			       transcription_filter_data &gf);
+#endif
+
 void transcription_filter_destroy(void *data)
 {
 	struct transcription_filter_data *gf =
@@ -158,6 +165,14 @@ void transcription_filter_destroy(void *data)
 	circlebuf_free(&gf->info_buffer);
 
 	circlebuf_free(&gf->resampled_buffer);
+
+#ifdef ENABLE_WEBVTT
+	{
+		auto lock = std::unique_lock(gf->active_outputs_mutex);
+		remove_all_webvtt_outputs(lock, *gf);
+		gf->active_outputs.clear();
+	}
+#endif
 
 	if (gf->captions_monitor.isEnabled()) {
 		gf->captions_monitor.stopThread();
@@ -556,4 +571,26 @@ void transcription_filter_hide(void *data)
 	struct transcription_filter_data *gf =
 		static_cast<struct transcription_filter_data *>(data);
 	obs_log(gf->log_level, "filter hide");
+}
+
+obs_output_add_packet_callback_t *obs_output_add_packet_callback_ = nullptr;
+obs_output_remove_packet_callback_t *obs_output_remove_packet_callback_ = nullptr;
+
+void load_packet_callback_functions()
+{
+	auto libobs = os_dlopen("obs");
+	if (!libobs)
+		return;
+
+	auto add_callback = os_dlsym(libobs, "obs_output_add_packet_callback");
+	auto remove_callback = os_dlsym(libobs, "obs_output_remove_packet_callback");
+	if (!add_callback || !remove_callback)
+		return;
+
+	obs_output_add_packet_callback_ =
+		reinterpret_cast<obs_output_add_packet_callback_t *>(add_callback);
+	obs_output_remove_packet_callback_ =
+		reinterpret_cast<obs_output_remove_packet_callback_t *>(remove_callback);
+
+	obs_log(LOG_INFO, "loaded callbacks");
 }

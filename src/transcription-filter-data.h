@@ -1,6 +1,11 @@
 #ifndef TRANSCRIPTION_FILTER_DATA_H
 #define TRANSCRIPTION_FILTER_DATA_H
 
+#ifdef ENABLE_WEBVTT
+#include <obs.hpp>
+#include <webvtt-in-sei.h>
+#endif
+
 #include <util/circlebuf.h>
 #include <util/darray.h>
 #include <media-io/audio-resampler.h>
@@ -22,6 +27,67 @@
 #include "translation/cloud-translation/translation-cloud.h"
 
 #define MAX_PREPROC_CHANNELS 10
+
+#if !defined(LIBOBS_MAJOR_VERSION) || LIBOBS_MAJOR_VERSION < 31
+struct encoder_packet_time {
+	/* PTS used to associate uncompressed frames with encoded packets. */
+	int64_t pts;
+
+	/* Composition timestamp is when the frame was rendered,
+	 * captured via os_gettime_ns().
+	 */
+	uint64_t cts;
+
+	/* FERC (Frame Encode Request) is when the frame was
+	 * submitted to the encoder for encoding via the encode
+	 * callback (e.g. encode_texture2()), captured via os_gettime_ns().
+	 */
+	uint64_t fer;
+
+	/* FERC (Frame Encode Request Complete) is when
+	 * the associated FER event completed. If the encode
+	 * is synchronous with the call, this means FERC - FEC
+	 * measures the actual encode time, otherwise if the
+	 * encode is asynchronous, it measures the pipeline
+	 * delay between encode request and encode complete.
+	 * FERC is also captured via os_gettime_ns().
+	 */
+	uint64_t ferc;
+
+	/* PIR (Packet Interleave Request) is when the encoded packet
+	 * is interleaved with the stream. PIR is captured via
+	 * os_gettime_ns(). The difference between PIR and CTS gives
+	 * the total latency between frame rendering
+	 * and packet interleaving.
+	 */
+	uint64_t pir;
+};
+#endif
+
+using obs_output_add_packet_callback_t =
+	void(obs_output_t *output,
+	     void (*packet_cb)(obs_output_t *output, struct encoder_packet *pkt,
+			       struct encoder_packet_time *pkt_time, void *param),
+	     void *param);
+using obs_output_remove_packet_callback_t =
+	void(obs_output_t *output,
+	     void (*packet_cb)(obs_output_t *output, struct encoder_packet *pkt,
+			       struct encoder_packet_time *pkt_time, void *param),
+	     void *param);
+
+extern obs_output_add_packet_callback_t *obs_output_add_packet_callback_;
+extern obs_output_remove_packet_callback_t *obs_output_remove_packet_callback_;
+extern "C" void load_packet_callback_functions();
+
+#ifdef ENABLE_WEBVTT
+struct webvtt_muxer_deleter {
+	void operator()(WebvttMuxer *m) { webvtt_muxer_free(m); }
+};
+
+struct webvtt_buffer_deleter {
+	void operator()(WebvttBuffer *b) { webvtt_buffer_free(b); }
+};
+#endif
 
 struct transcription_filter_data {
 	obs_source_t *context; // obs filter source (this filter)
@@ -139,6 +205,21 @@ struct transcription_filter_data {
 	TokenBufferSegmentation buffered_output_output_type =
 		TokenBufferSegmentation::SEGMENTATION_TOKEN;
 
+#ifdef ENABLE_WEBVTT
+	struct webvtt_output {
+		OBSWeakOutputAutoRelease output;
+		uint64_t start_timestamp_ms;
+
+		bool initialized = false;
+		std::unique_ptr<WebvttMuxer, webvtt_muxer_deleter>
+			webvtt_muxer[MAX_OUTPUT_VIDEO_ENCODERS];
+		CodecFlavor codec_flavor[MAX_OUTPUT_VIDEO_ENCODERS] = {};
+	};
+
+	std::mutex active_outputs_mutex;
+	std::vector<webvtt_output> active_outputs;
+#endif
+
 	// ctor
 	transcription_filter_data() : whisper_buf_mutex(), whisper_ctx_mutex(), wshiper_thread_cv()
 	{
@@ -162,7 +243,8 @@ struct transcription_filter_audio_info {
 };
 
 // Callback sent when the transcription has a new result
-void set_text_callback(struct transcription_filter_data *gf, const DetectionResultWithText &str);
+void set_text_callback(uint64_t possible_end_ts, struct transcription_filter_data *gf,
+		       const DetectionResultWithText &str);
 void clear_current_caption(transcription_filter_data *gf_);
 
 // Callback sent when the VAD finds an audio chunk. Sample rate = WHISPER_SAMPLE_RATE, channels = 1

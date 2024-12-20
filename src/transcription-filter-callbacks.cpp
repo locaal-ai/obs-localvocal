@@ -3,6 +3,7 @@
 #endif
 
 #include <obs.h>
+#include <obs.hpp>
 #include <obs-frontend-api.h>
 
 #include <curl/curl.h>
@@ -231,7 +232,32 @@ void send_caption_to_stream(DetectionResultWithText result, const std::string &s
 	}
 }
 
-void set_text_callback(struct transcription_filter_data *gf,
+#ifdef ENABLE_WEBVTT
+void send_caption_to_webvtt(uint64_t possible_end_ts_ms, DetectionResultWithText result,
+			    const std::string &str_copy, transcription_filter_data &gf)
+{
+	auto lock = std::unique_lock(gf.active_outputs_mutex);
+	for (auto &output : gf.active_outputs) {
+		for (size_t i = 0; i < MAX_OUTPUT_VIDEO_ENCODERS; i++) {
+			auto &muxer = output.webvtt_muxer[i];
+			if (!muxer)
+				continue;
+
+			auto duration = result.end_timestamp_ms - result.start_timestamp_ms;
+			auto segment_start_ts = possible_end_ts_ms - duration;
+			if (segment_start_ts < output.start_timestamp_ms) {
+				duration -= output.start_timestamp_ms - segment_start_ts;
+				segment_start_ts = output.start_timestamp_ms;
+			}
+			webvtt_muxer_add_cue(muxer.get(), 0,
+					     segment_start_ts - output.start_timestamp_ms, duration,
+					     str_copy.c_str());
+		}
+	}
+}
+#endif
+
+void set_text_callback(uint64_t possible_end_ts, struct transcription_filter_data *gf,
 		       const DetectionResultWithText &resultIn)
 {
 	DetectionResultWithText result = resultIn;
@@ -342,6 +368,11 @@ void set_text_callback(struct transcription_filter_data *gf,
 		send_caption_to_stream(result, str_copy, gf);
 	}
 
+#ifdef ENABLE_WEBVTT
+	if (result.result == DETECTION_RESULT_SPEECH)
+		send_caption_to_webvtt(possible_end_ts, result, str_copy, *gf);
+#endif
+
 	if (gf->save_to_file && gf->output_file_path != "" &&
 	    result.result == DETECTION_RESULT_SPEECH) {
 		send_sentence_to_file(gf, result, str_copy, gf->output_file_path, true);
@@ -362,6 +393,134 @@ void set_text_callback(struct transcription_filter_data *gf,
 		}
 	}
 };
+
+#ifdef ENABLE_WEBVTT
+void output_packet_added_callback(obs_output_t *output, struct encoder_packet *pkt,
+				  struct encoder_packet_time *pkt_time, void *param)
+{
+	if (!pkt || !pkt_time)
+		return;
+	if (pkt->type != OBS_ENCODER_VIDEO)
+		return;
+	if (pkt->track_idx >= MAX_OUTPUT_VIDEO_ENCODERS)
+		return;
+
+	auto &gf = *static_cast<transcription_filter_data *>(param);
+	auto lock = std::unique_lock(gf.active_outputs_mutex);
+	auto it = std::find_if(gf.active_outputs.begin(), gf.active_outputs.end(), [&](auto &val) {
+		return obs_weak_output_references_output(val.output, output);
+	});
+	if (it == gf.active_outputs.end())
+		return;
+
+	if (!it->initialized) {
+		it->initialized = true;
+		for (size_t i = 0; i < MAX_OUTPUT_VIDEO_ENCODERS; i++) {
+			auto encoder = obs_output_get_video_encoder2(output, i);
+			if (!encoder)
+				continue;
+
+			auto &codec_flavor = it->codec_flavor[i];
+			if (strcmp(obs_encoder_get_codec(encoder), "h264") == 0) {
+				codec_flavor = H264AnnexB;
+			} else if (strcmp(obs_encoder_get_codec(encoder), "av1") == 0) {
+				continue;
+			} else if (strcmp(obs_encoder_get_codec(encoder), "hevc") == 0) {
+				continue;
+			} else {
+				continue;
+			}
+
+			auto video = obs_encoder_video(encoder);
+			auto voi = video_output_get_info(video);
+
+			auto muxer_builder = webvtt_create_muxer_builder(
+				10'000, 2,
+				util_mul_div64(1000000000ULL, voi->fps_den, voi->fps_num));
+			// TODO: change name/language?
+			webvtt_muxer_builder_add_track(muxer_builder, false, false, false,
+						       "Subtitles", "en", nullptr, nullptr);
+			webvtt_muxer_builder_add_track(muxer_builder, false, false, false, "Empty",
+						       "en", nullptr, nullptr);
+			it->webvtt_muxer[i].reset(webvtt_muxer_builder_create_muxer(muxer_builder));
+		}
+	}
+
+	auto &muxer = it->webvtt_muxer[pkt->track_idx];
+	if (!muxer)
+		return;
+
+	std::unique_ptr<WebvttBuffer, webvtt_buffer_deleter> buffer{
+		webvtt_muxer_try_mux_into_bytestream(muxer.get(), pkt_time->cts, pkt->keyframe,
+						     it->codec_flavor[pkt->track_idx])};
+
+	if (!buffer)
+		return;
+
+	long ref = 1;
+
+	DARRAY(uint8_t) out_data;
+	da_init(out_data);
+	da_reserve(out_data, sizeof(ref) + pkt->size + webvtt_buffer_length(buffer.get()));
+
+	// Copy the original packet
+	da_push_back_array(out_data, (uint8_t *)&ref, sizeof(ref));
+	da_push_back_array(out_data, pkt->data, pkt->size);
+	da_push_back_array(out_data, webvtt_buffer_data(buffer.get()),
+			   webvtt_buffer_length(buffer.get()));
+
+	auto old_pkt = *pkt;
+	obs_encoder_packet_release(pkt);
+	*pkt = old_pkt;
+
+	pkt->data = (uint8_t *)out_data.array + sizeof(ref);
+	pkt->size = out_data.num - sizeof(ref);
+}
+
+void add_webvtt_output(transcription_filter_data &gf, obs_output_t *output)
+{
+	if (!obs_output_add_packet_callback_)
+		return;
+
+	auto start_ms = now_ms();
+
+	auto lock = std::unique_lock(gf.active_outputs_mutex);
+	gf.active_outputs.push_back({});
+	auto &entry = gf.active_outputs.back();
+	entry.output = obs_output_get_weak_output(output);
+	entry.start_timestamp_ms = start_ms;
+	obs_output_add_packet_callback_(output, output_packet_added_callback, &gf);
+}
+
+void remove_webvtt_output(transcription_filter_data &gf, obs_output_t *output)
+{
+	if (!obs_output_remove_packet_callback_)
+		return;
+
+	auto lock = std::unique_lock(gf.active_outputs_mutex);
+	for (auto iter = gf.active_outputs.begin(); iter != gf.active_outputs.end(); iter++) {
+		auto &webvtt_output = *iter;
+		if (!obs_weak_output_references_output(webvtt_output.output, output))
+			continue;
+
+		obs_output_remove_packet_callback_(output, output_packet_added_callback, &gf);
+		gf.active_outputs.erase(iter);
+		return;
+	}
+}
+
+void remove_all_webvtt_outputs(std::unique_lock<std::mutex> & /*active_outputs_lock*/,
+			       transcription_filter_data &gf)
+{
+	for (auto &output : gf.active_outputs) {
+		auto obs_output = OBSOutputAutoRelease{obs_weak_output_get_output(output.output)};
+		if (!obs_output)
+			continue;
+
+		obs_output_remove_packet_callback_(obs_output, output_packet_added_callback, &gf);
+	}
+}
+#endif
 
 /**
  * @brief Callback function to handle recording state changes in OBS.
@@ -385,6 +544,9 @@ void recording_state_callback(enum obs_frontend_event event, void *data)
 	struct transcription_filter_data *gf_ =
 		static_cast<struct transcription_filter_data *>(data);
 	if (event == OBS_FRONTEND_EVENT_RECORDING_STARTING) {
+#ifdef ENABLE_WEBVTT
+		add_webvtt_output(*gf_, OBSOutputAutoRelease{obs_frontend_get_recording_output()});
+#endif
 		if (gf_->save_srt && gf_->save_only_while_recording &&
 		    gf_->output_file_path != "") {
 			obs_log(gf_->log_level, "Recording started. Resetting srt file.");
@@ -397,6 +559,11 @@ void recording_state_callback(enum obs_frontend_event event, void *data)
 			gf_->sentence_number = 1;
 			gf_->start_timestamp_ms = now_ms();
 		}
+	} else if (event == OBS_FRONTEND_EVENT_RECORDING_STOPPING) {
+#ifdef ENABLE_WEBVTT
+		remove_webvtt_output(*gf_,
+				     OBSOutputAutoRelease{obs_frontend_get_recording_output()});
+#endif
 	} else if (event == OBS_FRONTEND_EVENT_RECORDING_STOPPED) {
 		if (!gf_->save_only_while_recording || !gf_->rename_file_to_match_recording) {
 			return;
@@ -430,6 +597,15 @@ void recording_state_callback(enum obs_frontend_event event, void *data)
 		newPath = recordingPath.parent_path() / newPath.filename();
 
 		fs::rename(outputPath, newPath);
+	} else if (event == OBS_FRONTEND_EVENT_STREAMING_STARTING) {
+#ifdef ENABLE_WEBVTT
+		add_webvtt_output(*gf_, OBSOutputAutoRelease{obs_frontend_get_streaming_output()});
+#endif
+	} else if (event == OBS_FRONTEND_EVENT_STREAMING_STOPPING) {
+#ifdef ENABLE_WEBVTT
+		remove_webvtt_output(*gf_,
+				     OBSOutputAutoRelease{obs_frontend_get_streaming_output()});
+#endif
 	}
 }
 

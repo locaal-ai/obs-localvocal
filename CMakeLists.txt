@@ -106,6 +106,14 @@ if(DEFINED ENV{LOCALVOCAL_EXTRA_VERBOSE})
   target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE LOCALVOCAL_EXTRA_VERBOSE)
 endif()
 
+option(ENABLE_WEBVTT "Enable WebVTT embedding" ON)
+
+if(ENABLE_WEBVTT)
+  include(cmake/BuildWebVTT.cmake)
+  target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE c_webvtt_in_video_stream)
+  target_compile_definitions(c_webvtt_in_video_stream INTERFACE ENABLE_WEBVTT)
+endif()
+
 target_sources(
   ${CMAKE_PROJECT_NAME}
   PRIVATE src/plugin-main.c

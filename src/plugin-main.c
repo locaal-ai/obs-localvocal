@@ -28,10 +28,12 @@ MODULE_EXPORT const char *obs_module_description(void)
 }
 
 extern struct obs_source_info transcription_filter_info;
+extern void load_packet_callback_functions();
 
 bool obs_module_load(void)
 {
 	obs_register_source(&transcription_filter_info);
+	load_packet_callback_functions();
 	obs_log(LOG_INFO, "plugin loaded successfully (version %s)", PLUGIN_VERSION);
 	return true;
 }
