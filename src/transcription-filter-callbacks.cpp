@@ -462,10 +462,8 @@ void reset_caption_state(transcription_filter_data *gf_)
 		if (gf_->info_buffer.data != nullptr) {
 			circlebuf_free(&gf_->info_buffer);
 		}
-		if (gf_->whisper_buffer.data != nullptr) {
-			circlebuf_free(&gf_->whisper_buffer);
-		}
 	}
+	gf_->clear_buffers = true;
 }
 
 void media_play_callback(void *data_, calldata_t *cd)

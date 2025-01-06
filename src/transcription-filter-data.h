@@ -47,6 +47,7 @@ struct transcription_filter_data {
 	float *copy_buffers[MAX_PREPROC_CHANNELS];
 	struct circlebuf info_buffer;
 	struct circlebuf input_buffers[MAX_PREPROC_CHANNELS];
+	std::atomic<bool> clear_buffers;
 	struct circlebuf whisper_buffer;
 
 	/* Resampler */

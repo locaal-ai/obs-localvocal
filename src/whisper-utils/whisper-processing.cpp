@@ -386,6 +386,13 @@ void whisper_loop(void *data)
 			}
 		}
 
+		if (gf->clear_buffers) {
+			circlebuf_pop_front(&gf->resampled_buffer, nullptr, 0);
+			circlebuf_pop_front(&gf->whisper_buffer, nullptr, 0);
+			current_vad_state = {false, now_ms(), 0, 0};
+			gf->clear_buffers = false;
+		}
+
 		if (gf->vad_mode == VAD_MODE_HYBRID) {
 			current_vad_state = hybrid_vad_segmentation(gf, current_vad_state);
 		} else if (gf->vad_mode == VAD_MODE_ACTIVE) {
