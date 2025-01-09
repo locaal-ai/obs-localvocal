@@ -225,6 +225,9 @@ struct transcription_filter_data {
 	std::mutex active_outputs_mutex;
 	std::vector<webvtt_output> active_outputs;
 
+	std::mutex webvtt_settings_mutex;
+	uint16_t latency_to_video_in_msecs;
+	uint8_t send_frequency_hz;
 	std::atomic<bool> webvtt_caption_to_stream;
 	std::atomic<bool> webvtt_caption_to_recording;
 #endif

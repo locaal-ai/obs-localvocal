@@ -197,6 +197,16 @@ void transcription_filter_update(void *data, obs_data_t *s)
 #ifdef ENABLE_WEBVTT
 	gf->webvtt_caption_to_stream = obs_data_get_bool(s, "webvtt_caption_to_stream");
 	gf->webvtt_caption_to_recording = obs_data_get_bool(s, "webvtt_caption_to_recording");
+
+	{
+		auto lock = std::unique_lock(gf->webvtt_settings_mutex);
+		gf->latency_to_video_in_msecs = static_cast<uint16_t>(std::max(
+			0ll, std::min(static_cast<long long>(std::numeric_limits<uint16_t>::max()),
+				      obs_data_get_int(s, "webvtt_latency_to_video_in_msecs"))));
+		gf->send_frequency_hz = static_cast<uint8_t>(std::max(
+			1ll, std::min(static_cast<long long>(std::numeric_limits<uint8_t>::max()),
+				      obs_data_get_int(s, "webvtt_send_frequency_hz"))));
+	}
 #endif
 	gf->save_to_file = obs_data_get_bool(s, "file_output_enable");
 	gf->save_srt = obs_data_get_bool(s, "subtitle_save_srt");

@@ -421,6 +421,7 @@ void output_packet_added_callback(obs_output_t *output, struct encoder_packet *p
 
 	if (!it->initialized) {
 		it->initialized = true;
+		auto settings_lock = std::unique_lock(gf.webvtt_settings_mutex);
 		for (size_t i = 0; i < MAX_OUTPUT_VIDEO_ENCODERS; i++) {
 			auto encoder = obs_output_get_video_encoder2(output, i);
 			if (!encoder)
@@ -441,7 +442,7 @@ void output_packet_added_callback(obs_output_t *output, struct encoder_packet *p
 			auto voi = video_output_get_info(video);
 
 			auto muxer_builder = webvtt_create_muxer_builder(
-				10'000, 2,
+				gf.latency_to_video_in_msecs, gf.send_frequency_hz,
 				util_mul_div64(1000000000ULL, voi->fps_den, voi->fps_num));
 			// TODO: change name/language?
 			webvtt_muxer_builder_add_track(muxer_builder, false, false, false,

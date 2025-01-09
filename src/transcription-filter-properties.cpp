@@ -422,6 +422,13 @@ void add_webvtt_group_properties(obs_properties_t *ppts)
 				MT_("webvtt_caption_to_stream"));
 	obs_properties_add_bool(webvtt_group, "webvtt_caption_to_recording",
 				MT_("webvtt_caption_to_recording"));
+
+	obs_properties_add_int_slider(webvtt_group, "webvtt_latency_to_video_in_msecs",
+				      MT_("webvtt_latency_to_video_in_msecs"), 0,
+				      std::numeric_limits<uint16_t>::max(), 1);
+	obs_properties_add_int_slider(webvtt_group, "webvtt_send_frequency_hz",
+				      MT_("webvtt_send_frequency_hz"), 1,
+				      std::numeric_limits<uint8_t>::max(), 1);
 }
 #endif
 
@@ -714,6 +721,10 @@ void transcription_filter_defaults(obs_data_t *s)
 		s, "translate_cloud_body",
 		"{\n\t\"text\":\"{{sentence}}\",\n\t\"target\":\"{{target_language}}\"\n}");
 	obs_data_set_default_string(s, "translate_cloud_response_json_path", "translations.0.text");
+
+	// webvtt options
+	obs_data_set_default_int(s, "webvtt_latency_to_video_in_msecs", 10'000);
+	obs_data_set_default_int(s, "webvtt_send_frequency_hz", 2);
 
 	// Whisper parameters
 	apply_whisper_params_defaults_on_settings(s);
