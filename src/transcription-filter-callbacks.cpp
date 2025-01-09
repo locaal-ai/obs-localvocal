@@ -200,8 +200,10 @@ void send_translated_sentence_to_file(struct transcription_filter_data *gf,
 		// add a postfix to the file name (without extension) with the translation target language
 		std::string translated_file_path = "";
 		std::string output_file_path = gf->output_file_path;
-		std::string file_extension =
-			output_file_path.substr(output_file_path.find_last_of(".") + 1);
+		auto point_pos = output_file_path.find_last_of(".");
+		std::string file_extension = point_pos != output_file_path.npos
+						     ? output_file_path.substr(point_pos + 1)
+						     : "";
 		std::string file_name =
 			output_file_path.substr(0, output_file_path.find_last_of("."));
 		translated_file_path = file_name + "_" + target_lang + "." + file_extension;
