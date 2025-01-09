@@ -2,6 +2,7 @@
 #include <obs.h>
 #include <obs-module.h>
 #include <obs-frontend-api.h>
+#include <util/dstr.hpp>
 
 #include "transcription-filter-data.h"
 #include "transcription-filter.h"
@@ -429,6 +430,24 @@ void add_webvtt_group_properties(obs_properties_t *ppts)
 	obs_properties_add_int_slider(webvtt_group, "webvtt_send_frequency_hz",
 				      MT_("webvtt_send_frequency_hz"), 1,
 				      std::numeric_limits<uint8_t>::max(), 1);
+
+	DStr num_buffer, name_buffer, description_buffer;
+	for (size_t i = 0; i < MAX_WEBVTT_TRACKS; i++) {
+		dstr_printf(num_buffer, "%zu", i + 1);
+		dstr_printf(name_buffer, "webvtt_language_%zu", i);
+		dstr_copy(description_buffer, MT_("webvtt_language_description"));
+		dstr_replace(description_buffer, "$1", num_buffer->array);
+		obs_property_t *language_select = obs_properties_add_list(
+			webvtt_group, name_buffer->array, description_buffer->array,
+			OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_STRING);
+		obs_property_list_add_string(language_select, "None", "");
+		for (auto const &pair : whisper_available_lang_reverse) {
+			if (pair.second == "auto")
+				continue;
+			obs_property_list_add_string(language_select, pair.first.c_str(),
+						     pair.second.c_str());
+		}
+	}
 }
 #endif
 

@@ -1,5 +1,6 @@
 #include <obs-module.h>
 #include <obs-frontend-api.h>
+#include <util/dstr.hpp>
 #include <util/platform.h>
 
 #include <algorithm>
@@ -206,6 +207,27 @@ void transcription_filter_update(void *data, obs_data_t *s)
 		gf->send_frequency_hz = static_cast<uint8_t>(std::max(
 			1ll, std::min(static_cast<long long>(std::numeric_limits<uint8_t>::max()),
 				      obs_data_get_int(s, "webvtt_send_frequency_hz"))));
+
+		gf->active_languages.clear();
+		DStr name_buffer;
+		for (size_t i = 0; i < MAX_WEBVTT_TRACKS; i++) {
+			dstr_printf(name_buffer, "webvtt_language_%zu", i);
+			if (!obs_data_has_user_value(s, name_buffer->array))
+				continue;
+
+			std::string lang = obs_data_get_string(s, name_buffer->array);
+			if (lang.empty())
+				continue;
+
+			if (std::find(gf->active_languages.begin(), gf->active_languages.end(),
+				      lang) != gf->active_languages.end()) {
+				obs_log(LOG_WARNING, "Not adding duplicate language '%s'",
+					lang.c_str());
+				continue;
+			}
+
+			gf->active_languages.push_back(lang);
+		}
 	}
 #endif
 	gf->save_to_file = obs_data_get_bool(s, "file_output_enable");

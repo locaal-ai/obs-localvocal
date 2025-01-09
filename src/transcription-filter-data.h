@@ -27,6 +27,7 @@
 #include "translation/cloud-translation/translation-cloud.h"
 
 #define MAX_PREPROC_CHANNELS 10
+#define MAX_WEBVTT_TRACKS 5
 
 #if !defined(LIBOBS_MAJOR_VERSION) || LIBOBS_MAJOR_VERSION < 31
 struct encoder_packet_time {
@@ -217,6 +218,7 @@ struct transcription_filter_data {
 		uint64_t start_timestamp_ms;
 
 		bool initialized = false;
+		std::map<std::string, uint8_t> language_to_track;
 		std::unique_ptr<WebvttMuxer, webvtt_muxer_deleter>
 			webvtt_muxer[MAX_OUTPUT_VIDEO_ENCODERS];
 		CodecFlavor codec_flavor[MAX_OUTPUT_VIDEO_ENCODERS] = {};
@@ -228,6 +230,8 @@ struct transcription_filter_data {
 	std::mutex webvtt_settings_mutex;
 	uint16_t latency_to_video_in_msecs;
 	uint8_t send_frequency_hz;
+	std::vector<std::string> active_languages;
+
 	std::atomic<bool> webvtt_caption_to_stream;
 	std::atomic<bool> webvtt_caption_to_recording;
 #endif

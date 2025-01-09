@@ -19,6 +19,7 @@
 #include "transcription-utils.h"
 #include "translation/translation.h"
 #include "translation/translation-includes.h"
+#include "whisper-utils/whisper-language.h"
 #include "whisper-utils/whisper-utils.h"
 #include "whisper-utils/whisper-model-utils.h"
 #include "translation/language_codes.h"
@@ -244,6 +245,11 @@ void send_caption_to_webvtt(uint64_t possible_end_ts_ms, DetectionResultWithText
 		if (!gf.webvtt_caption_to_stream &&
 		    output.output_type == transcription_filter_data::webvtt_output_type::Streaming)
 			continue;
+
+		auto lang_to_track = output.language_to_track.find(result.language);
+		if (lang_to_track == output.language_to_track.end())
+			continue;
+
 		for (size_t i = 0; i < MAX_OUTPUT_VIDEO_ENCODERS; i++) {
 			auto &muxer = output.webvtt_muxer[i];
 			if (!muxer)
@@ -255,7 +261,7 @@ void send_caption_to_webvtt(uint64_t possible_end_ts_ms, DetectionResultWithText
 				duration -= output.start_timestamp_ms - segment_start_ts;
 				segment_start_ts = output.start_timestamp_ms;
 			}
-			webvtt_muxer_add_cue(muxer.get(), 0,
+			webvtt_muxer_add_cue(muxer.get(), lang_to_track->second,
 					     segment_start_ts - output.start_timestamp_ms, duration,
 					     str_copy.c_str());
 		}
@@ -444,11 +450,22 @@ void output_packet_added_callback(obs_output_t *output, struct encoder_packet *p
 			auto muxer_builder = webvtt_create_muxer_builder(
 				gf.latency_to_video_in_msecs, gf.send_frequency_hz,
 				util_mul_div64(1000000000ULL, voi->fps_den, voi->fps_num));
-			// TODO: change name/language?
-			webvtt_muxer_builder_add_track(muxer_builder, false, false, false,
-						       "Subtitles", "en", nullptr, nullptr);
-			webvtt_muxer_builder_add_track(muxer_builder, false, false, false, "Empty",
-						       "en", nullptr, nullptr);
+			uint8_t track_index = 0;
+			// FIXME: this may be too lazy, i.e. languages should probably be locked in the signal handler instead
+			for (auto &lang : gf.active_languages) {
+				auto lang_it = whisper_available_lang_reverse.find(lang);
+				if (lang_it == whisper_available_lang.end()) {
+					obs_log(LOG_WARNING,
+						"requested language '%s' unknown, track not added",
+						lang.c_str());
+					continue;
+				}
+
+				webvtt_muxer_builder_add_track(muxer_builder, false, false, false,
+							       lang_it->second.c_str(),
+							       lang.c_str(), nullptr, nullptr);
+				it->language_to_track[lang] = track_index++;
+			}
 			it->webvtt_muxer[i].reset(webvtt_muxer_builder_create_muxer(muxer_builder));
 		}
 	}
