@@ -411,6 +411,20 @@ void add_translation_group_properties(obs_properties_t *ppts)
 				      MT_("translation_no_repeat_ngram_size"), 1, 10, 1);
 }
 
+#ifdef ENABLE_WEBVTT
+void add_webvtt_group_properties(obs_properties_t *ppts)
+{
+	auto webvtt_group = obs_properties_create();
+	obs_properties_add_group(ppts, "webvtt_enable", MT_("webvtt_group"), OBS_GROUP_CHECKABLE,
+				 webvtt_group);
+
+	obs_properties_add_bool(webvtt_group, "webvtt_caption_to_stream",
+				MT_("webvtt_caption_to_stream"));
+	obs_properties_add_bool(webvtt_group, "webvtt_caption_to_recording",
+				MT_("webvtt_caption_to_recording"));
+}
+#endif
+
 void add_file_output_group_properties(obs_properties_t *ppts)
 {
 	// create a file output group
@@ -617,6 +631,9 @@ obs_properties_t *transcription_filter_properties(void *data)
 	add_transcription_group_properties(ppts, gf);
 	add_translation_group_properties(ppts);
 	add_translation_cloud_group_properties(ppts);
+#ifdef ENABLE_WEBVTT
+	add_webvtt_group_properties(ppts);
+#endif
 	add_file_output_group_properties(ppts);
 	add_buffered_output_group_properties(ppts);
 	add_advanced_group_properties(ppts, gf);

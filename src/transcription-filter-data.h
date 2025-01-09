@@ -206,8 +206,14 @@ struct transcription_filter_data {
 		TokenBufferSegmentation::SEGMENTATION_TOKEN;
 
 #ifdef ENABLE_WEBVTT
+	enum struct webvtt_output_type {
+		Streaming,
+		Recording,
+	};
+
 	struct webvtt_output {
 		OBSWeakOutputAutoRelease output;
+		webvtt_output_type output_type;
 		uint64_t start_timestamp_ms;
 
 		bool initialized = false;
@@ -218,6 +224,9 @@ struct transcription_filter_data {
 
 	std::mutex active_outputs_mutex;
 	std::vector<webvtt_output> active_outputs;
+
+	std::atomic<bool> webvtt_caption_to_stream;
+	std::atomic<bool> webvtt_caption_to_recording;
 #endif
 
 	// ctor

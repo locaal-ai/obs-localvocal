@@ -194,6 +194,10 @@ void transcription_filter_update(void *data, obs_data_t *s)
 	gf->vad_mode = (int)obs_data_get_int(s, "vad_mode");
 	gf->log_words = obs_data_get_bool(s, "log_words");
 	gf->caption_to_stream = obs_data_get_bool(s, "caption_to_stream");
+#ifdef ENABLE_WEBVTT
+	gf->webvtt_caption_to_stream = obs_data_get_bool(s, "webvtt_caption_to_stream");
+	gf->webvtt_caption_to_recording = obs_data_get_bool(s, "webvtt_caption_to_recording");
+#endif
 	gf->save_to_file = obs_data_get_bool(s, "file_output_enable");
 	gf->save_srt = obs_data_get_bool(s, "subtitle_save_srt");
 	gf->truncate_output_file = obs_data_get_bool(s, "truncate_output_file");

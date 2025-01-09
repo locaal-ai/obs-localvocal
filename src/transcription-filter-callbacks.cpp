@@ -238,6 +238,12 @@ void send_caption_to_webvtt(uint64_t possible_end_ts_ms, DetectionResultWithText
 {
 	auto lock = std::unique_lock(gf.active_outputs_mutex);
 	for (auto &output : gf.active_outputs) {
+		if (!gf.webvtt_caption_to_recording &&
+		    output.output_type == transcription_filter_data::webvtt_output_type::Recording)
+			continue;
+		if (!gf.webvtt_caption_to_stream &&
+		    output.output_type == transcription_filter_data::webvtt_output_type::Streaming)
+			continue;
 		for (size_t i = 0; i < MAX_OUTPUT_VIDEO_ENCODERS; i++) {
 			auto &muxer = output.webvtt_muxer[i];
 			if (!muxer)
@@ -477,9 +483,17 @@ void output_packet_added_callback(obs_output_t *output, struct encoder_packet *p
 	pkt->size = out_data.num - sizeof(ref);
 }
 
-void add_webvtt_output(transcription_filter_data &gf, obs_output_t *output)
+void add_webvtt_output(transcription_filter_data &gf, obs_output_t *output,
+		       transcription_filter_data::webvtt_output_type output_type)
 {
 	if (!obs_output_add_packet_callback_)
+		return;
+
+	if (!gf.webvtt_caption_to_recording &&
+	    output_type == transcription_filter_data::webvtt_output_type::Recording)
+		return;
+	if (!gf.webvtt_caption_to_stream &&
+	    output_type == transcription_filter_data::webvtt_output_type::Streaming)
 		return;
 
 	auto start_ms = now_ms();
@@ -488,6 +502,7 @@ void add_webvtt_output(transcription_filter_data &gf, obs_output_t *output)
 	gf.active_outputs.push_back({});
 	auto &entry = gf.active_outputs.back();
 	entry.output = obs_output_get_weak_output(output);
+	entry.output_type = output_type;
 	entry.start_timestamp_ms = start_ms;
 	obs_output_add_packet_callback_(output, output_packet_added_callback, &gf);
 }
@@ -545,7 +560,8 @@ void recording_state_callback(enum obs_frontend_event event, void *data)
 		static_cast<struct transcription_filter_data *>(data);
 	if (event == OBS_FRONTEND_EVENT_RECORDING_STARTING) {
 #ifdef ENABLE_WEBVTT
-		add_webvtt_output(*gf_, OBSOutputAutoRelease{obs_frontend_get_recording_output()});
+		add_webvtt_output(*gf_, OBSOutputAutoRelease{obs_frontend_get_recording_output()},
+				  transcription_filter_data::webvtt_output_type::Recording);
 #endif
 		if (gf_->save_srt && gf_->save_only_while_recording &&
 		    gf_->output_file_path != "") {
@@ -599,7 +615,8 @@ void recording_state_callback(enum obs_frontend_event event, void *data)
 		fs::rename(outputPath, newPath);
 	} else if (event == OBS_FRONTEND_EVENT_STREAMING_STARTING) {
 #ifdef ENABLE_WEBVTT
-		add_webvtt_output(*gf_, OBSOutputAutoRelease{obs_frontend_get_streaming_output()});
+		add_webvtt_output(*gf_, OBSOutputAutoRelease{obs_frontend_get_streaming_output()},
+				  transcription_filter_data::webvtt_output_type::Streaming);
 #endif
 	} else if (event == OBS_FRONTEND_EVENT_STREAMING_STOPPING) {
 #ifdef ENABLE_WEBVTT
