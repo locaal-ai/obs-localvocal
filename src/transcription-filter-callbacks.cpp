@@ -303,6 +303,11 @@ void set_text_callback(uint64_t possible_end_ts, struct transcription_filter_dat
 		}
 	}
 
+#ifdef ENABLE_WEBVTT
+	if (result.result == DETECTION_RESULT_SPEECH)
+		send_caption_to_webvtt(possible_end_ts, result, str_copy, *gf);
+#endif
+
 	bool should_translate_local =
 		gf->translate_only_full_sentences ? result.result == DETECTION_RESULT_SPEECH : true;
 
@@ -343,7 +348,21 @@ void set_text_callback(uint64_t possible_end_ts, struct transcription_filter_dat
 	if (should_translate_cloud) {
 		send_sentence_to_cloud_translation_async(
 			str_copy, gf, result.language,
-			[gf, result](const std::string &translated_sentence_cloud) {
+			[gf, result,
+			 possible_end_ts](const std::string &translated_sentence_cloud) {
+#ifdef ENABLE_WEBVTT
+				if (result.result == DETECTION_RESULT_SPEECH) {
+					auto target_lang = language_codes_to_whisper.find(
+						gf->translate_cloud_target_language);
+					if (target_lang != language_codes_to_whisper.end()) {
+						auto res_copy = result;
+						res_copy.language = target_lang->second;
+						send_caption_to_webvtt(possible_end_ts, res_copy,
+								       translated_sentence_cloud,
+								       *gf);
+					}
+				}
+#endif
 				if (gf->translate_cloud_output != "none") {
 					send_caption_to_source(gf->translate_cloud_output,
 							       translated_sentence_cloud, gf);
@@ -375,15 +394,22 @@ void set_text_callback(uint64_t possible_end_ts, struct transcription_filter_dat
 		}
 	}
 
+#ifdef ENABLE_WEBVTT
+	if (should_translate_local && result.result == DETECTION_RESULT_SPEECH) {
+		auto target_lang = language_codes_to_whisper.find(gf->target_lang);
+		if (target_lang != language_codes_to_whisper.end()) {
+			auto res_copy = result;
+			res_copy.language = target_lang->second;
+			send_caption_to_webvtt(possible_end_ts, res_copy, translated_sentence_local,
+					       *gf);
+		}
+	}
+#endif
+
 	if (gf->caption_to_stream && result.result == DETECTION_RESULT_SPEECH) {
 		// TODO: add support for partial transcriptions
 		send_caption_to_stream(result, str_copy, gf);
 	}
-
-#ifdef ENABLE_WEBVTT
-	if (result.result == DETECTION_RESULT_SPEECH)
-		send_caption_to_webvtt(possible_end_ts, result, str_copy, *gf);
-#endif
 
 	if (gf->save_to_file && gf->output_file_path != "" &&
 	    result.result == DETECTION_RESULT_SPEECH) {
