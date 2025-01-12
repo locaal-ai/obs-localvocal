@@ -7,7 +7,6 @@
 [![Total downloads](https://img.shields.io/github/downloads/locaal-ai/obs-localvocal/total)](https://github.com/locaal-ai/obs-localvocal/releases)
 [![GitHub release (latest by date)](https://img.shields.io/github/v/release/locaal-ai/obs-localvocal)](https://github.com/locaal-ai/obs-localvocal/releases)
 [![GitHub stars](https://badgen.net/github/stars/locaal-ai/obs-localvocal)](https://GitHub.com/locaal-ai/obs-localvocal/stargazers/)
-[![Discord](https://img.shields.io/discord/1200229425141252116)](https://discord.gg/KbjGU2vvUz)
 <br/>
 Download:</br>
 <a href="https://github.com/locaal-ai/obs-localvocal/releases/download/0.3.9/obs-localvocal-0.3.9-windows-x64-cuda-Installer.exe"><img src="https://img.shields.io/badge/Windows-0078D6?style=for-the-badge&logo=windows&logoColor=white" /></a>
@@ -21,8 +20,6 @@ Download:</br>
 ## Introduction
 
 LocalVocal lets you transcribe, locally on your machine, speech into text and simultaneously translate to any language. ✅ No GPU required, ✅ no cloud costs, ✅ no network and ✅ no downtime! Privacy first - all data stays on your machine.
-
-If this free plugin has been valuable consider adding a ⭐ to this GH repo, rating it [on OBS](https://obsproject.com/forum/resources/localvocal-live-stream-ai-assistant.1769/), subscribing to [my YouTube channel](https://www.youtube.com/@royshilk) where I post updates, and supporting my work on [GitHub](https://github.com/sponsors/royshil), [Patreon](https://www.patreon.com/RoyShilkrot) or [OpenCollective](https://opencollective.com/locaal-ai) 🙏
 
 Internally the plugin is running [OpenAI's Whisper](https://github.com/openai/whisper) to process real-time the speech and predict a transcription.
 It's using the [Whisper.cpp](https://github.com/ggerganov/whisper.cpp) project from [ggerganov](https://github.com/ggerganov) to run the Whisper network efficiently on CPUs and GPUs.
@@ -64,23 +61,12 @@ Current Features:
 - Sync'ed captions with OBS recording timestamps
 - Send captions on a RTMP stream to e.g. YouTube, Twitch
 - Bring your own Whisper model (any GGML)
-- Translate captions in real time to major languages (both Whisper built-in translation as well as NMT models)
+- Translate captions in real time to major languages (with cloud prviders, Whisper built-in translation as well as NMT models)
 - CUDA, hipBLAS (AMD ROCm), Apple Arm64, AVX & SSE acceleration support
 - Filter out or replace any part of the produced captions
 - Partial transcriptions for a streaming-captions experience
 - 100s of fine-tuned Whisper models for dozens of languages from HuggingFace
 
-Roadmap:
-- More robust built-in translation options
-- Additional output options: .vtt, .ssa, .sub, etc.
-- Speaker diarization (detecting speakers in a multi-person audio stream)
-
-Check out our other plugins:
-- [Background Removal](https://github.com/locaal-ai/obs-backgroundremoval) removes background from webcam without a green screen.
-- [Detect](https://github.com/locaal-ai/obs-detect) will detect and track >80 types of objects in real-time inside OBS
-- [CleanStream](https://github.com/locaal-ai/obs-cleanstream) for real-time filler word (uh,um) and profanity removal from a live audio stream
-- [URL/API Source](https://github.com/locaal-ai/obs-urlsource) that allows fetching live data from an API and displaying it in OBS.
-- [Squawk](https://github.com/locaal-ai/obs-squawk) adds lifelike local text-to-speech capabilities built-in OBS
 
 ## Download
 Check out the [latest releases](https://github.com/locaal-ai/obs-localvocal/releases) for downloads and install instructions.
