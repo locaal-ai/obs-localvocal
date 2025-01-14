@@ -1,0 +1,9 @@
+cpp_compat = true
+language = "c"
+
+[parse]
+include = ["webvtt-in-video-stream"]
+parse_deps = true
+
+[export]
+include = ["CodecFlavor"]

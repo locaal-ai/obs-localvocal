@@ -1,0 +1,8 @@
+[package]
+edition = "2021"
+name = "webvtt-in-video-stream"
+version = "0.1.0"
+
+[dependencies]
+thiserror = "2.0.4"
+video-bytestream-tools = {path = "../video-bytestream-tools"}
