@@ -220,7 +220,8 @@ else()
     Whispercpp::Whisper
     PROPERTIES IMPORTED_LOCATION
                ${whispercpp_fetch_SOURCE_DIR}/lib/${CMAKE_STATIC_LIBRARY_PREFIX}whisper${CMAKE_STATIC_LIBRARY_SUFFIX})
-  set_target_properties(Whispercpp::Whisper PROPERTIES INTERFACE_INCLUDE_DIRECTORIES ${INSTALL_DIR}/include)
+  set_target_properties(Whispercpp::Whisper PROPERTIES INTERFACE_INCLUDE_DIRECTORIES
+                                                       ${whispercpp_fetch_SOURCE_DIR}/include)
   add_library(Whispercpp::GGML STATIC IMPORTED)
   set_target_properties(
     Whispercpp::GGML
