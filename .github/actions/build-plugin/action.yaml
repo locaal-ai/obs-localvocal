@@ -69,6 +69,8 @@ runs:
         if (( ${+RUNNER_DEBUG} )) build_args+=(--debug)
 
         .github/scripts/build-linux ${build_args}
+      env:
+        ACCELERATION: ${{ inputs.acceleration }}
 
     - name: Run Windows Build
       if: runner.os == 'Windows'
