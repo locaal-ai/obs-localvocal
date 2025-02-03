@@ -228,6 +228,9 @@ else()
     DOWNLOAD_EXTRACT_TIMESTAMP TRUE)
   FetchContent_MakeAvailable(whispercpp_fetch)
 
+  message(STATUS "Whispercpp URL: ${WHISPER_CPP_URL}")
+  message(STATUS "Whispercpp source dir: ${whispercpp_fetch_SOURCE_DIR}")
+
   # add the static Whisper library to the link line
   add_library(Whispercpp::Whisper STATIC IMPORTED)
   set_target_properties(
