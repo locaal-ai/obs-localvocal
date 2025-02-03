@@ -48,17 +48,19 @@ else()
   target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE libcurl)
 endif()
 
-if(WIN32)
+if(WIN32 OR (UNIX AND NOT APPLE))
   if(DEFINED ENV{ACCELERATION})
     set(ACCELERATION
         $ENV{ACCELERATION}
         CACHE STRING "Acceleration to use" FORCE)
   endif()
+
   if(NOT DEFINED ACCELERATION)
     set(ACCELERATION
         "cpu"
         CACHE STRING "Acceleration to use")
   endif()
+
   set_property(CACHE ACCELERATION PROPERTY STRINGS "cpu" "hipblas" "cuda" "vulkan")
 endif()
 
@@ -97,6 +99,7 @@ else()
 endif()
 
 include(cmake/BuildICU.cmake)
+
 # Add ICU to the target
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE ICU)
 target_include_directories(${CMAKE_PROJECT_NAME} SYSTEM PUBLIC ${ICU_INCLUDE_DIR})
