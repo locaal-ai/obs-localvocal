@@ -37,6 +37,8 @@ void whisper_params_pretty_print(whisper_full_params &params)
 	obs_log(LOG_INFO, "language: %s", params.language);
 	obs_log(LOG_INFO, "detect_language: %s", params.detect_language ? "true" : "false");
 	obs_log(LOG_INFO, "suppress_blank: %s", params.suppress_blank ? "true" : "false");
+	obs_log(LOG_INFO, "suppress_non_speech_tokens: %s",
+		params.suppress_non_speech_tokens ? "true" : "false");
 	obs_log(LOG_INFO, "temperature: %f", params.temperature);
 	obs_log(LOG_INFO, "max_initial_ts: %f", params.max_initial_ts);
 	obs_log(LOG_INFO, "length_penalty: %f", params.length_penalty);
@@ -82,6 +84,7 @@ void apply_whisper_params_defaults_on_settings(obs_data_t *s)
 	// obs_data_set_default_string(s, "language", whisper_params_tmp.language);
 	obs_data_set_default_bool(s, "detect_language", whisper_params_tmp.detect_language);
 	obs_data_set_default_bool(s, "suppress_blank", false);
+	obs_data_set_default_bool(s, "suppress_non_speech_tokens", false);
 	obs_data_set_default_double(s, "temperature", whisper_params_tmp.temperature);
 	obs_data_set_default_double(s, "max_initial_ts", whisper_params_tmp.max_initial_ts);
 	obs_data_set_default_double(s, "length_penalty", whisper_params_tmp.length_penalty);
@@ -126,6 +129,8 @@ void apply_whisper_params_from_settings(whisper_full_params &params, obs_data_t 
 	// params.language = obs_data_get_string(settings, "language");
 	params.detect_language = obs_data_get_bool(settings, "detect_language");
 	params.suppress_blank = obs_data_get_bool(settings, "suppress_blank");
+	params.suppress_non_speech_tokens =
+		obs_data_get_bool(settings, "suppress_non_speech_tokens");
 	params.temperature = (float)obs_data_get_double(settings, "temperature");
 	params.max_initial_ts = (float)obs_data_get_double(settings, "max_initial_ts");
 	params.length_penalty = (float)obs_data_get_double(settings, "length_penalty");
@@ -172,6 +177,7 @@ void add_whisper_params_group_properties(obs_properties_t *ppts)
 	// obs_properties_add_text(g, "language", MT_("language"), OBS_TEXT_DEFAULT);
 	obs_properties_add_bool(g, "detect_language", MT_("detect_language"));
 	obs_properties_add_bool(g, "suppress_blank", MT_("suppress_blank"));
+	obs_properties_add_bool(g, "suppress_non_speech_tokens", MT_("suppress_non_speech_tokens"));
 	obs_properties_add_float(g, "temperature", MT_("temperature"), 0, 1, 0.05);
 	obs_properties_add_float(g, "max_initial_ts", MT_("max_initial_ts"), 0, 100, 1);
 	obs_properties_add_float(g, "length_penalty", MT_("length_penalty"), 0, 1, 0.05);
