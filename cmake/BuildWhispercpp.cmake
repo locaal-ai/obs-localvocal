@@ -60,13 +60,6 @@ if(APPLE)
     PROPERTIES IMPORTED_LOCATION
                ${whispercpp_fetch_SOURCE_DIR}/lib/${CMAKE_STATIC_LIBRARY_PREFIX}ggml-blas${CMAKE_STATIC_LIBRARY_SUFFIX})
 
-  add_library(Whispercpp::CoreML STATIC IMPORTED)
-  set_target_properties(
-    Whispercpp::CoreML
-    PROPERTIES
-      IMPORTED_LOCATION
-      ${whispercpp_fetch_SOURCE_DIR}/lib/${CMAKE_STATIC_LIBRARY_PREFIX}whisper.coreml${CMAKE_STATIC_LIBRARY_SUFFIX})
-
 elseif(WIN32)
   if(NOT DEFINED ACCELERATION)
     message(FATAL_ERROR "ACCELERATION is not set. Please set it to either `cpu`, `cuda`, `vulkan` or `hipblas`")
@@ -267,7 +260,7 @@ endif()
 
 if(APPLE)
   target_link_libraries(Whispercpp INTERFACE "-framework Accelerate -framework CoreML -framework Metal")
-  target_link_libraries(Whispercpp INTERFACE Whispercpp::CoreML Whispercpp::GGMLMetal Whispercpp::GGMLBlas)
+  target_link_libraries(Whispercpp INTERFACE Whispercpp::GGMLMetal Whispercpp::GGMLBlas)
 endif(APPLE)
 
 if(UNIX
