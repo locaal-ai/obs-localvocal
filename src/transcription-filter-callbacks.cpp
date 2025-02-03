@@ -3,6 +3,7 @@
 #endif
 
 #include <obs.h>
+#include <obs.hpp>
 #include <obs-frontend-api.h>
 
 #include <curl/curl.h>
@@ -18,6 +19,7 @@
 #include "transcription-utils.h"
 #include "translation/translation.h"
 #include "translation/translation-includes.h"
+#include "whisper-utils/whisper-language.h"
 #include "whisper-utils/whisper-utils.h"
 #include "whisper-utils/whisper-model-utils.h"
 #include "translation/language_codes.h"
@@ -200,8 +202,10 @@ void send_translated_sentence_to_file(struct transcription_filter_data *gf,
 		// add a postfix to the file name (without extension) with the translation target language
 		std::string translated_file_path = "";
 		std::string output_file_path = gf->output_file_path;
-		std::string file_extension =
-			output_file_path.substr(output_file_path.find_last_of(".") + 1);
+		auto point_pos = output_file_path.find_last_of(".");
+		std::string file_extension = point_pos != output_file_path.npos
+						     ? output_file_path.substr(point_pos + 1)
+						     : "";
 		std::string file_name =
 			output_file_path.substr(0, output_file_path.find_last_of("."));
 		translated_file_path = file_name + "_" + target_lang + "." + file_extension;
@@ -229,7 +233,43 @@ void send_caption_to_stream(DetectionResultWithText result, const std::string &s
 	}
 }
 
-void set_text_callback(struct transcription_filter_data *gf,
+#ifdef ENABLE_WEBVTT
+void send_caption_to_webvtt(uint64_t possible_end_ts_ms, DetectionResultWithText result,
+			    const std::string &str_copy, transcription_filter_data &gf)
+{
+	auto lock = std::unique_lock(gf.active_outputs_mutex);
+	for (auto &output : gf.active_outputs) {
+		if (!gf.webvtt_caption_to_recording &&
+		    output.output_type == transcription_filter_data::webvtt_output_type::Recording)
+			continue;
+		if (!gf.webvtt_caption_to_stream &&
+		    output.output_type == transcription_filter_data::webvtt_output_type::Streaming)
+			continue;
+
+		auto lang_to_track = output.language_to_track.find(result.language);
+		if (lang_to_track == output.language_to_track.end())
+			continue;
+
+		for (size_t i = 0; i < MAX_OUTPUT_VIDEO_ENCODERS; i++) {
+			auto &muxer = output.webvtt_muxer[i];
+			if (!muxer)
+				continue;
+
+			auto duration = result.end_timestamp_ms - result.start_timestamp_ms;
+			auto segment_start_ts = possible_end_ts_ms - duration;
+			if (segment_start_ts < output.start_timestamp_ms) {
+				duration -= output.start_timestamp_ms - segment_start_ts;
+				segment_start_ts = output.start_timestamp_ms;
+			}
+			webvtt_muxer_add_cue(muxer.get(), lang_to_track->second,
+					     segment_start_ts - output.start_timestamp_ms, duration,
+					     str_copy.c_str());
+		}
+	}
+}
+#endif
+
+void set_text_callback(uint64_t possible_end_ts, struct transcription_filter_data *gf,
 		       const DetectionResultWithText &resultIn)
 {
 	DetectionResultWithText result = resultIn;
@@ -262,6 +302,11 @@ void set_text_callback(struct transcription_filter_data *gf,
 				original_str_copy.c_str(), str_copy.c_str());
 		}
 	}
+
+#ifdef ENABLE_WEBVTT
+	if (result.result == DETECTION_RESULT_SPEECH)
+		send_caption_to_webvtt(possible_end_ts, result, str_copy, *gf);
+#endif
 
 	bool should_translate_local =
 		gf->translate_only_full_sentences ? result.result == DETECTION_RESULT_SPEECH : true;
@@ -303,7 +348,21 @@ void set_text_callback(struct transcription_filter_data *gf,
 	if (should_translate_cloud) {
 		send_sentence_to_cloud_translation_async(
 			str_copy, gf, result.language,
-			[gf, result](const std::string &translated_sentence_cloud) {
+			[gf, result,
+			 possible_end_ts](const std::string &translated_sentence_cloud) {
+#ifdef ENABLE_WEBVTT
+				if (result.result == DETECTION_RESULT_SPEECH) {
+					auto target_lang = language_codes_to_whisper.find(
+						gf->translate_cloud_target_language);
+					if (target_lang != language_codes_to_whisper.end()) {
+						auto res_copy = result;
+						res_copy.language = target_lang->second;
+						send_caption_to_webvtt(possible_end_ts, res_copy,
+								       translated_sentence_cloud,
+								       *gf);
+					}
+				}
+#endif
 				if (gf->translate_cloud_output != "none") {
 					send_caption_to_source(gf->translate_cloud_output,
 							       translated_sentence_cloud, gf);
@@ -335,6 +394,18 @@ void set_text_callback(struct transcription_filter_data *gf,
 		}
 	}
 
+#ifdef ENABLE_WEBVTT
+	if (should_translate_local && result.result == DETECTION_RESULT_SPEECH) {
+		auto target_lang = language_codes_to_whisper.find(gf->target_lang);
+		if (target_lang != language_codes_to_whisper.end()) {
+			auto res_copy = result;
+			res_copy.language = target_lang->second;
+			send_caption_to_webvtt(possible_end_ts, res_copy, translated_sentence_local,
+					       *gf);
+		}
+	}
+#endif
+
 	if (gf->caption_to_stream && result.result == DETECTION_RESULT_SPEECH) {
 		// TODO: add support for partial transcriptions
 		send_caption_to_stream(result, str_copy, gf);
@@ -361,6 +432,155 @@ void set_text_callback(struct transcription_filter_data *gf,
 	}
 };
 
+#ifdef ENABLE_WEBVTT
+void output_packet_added_callback(obs_output_t *output, struct encoder_packet *pkt,
+				  struct encoder_packet_time *pkt_time, void *param)
+{
+	if (!pkt || !pkt_time)
+		return;
+	if (pkt->type != OBS_ENCODER_VIDEO)
+		return;
+	if (pkt->track_idx >= MAX_OUTPUT_VIDEO_ENCODERS)
+		return;
+
+	auto &gf = *static_cast<transcription_filter_data *>(param);
+	auto lock = std::unique_lock(gf.active_outputs_mutex);
+	auto it = std::find_if(gf.active_outputs.begin(), gf.active_outputs.end(), [&](auto &val) {
+		return obs_weak_output_references_output(val.output, output);
+	});
+	if (it == gf.active_outputs.end())
+		return;
+
+	if (!it->initialized) {
+		it->initialized = true;
+		auto settings_lock = std::unique_lock(gf.webvtt_settings_mutex);
+		for (size_t i = 0; i < MAX_OUTPUT_VIDEO_ENCODERS; i++) {
+			auto encoder = obs_output_get_video_encoder2(output, i);
+			if (!encoder)
+				continue;
+
+			auto &codec_flavor = it->codec_flavor[i];
+			if (strcmp(obs_encoder_get_codec(encoder), "h264") == 0) {
+				codec_flavor = H264AnnexB;
+			} else if (strcmp(obs_encoder_get_codec(encoder), "av1") == 0) {
+				continue;
+			} else if (strcmp(obs_encoder_get_codec(encoder), "hevc") == 0) {
+				continue;
+			} else {
+				continue;
+			}
+
+			auto video = obs_encoder_video(encoder);
+			auto voi = video_output_get_info(video);
+
+			auto muxer_builder = webvtt_create_muxer_builder(
+				gf.latency_to_video_in_msecs, gf.send_frequency_hz,
+				util_mul_div64(1000000000ULL, voi->fps_den, voi->fps_num));
+			uint8_t track_index = 0;
+			// FIXME: this may be too lazy, i.e. languages should probably be locked in the signal handler instead
+			for (auto &lang : gf.active_languages) {
+				auto lang_it = whisper_available_lang_reverse.find(lang);
+				if (lang_it == whisper_available_lang.end()) {
+					obs_log(LOG_WARNING,
+						"requested language '%s' unknown, track not added",
+						lang.c_str());
+					continue;
+				}
+
+				webvtt_muxer_builder_add_track(muxer_builder, false, false, false,
+							       lang_it->second.c_str(),
+							       lang.c_str(), nullptr, nullptr);
+				it->language_to_track[lang] = track_index++;
+			}
+			it->webvtt_muxer[i].reset(webvtt_muxer_builder_create_muxer(muxer_builder));
+		}
+	}
+
+	auto &muxer = it->webvtt_muxer[pkt->track_idx];
+	if (!muxer)
+		return;
+
+	std::unique_ptr<WebvttBuffer, webvtt_buffer_deleter> buffer{
+		webvtt_muxer_try_mux_into_bytestream(muxer.get(), pkt_time->cts, pkt->keyframe,
+						     it->codec_flavor[pkt->track_idx])};
+
+	if (!buffer)
+		return;
+
+	long ref = 1;
+
+	DARRAY(uint8_t) out_data;
+	da_init(out_data);
+	da_reserve(out_data, sizeof(ref) + pkt->size + webvtt_buffer_length(buffer.get()));
+
+	// Copy the original packet
+	da_push_back_array(out_data, (uint8_t *)&ref, sizeof(ref));
+	da_push_back_array(out_data, pkt->data, pkt->size);
+	da_push_back_array(out_data, webvtt_buffer_data(buffer.get()),
+			   webvtt_buffer_length(buffer.get()));
+
+	auto old_pkt = *pkt;
+	obs_encoder_packet_release(pkt);
+	*pkt = old_pkt;
+
+	pkt->data = (uint8_t *)out_data.array + sizeof(ref);
+	pkt->size = out_data.num - sizeof(ref);
+}
+
+void add_webvtt_output(transcription_filter_data &gf, obs_output_t *output,
+		       transcription_filter_data::webvtt_output_type output_type)
+{
+	if (!obs_output_add_packet_callback_)
+		return;
+
+	if (!gf.webvtt_caption_to_recording &&
+	    output_type == transcription_filter_data::webvtt_output_type::Recording)
+		return;
+	if (!gf.webvtt_caption_to_stream &&
+	    output_type == transcription_filter_data::webvtt_output_type::Streaming)
+		return;
+
+	auto start_ms = now_ms();
+
+	auto lock = std::unique_lock(gf.active_outputs_mutex);
+	gf.active_outputs.push_back({});
+	auto &entry = gf.active_outputs.back();
+	entry.output = obs_output_get_weak_output(output);
+	entry.output_type = output_type;
+	entry.start_timestamp_ms = start_ms;
+	obs_output_add_packet_callback_(output, output_packet_added_callback, &gf);
+}
+
+void remove_webvtt_output(transcription_filter_data &gf, obs_output_t *output)
+{
+	if (!obs_output_remove_packet_callback_)
+		return;
+
+	auto lock = std::unique_lock(gf.active_outputs_mutex);
+	for (auto iter = gf.active_outputs.begin(); iter != gf.active_outputs.end(); iter++) {
+		auto &webvtt_output = *iter;
+		if (!obs_weak_output_references_output(webvtt_output.output, output))
+			continue;
+
+		obs_output_remove_packet_callback_(output, output_packet_added_callback, &gf);
+		gf.active_outputs.erase(iter);
+		return;
+	}
+}
+
+void remove_all_webvtt_outputs(std::unique_lock<std::mutex> & /*active_outputs_lock*/,
+			       transcription_filter_data &gf)
+{
+	for (auto &output : gf.active_outputs) {
+		auto obs_output = OBSOutputAutoRelease{obs_weak_output_get_output(output.output)};
+		if (!obs_output)
+			continue;
+
+		obs_output_remove_packet_callback_(obs_output, output_packet_added_callback, &gf);
+	}
+}
+#endif
+
 /**
  * @brief Callback function to handle recording state changes in OBS.
  *
@@ -383,6 +603,10 @@ void recording_state_callback(enum obs_frontend_event event, void *data)
 	struct transcription_filter_data *gf_ =
 		static_cast<struct transcription_filter_data *>(data);
 	if (event == OBS_FRONTEND_EVENT_RECORDING_STARTING) {
+#ifdef ENABLE_WEBVTT
+		add_webvtt_output(*gf_, OBSOutputAutoRelease{obs_frontend_get_recording_output()},
+				  transcription_filter_data::webvtt_output_type::Recording);
+#endif
 		if (gf_->save_srt && gf_->save_only_while_recording &&
 		    gf_->output_file_path != "") {
 			obs_log(gf_->log_level, "Recording started. Resetting srt file.");
@@ -395,6 +619,11 @@ void recording_state_callback(enum obs_frontend_event event, void *data)
 			gf_->sentence_number = 1;
 			gf_->start_timestamp_ms = now_ms();
 		}
+	} else if (event == OBS_FRONTEND_EVENT_RECORDING_STOPPING) {
+#ifdef ENABLE_WEBVTT
+		remove_webvtt_output(*gf_,
+				     OBSOutputAutoRelease{obs_frontend_get_recording_output()});
+#endif
 	} else if (event == OBS_FRONTEND_EVENT_RECORDING_STOPPED) {
 		if (!gf_->save_only_while_recording || !gf_->rename_file_to_match_recording) {
 			return;
@@ -428,6 +657,16 @@ void recording_state_callback(enum obs_frontend_event event, void *data)
 		newPath = recordingPath.parent_path() / newPath.filename();
 
 		fs::rename(outputPath, newPath);
+	} else if (event == OBS_FRONTEND_EVENT_STREAMING_STARTING) {
+#ifdef ENABLE_WEBVTT
+		add_webvtt_output(*gf_, OBSOutputAutoRelease{obs_frontend_get_streaming_output()},
+				  transcription_filter_data::webvtt_output_type::Streaming);
+#endif
+	} else if (event == OBS_FRONTEND_EVENT_STREAMING_STOPPING) {
+#ifdef ENABLE_WEBVTT
+		remove_webvtt_output(*gf_,
+				     OBSOutputAutoRelease{obs_frontend_get_streaming_output()});
+#endif
 	}
 }
 
@@ -462,10 +701,8 @@ void reset_caption_state(transcription_filter_data *gf_)
 		if (gf_->info_buffer.data != nullptr) {
 			circlebuf_free(&gf_->info_buffer);
 		}
-		if (gf_->whisper_buffer.data != nullptr) {
-			circlebuf_free(&gf_->whisper_buffer);
-		}
 	}
+	gf_->clear_buffers = true;
 }
 
 void media_play_callback(void *data_, calldata_t *cd)

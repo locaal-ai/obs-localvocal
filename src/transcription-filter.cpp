@@ -1,5 +1,7 @@
 #include <obs-module.h>
 #include <obs-frontend-api.h>
+#include <util/dstr.hpp>
+#include <util/platform.h>
 
 #include <algorithm>
 #include <fstream>
@@ -132,6 +134,12 @@ void transcription_filter_remove(void *data, obs_source_t *source)
 	disconnect_source_signals(gf, source);
 }
 
+#ifdef ENABLE_WEBVTT
+
+void remove_all_webvtt_outputs(std::unique_lock<std::mutex> &active_outputs_lock,
+			       transcription_filter_data &gf);
+#endif
+
 void transcription_filter_destroy(void *data)
 {
 	struct transcription_filter_data *gf =
@@ -159,6 +167,14 @@ void transcription_filter_destroy(void *data)
 
 	circlebuf_free(&gf->resampled_buffer);
 
+#ifdef ENABLE_WEBVTT
+	{
+		auto lock = std::unique_lock(gf->active_outputs_mutex);
+		remove_all_webvtt_outputs(lock, *gf);
+		gf->active_outputs.clear();
+	}
+#endif
+
 	if (gf->captions_monitor.isEnabled()) {
 		gf->captions_monitor.stopThread();
 	}
@@ -179,6 +195,41 @@ void transcription_filter_update(void *data, obs_data_t *s)
 	gf->vad_mode = (int)obs_data_get_int(s, "vad_mode");
 	gf->log_words = obs_data_get_bool(s, "log_words");
 	gf->caption_to_stream = obs_data_get_bool(s, "caption_to_stream");
+#ifdef ENABLE_WEBVTT
+	gf->webvtt_caption_to_stream = obs_data_get_bool(s, "webvtt_caption_to_stream");
+	gf->webvtt_caption_to_recording = obs_data_get_bool(s, "webvtt_caption_to_recording");
+
+	{
+		auto lock = std::unique_lock(gf->webvtt_settings_mutex);
+		gf->latency_to_video_in_msecs = static_cast<uint16_t>(std::max(
+			0ll, std::min(static_cast<long long>(std::numeric_limits<uint16_t>::max()),
+				      obs_data_get_int(s, "webvtt_latency_to_video_in_msecs"))));
+		gf->send_frequency_hz = static_cast<uint8_t>(std::max(
+			1ll, std::min(static_cast<long long>(std::numeric_limits<uint8_t>::max()),
+				      obs_data_get_int(s, "webvtt_send_frequency_hz"))));
+
+		gf->active_languages.clear();
+		DStr name_buffer;
+		for (size_t i = 0; i < MAX_WEBVTT_TRACKS; i++) {
+			dstr_printf(name_buffer, "webvtt_language_%zu", i);
+			if (!obs_data_has_user_value(s, name_buffer->array))
+				continue;
+
+			std::string lang = obs_data_get_string(s, name_buffer->array);
+			if (lang.empty())
+				continue;
+
+			if (std::find(gf->active_languages.begin(), gf->active_languages.end(),
+				      lang) != gf->active_languages.end()) {
+				obs_log(LOG_WARNING, "Not adding duplicate language '%s'",
+					lang.c_str());
+				continue;
+			}
+
+			gf->active_languages.push_back(lang);
+		}
+	}
+#endif
 	gf->save_to_file = obs_data_get_bool(s, "file_output_enable");
 	gf->save_srt = obs_data_get_bool(s, "subtitle_save_srt");
 	gf->truncate_output_file = obs_data_get_bool(s, "truncate_output_file");
@@ -556,4 +607,26 @@ void transcription_filter_hide(void *data)
 	struct transcription_filter_data *gf =
 		static_cast<struct transcription_filter_data *>(data);
 	obs_log(gf->log_level, "filter hide");
+}
+
+obs_output_add_packet_callback_t *obs_output_add_packet_callback_ = nullptr;
+obs_output_remove_packet_callback_t *obs_output_remove_packet_callback_ = nullptr;
+
+void load_packet_callback_functions()
+{
+	auto libobs = os_dlopen("obs");
+	if (!libobs)
+		return;
+
+	auto add_callback = os_dlsym(libobs, "obs_output_add_packet_callback");
+	auto remove_callback = os_dlsym(libobs, "obs_output_remove_packet_callback");
+	if (!add_callback || !remove_callback)
+		return;
+
+	obs_output_add_packet_callback_ =
+		reinterpret_cast<obs_output_add_packet_callback_t *>(add_callback);
+	obs_output_remove_packet_callback_ =
+		reinterpret_cast<obs_output_remove_packet_callback_t *>(remove_callback);
+
+	obs_log(LOG_INFO, "loaded callbacks");
 }

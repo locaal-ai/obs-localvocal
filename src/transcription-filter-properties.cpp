@@ -2,6 +2,7 @@
 #include <obs.h>
 #include <obs-module.h>
 #include <obs-frontend-api.h>
+#include <util/dstr.hpp>
 
 #include "transcription-filter-data.h"
 #include "transcription-filter.h"
@@ -411,6 +412,45 @@ void add_translation_group_properties(obs_properties_t *ppts)
 				      MT_("translation_no_repeat_ngram_size"), 1, 10, 1);
 }
 
+#ifdef ENABLE_WEBVTT
+void add_webvtt_group_properties(obs_properties_t *ppts)
+{
+	auto webvtt_group = obs_properties_create();
+	obs_properties_add_group(ppts, "webvtt_enable", MT_("webvtt_group"), OBS_GROUP_CHECKABLE,
+				 webvtt_group);
+
+	obs_properties_add_bool(webvtt_group, "webvtt_caption_to_stream",
+				MT_("webvtt_caption_to_stream"));
+	obs_properties_add_bool(webvtt_group, "webvtt_caption_to_recording",
+				MT_("webvtt_caption_to_recording"));
+
+	obs_properties_add_int_slider(webvtt_group, "webvtt_latency_to_video_in_msecs",
+				      MT_("webvtt_latency_to_video_in_msecs"), 0,
+				      std::numeric_limits<uint16_t>::max(), 1);
+	obs_properties_add_int_slider(webvtt_group, "webvtt_send_frequency_hz",
+				      MT_("webvtt_send_frequency_hz"), 1,
+				      std::numeric_limits<uint8_t>::max(), 1);
+
+	DStr num_buffer, name_buffer, description_buffer;
+	for (size_t i = 0; i < MAX_WEBVTT_TRACKS; i++) {
+		dstr_printf(num_buffer, "%zu", i + 1);
+		dstr_printf(name_buffer, "webvtt_language_%zu", i);
+		dstr_copy(description_buffer, MT_("webvtt_language_description"));
+		dstr_replace(description_buffer, "$1", num_buffer->array);
+		obs_property_t *language_select = obs_properties_add_list(
+			webvtt_group, name_buffer->array, description_buffer->array,
+			OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_STRING);
+		obs_property_list_add_string(language_select, "None", "");
+		for (auto const &pair : whisper_available_lang_reverse) {
+			if (pair.second == "auto")
+				continue;
+			obs_property_list_add_string(language_select, pair.first.c_str(),
+						     pair.second.c_str());
+		}
+	}
+}
+#endif
+
 void add_file_output_group_properties(obs_properties_t *ppts)
 {
 	// create a file output group
@@ -617,6 +657,9 @@ obs_properties_t *transcription_filter_properties(void *data)
 	add_transcription_group_properties(ppts, gf);
 	add_translation_group_properties(ppts);
 	add_translation_cloud_group_properties(ppts);
+#ifdef ENABLE_WEBVTT
+	add_webvtt_group_properties(ppts);
+#endif
 	add_file_output_group_properties(ppts);
 	add_buffered_output_group_properties(ppts);
 	add_advanced_group_properties(ppts, gf);
@@ -697,6 +740,10 @@ void transcription_filter_defaults(obs_data_t *s)
 		s, "translate_cloud_body",
 		"{\n\t\"text\":\"{{sentence}}\",\n\t\"target\":\"{{target_language}}\"\n}");
 	obs_data_set_default_string(s, "translate_cloud_response_json_path", "translations.0.text");
+
+	// webvtt options
+	obs_data_set_default_int(s, "webvtt_latency_to_video_in_msecs", 10'000);
+	obs_data_set_default_int(s, "webvtt_send_frequency_hz", 2);
 
 	// Whisper parameters
 	apply_whisper_params_defaults_on_settings(s);

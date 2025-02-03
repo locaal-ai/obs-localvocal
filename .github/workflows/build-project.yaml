@@ -119,6 +119,16 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-ccache-${{ matrix.architecture }}-
 
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+        if: matrix.architecture == 'arm64'
+        with:
+          target: aarch64-apple-darwin
+
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+        if: matrix.architecture == 'x86_64'
+        with:
+          target: x86_64-apple-darwin
+
       - name: Set Up Codesigning 🔑
         uses: ./.github/actions/setup-macos-codesigning
         if: fromJSON(needs.check-event.outputs.codesign)
@@ -197,6 +207,8 @@ jobs:
           echo "pluginName=${product_name}" >> $GITHUB_OUTPUT
           echo "pluginVersion=${product_version}" >> $GITHUB_OUTPUT
 
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+
       - uses: actions/cache@v4
         id: ccache-cache
         with:
@@ -270,6 +282,8 @@ jobs:
 
           "pluginName=${ProductName}" >> $env:GITHUB_OUTPUT
           "pluginVersion=${ProductVersion}" >> $env:GITHUB_OUTPUT
+
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
 
       - name: Build Plugin 🧱
         uses: ./.github/actions/build-plugin

@@ -341,11 +341,13 @@ void run_inference_and_callbacks(transcription_filter_data *gf, uint64_t start_o
 				    pcm32f_size * sizeof(float));
 	}
 
+	auto inference_start_ts = now_ms();
+
 	struct DetectionResultWithText inference_result =
 		run_whisper_inference(gf, pcm32f_data, pcm32f_size_with_silence, start_offset_ms,
 				      end_offset_ms, vad_state);
 	// output inference result to a text source
-	set_text_callback(gf, inference_result);
+	set_text_callback(inference_start_ts, gf, inference_result);
 
 	if (gf->enable_audio_chunks_callback && vad_state != VAD_STATE_PARTIAL) {
 		audio_chunk_callback(gf, pcm32f_data, pcm32f_size_with_silence, vad_state,
@@ -384,6 +386,13 @@ void whisper_loop(void *data)
 				obs_log(LOG_WARNING, "Whisper context is null, exiting thread");
 				break;
 			}
+		}
+
+		if (gf->clear_buffers) {
+			circlebuf_pop_front(&gf->resampled_buffer, nullptr, 0);
+			circlebuf_pop_front(&gf->whisper_buffer, nullptr, 0);
+			current_vad_state = {false, now_ms(), 0, 0};
+			gf->clear_buffers = false;
 		}
 
 		if (gf->vad_mode == VAD_MODE_HYBRID) {

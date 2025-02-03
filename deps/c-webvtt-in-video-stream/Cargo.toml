@@ -1,0 +1,27 @@
+[package]
+edition = "2021"
+name = "c-webvtt-in-video-stream"
+version = "0.1.0"
+
+[lib]
+crate-type = ["staticlib"]
+
+[profile.release]
+debug = 2
+panic = "abort"
+
+[profile.dev]
+debug = 2
+panic = "abort"
+
+[workspace]
+members = ["webvtt-in-video-stream", "video-bytestream-tools"]
+
+[dependencies]
+h264-reader = "0.7.0"
+strum_macros = "0.26.3"
+video-bytestream-tools = {path = "./video-bytestream-tools"}
+webvtt-in-video-stream = {path = "./webvtt-in-video-stream"}
+
+[build-dependencies]
+cbindgen = "0.27.0"
