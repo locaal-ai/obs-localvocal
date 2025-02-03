@@ -3,7 +3,7 @@ include(FetchContent)
 
 set(PREBUILT_WHISPERCPP_VERSION "0.0.8")
 set(PREBUILT_WHISPERCPP_URL_BASE
-    "https://github.com/locaal-ai/occ-ai-dep-whispercpp/releases/download/${PREBUILT_WHISPERCPP_VERSION}")
+  "https://github.com/locaal-ai/occ-ai-dep-whispercpps/download/${PREBUILT_WHISPERCPP_VERSION}")
 
 if(APPLE)
   # check the "MACOS_ARCH" env var to figure out if this is x86 or arm64
@@ -14,11 +14,11 @@ if(APPLE)
   else()
     message(
       FATAL_ERROR
-        "The MACOS_ARCH environment variable is not set to a valid value. Please set it to either `x86_64` or `arm64`")
+      "The MACOS_ARCH environment variable is not set to a valid value. Please set it to either `x86_64` or `arm64`")
   endif()
 
   set(WHISPER_CPP_URL
-      "${PREBUILT_WHISPERCPP_URL_BASE}/whispercpp-macos-$ENV{MACOS_ARCH}-${PREBUILT_WHISPERCPP_VERSION}.tar.gz")
+    "${PREBUILT_WHISPERCPP_URL_BASE}/whispercpp-macos-$ENV{MACOS_ARCH}-${PREBUILT_WHISPERCPP_VERSION}.tar.gz")
 
   FetchContent_Declare(
     whispercpp_fetch
@@ -30,47 +30,47 @@ if(APPLE)
   set_target_properties(
     Whispercpp::Whisper
     PROPERTIES
-      IMPORTED_LOCATION
-      ${whispercpp_fetch_SOURCE_DIR}/release/lib/${CMAKE_STATIC_LIBRARY_PREFIX}whisper${CMAKE_STATIC_LIBRARY_SUFFIX})
+    IMPORTED_LOCATION
+    ${whispercpp_fetch_SOURCE_DIR}/lib/${CMAKE_STATIC_LIBRARY_PREFIX}whisper${CMAKE_STATIC_LIBRARY_SUFFIX})
   set_target_properties(Whispercpp::Whisper PROPERTIES INTERFACE_INCLUDE_DIRECTORIES
-                                                       ${whispercpp_fetch_SOURCE_DIR}/release/include)
+    ${whispercpp_fetch_SOURCE_DIR}/include)
   add_library(Whispercpp::GGML STATIC IMPORTED)
   set_target_properties(
     Whispercpp::GGML
     PROPERTIES
-      IMPORTED_LOCATION
-      ${whispercpp_fetch_SOURCE_DIR}/release/lib/${CMAKE_STATIC_LIBRARY_PREFIX}ggml${CMAKE_STATIC_LIBRARY_SUFFIX})
+    IMPORTED_LOCATION
+    ${whispercpp_fetch_SOURCE_DIR}/lib/${CMAKE_STATIC_LIBRARY_PREFIX}ggml${CMAKE_STATIC_LIBRARY_SUFFIX})
   add_library(Whispercpp::GGMLBase STATIC IMPORTED)
   set_target_properties(
     Whispercpp::GGMLBase
     PROPERTIES
-      IMPORTED_LOCATION
-      ${whispercpp_fetch_SOURCE_DIR}/release/lib/${CMAKE_STATIC_LIBRARY_PREFIX}ggml-base${CMAKE_STATIC_LIBRARY_SUFFIX})
+    IMPORTED_LOCATION
+    ${whispercpp_fetch_SOURCE_DIR}/lib/${CMAKE_STATIC_LIBRARY_PREFIX}ggml-base${CMAKE_STATIC_LIBRARY_SUFFIX})
   add_library(Whispercpp::GGMLCPU STATIC IMPORTED)
   set_target_properties(
     Whispercpp::GGMLCPU
     PROPERTIES
-      IMPORTED_LOCATION
-      ${whispercpp_fetch_SOURCE_DIR}/release/lib/${CMAKE_STATIC_LIBRARY_PREFIX}ggml-cpu${CMAKE_STATIC_LIBRARY_SUFFIX})
+    IMPORTED_LOCATION
+    ${whispercpp_fetch_SOURCE_DIR}/lib/${CMAKE_STATIC_LIBRARY_PREFIX}ggml-cpu${CMAKE_STATIC_LIBRARY_SUFFIX})
   add_library(Whispercpp::GGMLMetal STATIC IMPORTED)
   set_target_properties(
     Whispercpp::GGMLMetal
     PROPERTIES
-      IMPORTED_LOCATION
-      ${whispercpp_fetch_SOURCE_DIR}/release/lib/${CMAKE_STATIC_LIBRARY_PREFIX}ggml-metal${CMAKE_STATIC_LIBRARY_SUFFIX})
+    IMPORTED_LOCATION
+    ${whispercpp_fetch_SOURCE_DIR}/lib/${CMAKE_STATIC_LIBRARY_PREFIX}ggml-metal${CMAKE_STATIC_LIBRARY_SUFFIX})
   add_library(Whispercpp::GGMLBlas STATIC IMPORTED)
   set_target_properties(
     Whispercpp::GGMLBlas
     PROPERTIES
-      IMPORTED_LOCATION
-      ${whispercpp_fetch_SOURCE_DIR}/release/lib/${CMAKE_STATIC_LIBRARY_PREFIX}ggml-blas${CMAKE_STATIC_LIBRARY_SUFFIX})
+    IMPORTED_LOCATION
+    ${whispercpp_fetch_SOURCE_DIR}/lib/${CMAKE_STATIC_LIBRARY_PREFIX}ggml-blas${CMAKE_STATIC_LIBRARY_SUFFIX})
 
   add_library(Whispercpp::CoreML STATIC IMPORTED)
   set_target_properties(
     Whispercpp::CoreML
     PROPERTIES
-      IMPORTED_LOCATION
-      ${whispercpp_fetch_SOURCE_DIR}/lib/${CMAKE_STATIC_LIBRARY_PREFIX}whisper.coreml${CMAKE_STATIC_LIBRARY_SUFFIX})
+    IMPORTED_LOCATION
+    ${whispercpp_fetch_SOURCE_DIR}/lib/${CMAKE_STATIC_LIBRARY_PREFIX}whisper.coreml${CMAKE_STATIC_LIBRARY_SUFFIX})
 
 elseif(WIN32)
   if(NOT DEFINED ACCELERATION)
@@ -79,7 +79,7 @@ elseif(WIN32)
 
   set(ARCH_PREFIX ${ACCELERATION})
   set(WHISPER_CPP_URL
-      "${PREBUILT_WHISPERCPP_URL_BASE}/whispercpp-windows-${ARCH_PREFIX}-${PREBUILT_WHISPERCPP_VERSION}.zip")
+    "${PREBUILT_WHISPERCPP_URL_BASE}/whispercpp-windows-${ARCH_PREFIX}-${PREBUILT_WHISPERCPP_VERSION}.zip")
 
   if("${ACCELERATION}" STREQUAL "cpu")
     set(WHISPER_CPP_HASH "cb25c675a01f98bc1cd544187945636d9f7fbaffcfc08699d5edbd29be137e0b")
@@ -96,7 +96,7 @@ elseif(WIN32)
   else()
     message(
       FATAL_ERROR
-        "The ACCELERATION environment variable is not set to a valid value. Please set it to either `cpu` or `cuda` or `vulkan` or `hipblas`"
+      "The ACCELERATION environment variable is not set to a valid value. Please set it to either `cpu` or `cuda` or `vulkan` or `hipblas`"
     )
   endif()
 
@@ -111,58 +111,58 @@ elseif(WIN32)
   set_target_properties(
     Whispercpp::Whisper
     PROPERTIES
-      IMPORTED_LOCATION
-      ${whispercpp_fetch_SOURCE_DIR}/release/bin/${CMAKE_SHARED_LIBRARY_PREFIX}whisper${CMAKE_SHARED_LIBRARY_SUFFIX})
+    IMPORTED_LOCATION
+    ${whispercpp_fetch_SOURCE_DIR}/bin/${CMAKE_SHARED_LIBRARY_PREFIX}whisper${CMAKE_SHARED_LIBRARY_SUFFIX})
   set_target_properties(
     Whispercpp::Whisper
     PROPERTIES
-      IMPORTED_IMPLIB
-      ${whispercpp_fetch_SOURCE_DIR}/release/lib/${CMAKE_STATIC_LIBRARY_PREFIX}whisper${CMAKE_STATIC_LIBRARY_SUFFIX})
+    IMPORTED_IMPLIB
+    ${whispercpp_fetch_SOURCE_DIR}/lib/${CMAKE_STATIC_LIBRARY_PREFIX}whisper${CMAKE_STATIC_LIBRARY_SUFFIX})
 
   add_library(Whispercpp::GGML SHARED IMPORTED)
   set_target_properties(
     Whispercpp::GGML
     PROPERTIES
-      IMPORTED_LOCATION
-      ${whispercpp_fetch_SOURCE_DIR}/release/bin/${CMAKE_SHARED_LIBRARY_PREFIX}ggml${CMAKE_SHARED_LIBRARY_SUFFIX})
+    IMPORTED_LOCATION
+    ${whispercpp_fetch_SOURCE_DIR}/bin/${CMAKE_SHARED_LIBRARY_PREFIX}ggml${CMAKE_SHARED_LIBRARY_SUFFIX})
   set_target_properties(
     Whispercpp::GGML
     PROPERTIES
-      IMPORTED_IMPLIB
-      ${whispercpp_fetch_SOURCE_DIR}/release/lib/${CMAKE_STATIC_LIBRARY_PREFIX}ggml${CMAKE_STATIC_LIBRARY_SUFFIX})
+    IMPORTED_IMPLIB
+    ${whispercpp_fetch_SOURCE_DIR}/lib/${CMAKE_STATIC_LIBRARY_PREFIX}ggml${CMAKE_STATIC_LIBRARY_SUFFIX})
 
   add_library(Whispercpp::GGMLBase SHARED IMPORTED)
   set_target_properties(
     Whispercpp::GGMLBase
     PROPERTIES
-      IMPORTED_LOCATION
-      ${whispercpp_fetch_SOURCE_DIR}/release/bin/${CMAKE_SHARED_LIBRARY_PREFIX}ggml-base${CMAKE_SHARED_LIBRARY_SUFFIX})
+    IMPORTED_LOCATION
+    ${whispercpp_fetch_SOURCE_DIR}/bin/${CMAKE_SHARED_LIBRARY_PREFIX}ggml-base${CMAKE_SHARED_LIBRARY_SUFFIX})
   set_target_properties(
     Whispercpp::GGMLBase
     PROPERTIES
-      IMPORTED_IMPLIB
-      ${whispercpp_fetch_SOURCE_DIR}/release/lib/${CMAKE_STATIC_LIBRARY_PREFIX}ggml-base${CMAKE_STATIC_LIBRARY_SUFFIX})
+    IMPORTED_IMPLIB
+    ${whispercpp_fetch_SOURCE_DIR}/lib/${CMAKE_STATIC_LIBRARY_PREFIX}ggml-base${CMAKE_STATIC_LIBRARY_SUFFIX})
 
   add_library(Whispercpp::GGMLCPU SHARED IMPORTED)
   set_target_properties(
     Whispercpp::GGMLCPU
     PROPERTIES
-      IMPORTED_LOCATION
-      ${whispercpp_fetch_SOURCE_DIR}/release/bin/${CMAKE_SHARED_LIBRARY_PREFIX}ggml-cpu${CMAKE_SHARED_LIBRARY_SUFFIX})
+    IMPORTED_LOCATION
+    ${whispercpp_fetch_SOURCE_DIR}/bin/${CMAKE_SHARED_LIBRARY_PREFIX}ggml-cpu${CMAKE_SHARED_LIBRARY_SUFFIX})
   set_target_properties(
     Whispercpp::GGMLCPU
     PROPERTIES
-      IMPORTED_IMPLIB
-      ${whispercpp_fetch_SOURCE_DIR}/release/lib/${CMAKE_STATIC_LIBRARY_PREFIX}ggml-cpu${CMAKE_STATIC_LIBRARY_SUFFIX})
+    IMPORTED_IMPLIB
+    ${whispercpp_fetch_SOURCE_DIR}/lib/${CMAKE_STATIC_LIBRARY_PREFIX}ggml-cpu${CMAKE_STATIC_LIBRARY_SUFFIX})
 
   set_target_properties(Whispercpp::Whisper PROPERTIES INTERFACE_INCLUDE_DIRECTORIES
-                                                       ${whispercpp_fetch_SOURCE_DIR}/include)
+    ${whispercpp_fetch_SOURCE_DIR}/include)
 
   if("${ACCELERATION}" STREQUAL "cpu")
     # add openblas to the link line
     add_library(Whispercpp::OpenBLAS STATIC IMPORTED)
     set_target_properties(Whispercpp::OpenBLAS PROPERTIES IMPORTED_LOCATION
-                                                          ${whispercpp_fetch_SOURCE_DIR}/release/lib/libopenblas.dll.a)
+      ${whispercpp_fetch_SOURCE_DIR}/lib/libopenblas.dll.a)
   endif()
 
   if("${ACCELERATION}" STREQUAL "cuda")
@@ -171,14 +171,14 @@ elseif(WIN32)
     set_target_properties(
       Whispercpp::GGMLCUDA
       PROPERTIES
-        IMPORTED_LOCATION
-        ${whispercpp_fetch_SOURCE_DIR}/release/bin/${CMAKE_SHARED_LIBRARY_PREFIX}ggml-cuda${CMAKE_SHARED_LIBRARY_SUFFIX}
+      IMPORTED_LOCATION
+      ${whispercpp_fetch_SOURCE_DIR}/bin/${CMAKE_SHARED_LIBRARY_PREFIX}ggml-cuda${CMAKE_SHARED_LIBRARY_SUFFIX}
     )
     set_target_properties(
       Whispercpp::GGMLCUDA
       PROPERTIES
-        IMPORTED_IMPLIB
-        ${whispercpp_fetch_SOURCE_DIR}/release/lib/${CMAKE_STATIC_LIBRARY_PREFIX}ggml-cuda${CMAKE_STATIC_LIBRARY_SUFFIX}
+      IMPORTED_IMPLIB
+      ${whispercpp_fetch_SOURCE_DIR}/lib/${CMAKE_STATIC_LIBRARY_PREFIX}ggml-cuda${CMAKE_STATIC_LIBRARY_SUFFIX}
     )
   endif()
 
@@ -188,14 +188,14 @@ elseif(WIN32)
     set_target_properties(
       Whispercpp::GGMLVulkan
       PROPERTIES
-        IMPORTED_LOCATION
-        ${whispercpp_fetch_SOURCE_DIR}/release/bin/${CMAKE_SHARED_LIBRARY_PREFIX}ggml-vulkan${CMAKE_SHARED_LIBRARY_SUFFIX}
+      IMPORTED_LOCATION
+      ${whispercpp_fetch_SOURCE_DIR}/bin/${CMAKE_SHARED_LIBRARY_PREFIX}ggml-vulkan${CMAKE_SHARED_LIBRARY_SUFFIX}
     )
     set_target_properties(
       Whispercpp::GGMLVulkan
       PROPERTIES
-        IMPORTED_IMPLIB
-        ${whispercpp_fetch_SOURCE_DIR}/release/lib/${CMAKE_STATIC_LIBRARY_PREFIX}ggml-vulkan${CMAKE_STATIC_LIBRARY_SUFFIX}
+      IMPORTED_IMPLIB
+      ${whispercpp_fetch_SOURCE_DIR}/lib/${CMAKE_STATIC_LIBRARY_PREFIX}ggml-vulkan${CMAKE_STATIC_LIBRARY_SUFFIX}
     )
   endif()
 
@@ -218,7 +218,7 @@ else()
   else()
     message(
       FATAL_ERROR
-        "The ACCELERATION environment variable is not set to a valid value. Please set it to either `cpu` or `vulkan`")
+      "The ACCELERATION environment variable is not set to a valid value. Please set it to either `cpu` or `vulkan`")
   endif()
 
   FetchContent_Declare(
@@ -236,35 +236,35 @@ else()
   set_target_properties(
     Whispercpp::Whisper
     PROPERTIES
-      IMPORTED_LOCATION
-      ${whispercpp_fetch_SOURCE_DIR}/release/lib/${CMAKE_STATIC_LIBRARY_PREFIX}whisper${CMAKE_STATIC_LIBRARY_SUFFIX})
+    IMPORTED_LOCATION
+    ${whispercpp_fetch_SOURCE_DIR}/lib/${CMAKE_STATIC_LIBRARY_PREFIX}whisper${CMAKE_STATIC_LIBRARY_SUFFIX})
   set_target_properties(Whispercpp::Whisper PROPERTIES INTERFACE_INCLUDE_DIRECTORIES ${INSTALL_DIR}/include)
   add_library(Whispercpp::GGML STATIC IMPORTED)
   set_target_properties(
     Whispercpp::GGML
     PROPERTIES
-      IMPORTED_LOCATION
-      ${whispercpp_fetch_SOURCE_DIR}/release/lib/${CMAKE_STATIC_LIBRARY_PREFIX}ggml${CMAKE_STATIC_LIBRARY_SUFFIX})
+    IMPORTED_LOCATION
+    ${whispercpp_fetch_SOURCE_DIR}/lib/${CMAKE_STATIC_LIBRARY_PREFIX}ggml${CMAKE_STATIC_LIBRARY_SUFFIX})
   add_library(Whispercpp::GGMLBase STATIC IMPORTED)
   set_target_properties(
     Whispercpp::GGMLBase
     PROPERTIES
-      IMPORTED_LOCATION
-      ${whispercpp_fetch_SOURCE_DIR}/release/lib/${CMAKE_STATIC_LIBRARY_PREFIX}ggml-base${CMAKE_STATIC_LIBRARY_SUFFIX})
+    IMPORTED_LOCATION
+    ${whispercpp_fetch_SOURCE_DIR}/lib/${CMAKE_STATIC_LIBRARY_PREFIX}ggml-base${CMAKE_STATIC_LIBRARY_SUFFIX})
   add_library(Whispercpp::GGMLCPU STATIC IMPORTED)
   set_target_properties(
     Whispercpp::GGMLCPU
     PROPERTIES
-      IMPORTED_LOCATION
-      ${whispercpp_fetch_SOURCE_DIR}/release/lib/${CMAKE_STATIC_LIBRARY_PREFIX}ggml-cpu${CMAKE_STATIC_LIBRARY_SUFFIX})
+    IMPORTED_LOCATION
+    ${whispercpp_fetch_SOURCE_DIR}/lib/${CMAKE_STATIC_LIBRARY_PREFIX}ggml-cpu${CMAKE_STATIC_LIBRARY_SUFFIX})
 
   if("${ACCELERATION}" STREQUAL "vulkan")
     add_library(Whispercpp::GGMLVulkan STATIC IMPORTED)
     set_target_properties(
       Whispercpp::GGMLVulkan
       PROPERTIES
-        IMPORTED_LOCATION
-        ${whispercpp_fetch_SOURCE_DIR}/release/lib/${CMAKE_STATIC_LIBRARY_PREFIX}ggml-vulkan${CMAKE_STATIC_LIBRARY_SUFFIX}
+      IMPORTED_LOCATION
+      ${whispercpp_fetch_SOURCE_DIR}/lib/${CMAKE_STATIC_LIBRARY_PREFIX}ggml-vulkan${CMAKE_STATIC_LIBRARY_SUFFIX}
     )
   endif()
 endif()
@@ -272,7 +272,7 @@ endif()
 add_library(Whispercpp INTERFACE)
 add_dependencies(Whispercpp Whispercpp_Build)
 target_link_libraries(Whispercpp INTERFACE Whispercpp::Whisper Whispercpp::GGML Whispercpp::GGMLBase
-                                           Whispercpp::GGMLCPU)
+  Whispercpp::GGMLCPU)
 
 if(WIN32 AND "${ACCELERATION}" STREQUAL "cpu")
   target_link_libraries(Whispercpp INTERFACE Whispercpp::OpenBLAS)
@@ -292,7 +292,7 @@ if(APPLE)
 endif(APPLE)
 
 if(UNIX
-   AND (NOT APPLE)
-   AND "${ACCELERATION}" STREQUAL "vulkan")
+  AND(NOT APPLE)
+  AND "${ACCELERATION}" STREQUAL "vulkan")
   target_link_libraries(Whispercpp INTERFACE Whispercpp::GGMLVulkan)
 endif()
