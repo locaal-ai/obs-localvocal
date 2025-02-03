@@ -75,16 +75,16 @@ elseif(WIN32)
   set(WHISPER_CPP_URL
     "${PREBUILT_WHISPERCPP_URL_BASE}/whispercpp-windows-${ARCH_PREFIX}-${PREBUILT_WHISPERCPP_VERSION}.zip")
 
-  if(${ACCELERATION} STREQUAL "cpu")
+  if("${ACCELERATION}" STREQUAL "cpu")
     set(WHISPER_CPP_HASH "cb25c675a01f98bc1cd544187945636d9f7fbaffcfc08699d5edbd29be137e0b")
     add_compile_definitions("LOCALVOCAL_WITH_CPU")
-  elseif(${ACCELERATION} STREQUAL "cuda")
+  elseif("${ACCELERATION}" STREQUAL "cuda")
     set(WHISPER_CPP_HASH "672fd34841436261937d5701bf80945ddb8194f033768bb4d7b3becbdf1f66c0")
     add_compile_definitions("LOCALVOCAL_WITH_CUDA")
-  elseif(${ACCELERATION} STREQUAL "hipblas")
+  elseif("${ACCELERATION}" STREQUAL "hipblas")
     set(WHISPER_CPP_HASH "3f4f16aa6bc9bb6326e86868603136502baef108a339bc4e42bb51654c935120")
     add_compile_definitions("LOCALVOCAL_WITH_HIPBLAS")
-  elseif(${ACCELERATION} STREQUAL "vulkan")
+  elseif("${ACCELERATION}" STREQUAL "vulkan")
     set(WHISPER_CPP_HASH "46bbcf96cc20a92b36e47ebfabd6c9d581480f38bce72cee16c16e78d7e8c557")
     add_compile_definitions("LOCALVOCAL_WITH_VULKAN")
   else()
@@ -142,14 +142,14 @@ elseif(WIN32)
   set_target_properties(Whispercpp::Whisper PROPERTIES INTERFACE_INCLUDE_DIRECTORIES
     ${whispercpp_fetch_SOURCE_DIR}/include)
 
-  if(${ACCELERATION} STREQUAL "cpu")
+  if("${ACCELERATION}" STREQUAL "cpu")
     # add openblas to the link line
     add_library(Whispercpp::OpenBLAS STATIC IMPORTED)
     set_target_properties(Whispercpp::OpenBLAS PROPERTIES IMPORTED_LOCATION
       ${whispercpp_fetch_SOURCE_DIR}/release/lib/libopenblas.dll.a)
   endif()
 
-  if(${ACCELERATION} STREQUAL "cuda")
+  if("${ACCELERATION}" STREQUAL "cuda")
     # add cuda to the link line
     add_library(Whispercpp::GGMLCUDA SHARED IMPORTED)
     set_target_properties(
@@ -162,7 +162,7 @@ elseif(WIN32)
       ${whispercpp_fetch_SOURCE_DIR}/release/lib/${CMAKE_STATIC_LIBRARY_PREFIX}ggml-cuda${CMAKE_STATIC_LIBRARY_SUFFIX})
   endif()
 
-  if(${ACCELERATION} STREQUAL "vulkan")
+  if("${ACCELERATION}" STREQUAL "vulkan")
     # add cuda to the link line
     add_library(Whispercpp::GGMLVulkan SHARED IMPORTED)
     set_target_properties(
@@ -186,10 +186,10 @@ else()
   set(WHISPER_CPP_URL
     "${PREBUILT_WHISPERCPP_URL_BASE}/whispercpp-linux-x86_64-${ACCELERATION}-Release.tar.gz")
 
-  if(${ACCELERATION} STREQUAL "cpu")
+  if("${ACCELERATION}" STREQUAL "cpu")
     set(WHISPER_CPP_HASH "b6a30f0e995070145ae10e58a656449fee00dd69c53c49ffef4597b07bcb3c2a")
     add_compile_definitions("LOCALVOCAL_WITH_CPU")
-  elseif(${ACCELERATION} STREQUAL "vulkan")
+  elseif("${ACCELERATION}" STREQUAL "vulkan")
     set(WHISPER_CPP_HASH "6c5fe9c6a35b5f7f63a968b4fbbc8e05e888cc887aadbb8d82cf7e39da8ec163")
     add_compile_definitions("LOCALVOCAL_WITH_VULKAN")
   else()
@@ -229,7 +229,7 @@ else()
     PROPERTIES IMPORTED_LOCATION
     ${whispercpp_fetch_SOURCE_DIR}/release/lib/${CMAKE_STATIC_LIBRARY_PREFIX}ggml-cpu${CMAKE_STATIC_LIBRARY_SUFFIX})
 
-  if(${ACCELERATION} STREQUAL "vulkan")
+  if("${ACCELERATION}" STREQUAL "vulkan")
     add_library(Whispercpp::GGMLVulkan STATIC IMPORTED)
     set_target_properties(
       Whispercpp::GGMLVulkan
@@ -256,9 +256,9 @@ endif()
 
 if(APPLE)
   target_link_libraries(Whispercpp INTERFACE "-framework Accelerate -framework CoreML -framework Metal")
-  target_link_libraries(Whispercpp INTERFACE Whispercpp::CoreML)
+  target_link_libraries(Whispercpp INTERFACE Whispercpp::CoreML Whispercpp::GGMLMetal Whispercpp::GGMLBlas)
 endif(APPLE)
 
-if(UNIX AND NOT APPLE AND ${ACCELERATION} STREQUAL "vulkan")
+if(UNIX AND(NOT APPLE) AND "${ACCELERATION}" STREQUAL "vulkan")
   target_link_libraries(Whispercpp INTERFACE Whispercpp::GGMLVulkan)
 endif()
