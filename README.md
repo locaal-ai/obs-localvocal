@@ -380,7 +380,7 @@ To build with cuda add `ACCELERATION` as an environment variable (with `cpu`, `h
 
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=locaal-ai/obs-localvocal&type=Date&theme=dark" />
-  <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=locaal-ai/obs-localvocal&type=Date" />
-  <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=locaal-ai/obs-localvocal&type=Date" />
+  <source media="(prefers-color-scheme: dark)" srcset="https://star-history.dera.page/svg?repos=locaal-ai/obs-localvocal&type=Date&theme=dark" />
+  <source media="(prefers-color-scheme: light)" srcset="https://star-history.dera.page/svg?repos=locaal-ai/obs-localvocal&type=Date" />
+  <img alt="Star History Chart" src="https://star-history.dera.page/svg?repos=locaal-ai/obs-localvocal&type=Date" />
 </picture>
