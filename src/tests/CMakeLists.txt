@@ -26,3 +26,7 @@ target_include_directories(${TEST_EXEC_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/src)
 
 # install the tests to the release/test directory
 install(TARGETS ${TEST_EXEC_NAME} DESTINATION test)
+
+add_executable(${CMAKE_PROJECT_NAME}-backend-change-tests whisper-backend-change-test.cpp)
+target_include_directories(${CMAKE_PROJECT_NAME}-backend-change-tests PRIVATE ${CMAKE_SOURCE_DIR}/src)
+install(TARGETS ${CMAKE_PROJECT_NAME}-backend-change-tests DESTINATION test)
