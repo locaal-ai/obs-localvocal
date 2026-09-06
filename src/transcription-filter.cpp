@@ -72,11 +72,40 @@ void enumerate_gpu_devices(transcription_filter_data *gf)
 	path = path.parent_path() / "Frameworks";
 #endif
 
-	obs_log(LOG_INFO, "Loading dynamic backends from %s", path.string().c_str());
-	ggml_backend_load_all_from_path(path.string().c_str());
+#ifdef _WIN32
+	// OBS 32.2+ restricts the process DLL search path with
+	// SetDefaultDllDirectories(LOAD_LIBRARY_SEARCH_DEFAULT_DIRS). whisper.cpp's
+	// dynamic backend loader (v1.8.2) uses LoadLibraryW() for a backend DLL, so
+	// sibling dependencies such as cudart64_12.dll/cublas64_12.dll are otherwise
+	// not searched in the backend DLL's directory.
+	//
+	// AddDllDirectory participates in LOAD_LIBRARY_SEARCH_USER_DIRS, which is
+	// included in LOAD_LIBRARY_SEARCH_DEFAULT_DIRS. Keep the registration scoped
+	// to backend discovery so it does not permanently widen OBS's DLL search path.
+	std::error_code path_error;
+	auto absolute_path = std::filesystem::absolute(path, path_error);
+	if (!path_error) {
+		path = std::move(absolute_path);
+	}
+
+	DLL_DIRECTORY_COOKIE backend_dll_dir = AddDllDirectory(path.wstring().c_str());
+	if (backend_dll_dir == nullptr) {
+		obs_log(LOG_WARNING, "Failed to add dynamic backend DLL directory %s (Win32 error %lu)",
+			path.string().c_str(), static_cast<unsigned long>(GetLastError()));
+	}
 #endif
 
-	// Enumerate backend devices to populate list
+	obs_log(LOG_INFO, "Loading dynamic backends from %s", path.string().c_str());
+	ggml_backend_load_all_from_path(path.string().c_str());
+
+#ifdef _WIN32
+	if (backend_dll_dir != nullptr && !RemoveDllDirectory(backend_dll_dir)) {
+		obs_log(LOG_WARNING, "Failed to remove dynamic backend DLL directory %s (Win32 error %lu)",
+			path.string().c_str(), static_cast<unsigned long>(GetLastError()));
+	}
+#endif
+
+    // Enumerate backend devices to populate list
 	auto backend_count = ggml_backend_dev_count();
 	size_t gpu_count = 0;
 	for (size_t i = 0; i < backend_count; i++) {
