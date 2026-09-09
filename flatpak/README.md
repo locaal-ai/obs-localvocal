@@ -6,21 +6,24 @@ Flatpak manifest for the OBS LocalVocal plugin using system dependencies where p
 
 ### Flatpak Configuration
 
-| File | Description |
-|------|-------------|
-| `com.obsproject.Studio.Plugin.LocalVocal.yaml` | ⚙️ Main Flatpak manifest |
-| `com.obsproject.Studio.Plugin.LocalVocal.metainfo.xml` | 📋 AppStream metadata |
-| `cargo-sources.json` | 📦 Vendored Rust dependencies |
-| `build.sh` | 🔨 Build script |
-| `patches/` | 🩹 Patches for USE_SYSTEM_* CMake options |
+| File                                                   | Description                               |
+| ------------------------------------------------------ | ----------------------------------------- |
+| `com.obsproject.Studio.Plugin.LocalVocal.yaml`         | ⚙️ Main Flatpak manifest                  |
+| `com.obsproject.Studio.Plugin.LocalVocal.metainfo.xml` | 📋 AppStream metadata                     |
+| `cargo-sources.json`                                   | 📦 Vendored Rust dependencies             |
+| `build.sh`                                             | 🔨 Build script                           |
 
 ## 🎯 Quick Start
 
 ### Build the plugin
 
-```bash
-# Using build script
-./flatpak/build.sh
+```sh
+# Using build script (default: generic CPU build)
+./flatpak/build.sh build-dir
+
+# With GPU acceleration
+ACCELERATION=nvidia ./flatpak/build.sh build-dir # CUDA
+ACCELERATION=amd    ./flatpak/build.sh build-dir # ROCm/HIP
 
 # Or manually with flatpak-builder
 flatpak-builder --force-clean --repo=repo build \
@@ -31,11 +34,11 @@ flatpak-builder --force-clean --repo=repo build \
 
 ### SDK and Dependencies
 
-| Component | Version | Notes |
-|-----------|---------|-------|
-| **SDK** | org.freedesktop.Sdk//25.08 | Same as OBS Studio |
-| **Rust** | SDK extension (1.94.0) | Saves 15-20 min build time |
-| **ICU** | SDK system library | Saves 8-10 min build time |
+| Component | Version                    | Notes                      |
+| --------- | -------------------------- | -------------------------- |
+| **SDK**   | org.freedesktop.Sdk//25.08 | Same as OBS Studio         |
+| **Rust**  | SDK extension (1.94.0)     | Saves 15-20 min build time |
+| **ICU**   | SDK system library         | Saves 8-10 min build time  |
 
 ### Library Versions
 
@@ -46,14 +49,14 @@ All libraries use versions with native CMake 3.x/4.x support:
 - **CTranslate2** v4.7.1 (CMake 3.7+)
   - cpu_features v0.10.1 (CMake 3.13+)
   - spdlog v1.17.0 (CMake 3.10+)
-- **whisper.cpp** v1.8.2
+- **whisper.cpp** v1.8.4
 - **SentencePiece** v0.2.1
 
 ## 🔍 Technical Details
 
 ### Build Architecture
 
-```
+```text
 com.obsproject.Studio (runtime)
 ├── org.freedesktop.Sdk//25.08
 │   ├── sdk-extensions
@@ -72,18 +75,11 @@ com.obsproject.Studio (runtime)
         └── onnxruntime-prebuilt
 ```
 
-### Applied Patches
-
-Patches in `patches/` add CMake options to use system libraries:
-
-- `0001-BuildCTranslate2-use-system-option.patch` → `USE_SYSTEM_CTRANSLATE2`
-- `0002-BuildSentencepiece-use-system-option.patch` → `USE_SYSTEM_SENTENCEPIECE`
-
 ## 🧪 Testing
 
 ### Verify build environment
 
-```bash
+```sh
 # Check Flatpak configuration
 flatpak remotes --show-details
 flatpak list --runtime
@@ -94,7 +90,7 @@ flatpak search org.freedesktop.Sdk.Extension.rust-stable
 
 ### Test build with timing
 
-```bash
+```sh
 # Full build with timing
 time flatpak-builder --force-clean build \
   flatpak/com.obsproject.Studio.Plugin.LocalVocal.yaml
@@ -108,15 +104,15 @@ flatpak-builder --force-clean --stop-at=obs-localvocal build \
 
 ### Common Issues
 
-| Error | Solution |
-|-------|----------|
+| Error                    | Solution                                                                   |
+| ------------------------ | -------------------------------------------------------------------------- |
 | Rust extension not found | `flatpak install flathub org.freedesktop.Sdk.Extension.rust-stable//25.08` |
-| CMake version errors | Update library versions in manifest (already done) |
-| UIC wrapper fails | Check Qt installation in SDK with `flatpak-builder --run ... which uic` |
+| CMake version errors     | Update library versions in manifest (already done)                         |
+| UIC wrapper fails        | Check Qt installation in SDK with `flatpak-builder --run ... which uic`    |
 
 ### Debug build
 
-```bash
+```sh
 # Verbose build
 flatpak-builder -v --force-clean build manifest.yaml
 
@@ -131,4 +127,4 @@ See the `LICENSE` file in the project root.
 
 ---
 
-**Last updated:** March 24, 2026
+**Last updated:** May 5, 2026

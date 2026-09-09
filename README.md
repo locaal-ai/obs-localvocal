@@ -278,6 +278,7 @@ Building the plugin as a Flatpak extension for OBS Studio allows for easy distri
 #### Prerequisites
 
 1. Install Flatpak and flatpak-builder:
+
    ```sh
    # On Ubuntu/Debian
    sudo apt install flatpak flatpak-builder
@@ -290,11 +291,13 @@ Building the plugin as a Flatpak extension for OBS Studio allows for easy distri
    ```
 
 2. Add the Flathub repository:
+
    ```sh
    flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
    ```
 
 3. Install the OBS Studio Flatpak and required SDKs:
+
    ```sh
    flatpak install flathub com.obsproject.Studio
    flatpak install flathub org.kde.Sdk//6.8
@@ -303,19 +306,22 @@ Building the plugin as a Flatpak extension for OBS Studio allows for easy distri
 #### Building
 
 1. Clone the repository if you haven't already:
+
    ```sh
    git clone https://github.com/locaal-ai/obs-localvocal.git
    cd obs-localvocal
    ```
 
 2. Set the `ACCELERATION` environment variable to one of `generic`, `nvidia`, or `amd` (defaults to `generic` if unset):
+
    ```sh
    export ACCELERATION="nvidia"  # or "amd" or "generic"
    ```
 
 3. Build the Flatpak extension:
+
    ```sh
-   ./flatpak/build.sh --disable-rofiles-fuse --force-clean build-dir ./flatpak/com.obsproject.Studio.Plugin.LocalVocal.yaml
+   ./flatpak/build.sh --disable-rofiles-fuse --force-clean build-dir
    ```
 
    The build process will:
@@ -324,16 +330,19 @@ Building the plugin as a Flatpak extension for OBS Studio allows for easy distri
    - Create a Flatpak extension that integrates with OBS Studio
 
 4. Installing the built extension:
+
    ```sh
-   ./flatpak/build.sh --disable-rofiles-fuse --install build-dir ./flatpak/com.obsproject.Studio.Plugin.LocalVocal.yaml
+   ./flatpak/build.sh --disable-rofiles-fuse --install build-dir
    ```
 
    Or manually install using:
+
    ```sh
-   flatpak-builder --user --install --force-clean build-dir ./flatpak/com.obsproject.Studio.Plugin.LocalVocal.yaml
+   flatpak-builder --user --install --force-clean build-dir
    ```
 
 5. Verify the installation:
+
    ```sh
    flatpak list | grep LocalVocal
    ```
@@ -341,6 +350,7 @@ Building the plugin as a Flatpak extension for OBS Studio allows for easy distri
 #### Running OBS Studio with the Plugin
 
 After installation, simply launch OBS Studio from your application menu or via:
+
 ```sh
 flatpak run com.obsproject.Studio
 ```
