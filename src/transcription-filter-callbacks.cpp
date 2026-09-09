@@ -44,8 +44,11 @@ void send_caption_to_source(const std::string &target_source_name, const std::st
 		return;
 	}
 	auto text_settings = obs_source_get_settings(target);
-	obs_data_set_string(text_settings, "text", caption.c_str());
-	obs_source_update(target, text_settings);
+	if (text_settings) {
+		obs_data_set_string(text_settings, "text", caption.c_str());
+		obs_source_update(target, text_settings);
+		obs_data_release(text_settings);
+	}
 	obs_source_release(target);
 }
 
