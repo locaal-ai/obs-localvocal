@@ -84,6 +84,8 @@ set_property(CACHE ACCELERATION PROPERTY STRINGS "generic" "nvidia" "amd")
 
 if(UNIX AND NOT APPLE)
   set(BLA_VENDOR OpenBLAS)
+  set(BLA_PREFER_PKGCONFIG ON)
+  set(BLA_PKGCONFIG_BLAS openblas)
   find_package(BLAS REQUIRED)
 endif()
 
