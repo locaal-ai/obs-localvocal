@@ -25,6 +25,7 @@
 #include "transcription-utils.h"
 #include "model-utils/model-downloader.h"
 #include "whisper-utils/whisper-processing.h"
+#include "whisper-utils/whisper-backend-utils.h"
 #include "whisper-utils/whisper-language.h"
 #include "whisper-utils/whisper-model-utils.h"
 #include "whisper-utils/whisper-utils.h"
@@ -541,8 +542,8 @@ void transcription_filter_update(void *data, obs_data_t *s)
 
 	int new_backend_device = (int)obs_data_get_int(s, "backend_device");
 	bool enable_flash_attn = obs_data_get_bool(s, "enable_flash_attn");
-	bool whisper_backend_changed = (gf->gpu_device == new_backend_device) ||
-				       (enable_flash_attn != gf->enable_flash_attn);
+	bool whisper_backend_changed = is_whisper_backend_changed(
+		gf->gpu_device, new_backend_device, gf->enable_flash_attn, enable_flash_attn);
 	gf->gpu_device = new_backend_device;
 	gf->enable_flash_attn = enable_flash_attn;
 
