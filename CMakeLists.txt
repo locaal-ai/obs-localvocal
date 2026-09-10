@@ -197,5 +197,6 @@ if(APPLE)
 endif()
 
 if(ENABLE_TESTS)
+  enable_testing()
   add_subdirectory(src/tests)
 endif()

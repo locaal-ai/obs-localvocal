@@ -6,6 +6,7 @@ target_sources(
           ${CMAKE_SOURCE_DIR}/src/translation/cloud-translation/claude.cpp
           ${CMAKE_SOURCE_DIR}/src/translation/cloud-translation/curl-helper.cpp
           ${CMAKE_SOURCE_DIR}/src/translation/cloud-translation/custom-api.cpp
+          ${CMAKE_SOURCE_DIR}/src/translation/cloud-translation/custom-api-json.cpp
           ${CMAKE_SOURCE_DIR}/src/translation/cloud-translation/deepl.cpp
           ${CMAKE_SOURCE_DIR}/src/translation/cloud-translation/google-cloud.cpp
           ${CMAKE_SOURCE_DIR}/src/translation/cloud-translation/openai.cpp

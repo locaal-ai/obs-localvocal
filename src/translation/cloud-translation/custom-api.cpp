@@ -1,4 +1,5 @@
 #include "custom-api.h"
+#include "custom-api-json.h"
 #include "curl-helper.h"
 #include "plugin-support.h"
 #include <nlohmann/json.hpp>
@@ -48,42 +49,37 @@ std::string CustomApiTranslator::translate(const std::string &text, const std::s
 		throw std::runtime_error("Failed to initialize CURL session");
 	}
 
-	try {
-		// Set up curl options
-		curl_easy_setopt(curl.get(), CURLOPT_URL, endpoint_.c_str());
-		curl_easy_setopt(curl.get(), CURLOPT_WRITEFUNCTION, CurlHelper::WriteCallback);
-		curl_easy_setopt(curl.get(), CURLOPT_WRITEDATA, &response);
-		curl_easy_setopt(curl.get(), CURLOPT_SSL_VERIFYPEER, 1L);
-		curl_easy_setopt(curl.get(), CURLOPT_SSL_VERIFYHOST, 2L);
-		curl_easy_setopt(curl.get(), CURLOPT_TIMEOUT, 30L);
+	// Set up curl options
+	curl_easy_setopt(curl.get(), CURLOPT_URL, endpoint_.c_str());
+	curl_easy_setopt(curl.get(), CURLOPT_WRITEFUNCTION, CurlHelper::WriteCallback);
+	curl_easy_setopt(curl.get(), CURLOPT_WRITEDATA, &response);
+	curl_easy_setopt(curl.get(), CURLOPT_SSL_VERIFYPEER, 1L);
+	curl_easy_setopt(curl.get(), CURLOPT_SSL_VERIFYHOST, 2L);
+	curl_easy_setopt(curl.get(), CURLOPT_TIMEOUT, 30L);
 
-		// Set up POST request
-		curl_easy_setopt(curl.get(), CURLOPT_POST, 1L);
-		curl_easy_setopt(curl.get(), CURLOPT_POSTFIELDS, body.c_str());
+	// Set up POST request
+	curl_easy_setopt(curl.get(), CURLOPT_POST, 1L);
+	curl_easy_setopt(curl.get(), CURLOPT_POSTFIELDS, body.c_str());
 
-		// Set up headers
-		struct curl_slist *headers = nullptr;
-		headers = curl_slist_append(headers, "Content-Type: application/json");
-		curl_easy_setopt(curl.get(), CURLOPT_HTTPHEADER, headers);
+	// Set up headers
+	struct curl_slist *headers = nullptr;
+	headers = curl_slist_append(headers, "Content-Type: application/json");
+	curl_easy_setopt(curl.get(), CURLOPT_HTTPHEADER, headers);
 
-		// Perform request
-		CURLcode res = curl_easy_perform(curl.get());
+	// Perform request
+	CURLcode res = curl_easy_perform(curl.get());
 
-		// Clean up headers
-		curl_slist_free_all(headers);
+	// Clean up headers
+	curl_slist_free_all(headers);
 
-		if (res != CURLE_OK) {
-			throw TranslationError(std::string("CURL request failed: ") +
-					       curl_easy_strerror(res));
-		}
-
-		obs_log(400, "Response from custom API: %s", response.c_str());
-
-		return parseResponse(response);
-
-	} catch (const std::exception &e) {
-		throw TranslationError(std::string("JSON parsing error: ") + e.what());
+	if (res != CURLE_OK) {
+		throw TranslationError(std::string("CURL request failed: ") +
+				       curl_easy_strerror(res));
 	}
+
+	obs_log(400, "Response from custom API: %s", response.c_str());
+
+	return parseResponse(response);
 }
 
 std::string CustomApiTranslator::replacePlaceholders(
@@ -109,10 +105,7 @@ std::string CustomApiTranslator::parseResponse(const std::string &response_str)
 		// parse the JSON response
 		json response = json::parse(response_str);
 
-		// extract the translation from the JSON response
-		std::string response_out = response[response_json_path_];
-
-		return response_out;
+		return resolve_custom_api_response(response, response_json_path_);
 	} catch (const json::exception &e) {
 		throw TranslationError(std::string("JSON parsing error: ") + e.what());
 	}

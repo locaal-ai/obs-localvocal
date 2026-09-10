@@ -1,5 +1,15 @@
 set(TEST_EXEC_NAME ${CMAKE_PROJECT_NAME}-tests)
 
+set(CUSTOM_API_JSON_TEST_EXEC_NAME ${CMAKE_PROJECT_NAME}-custom-api-json-tests)
+
+add_executable(
+  ${CUSTOM_API_JSON_TEST_EXEC_NAME}
+  ${CMAKE_SOURCE_DIR}/src/tests/custom-api-json-path-test.cpp
+  ${CMAKE_SOURCE_DIR}/src/translation/cloud-translation/custom-api-json.cpp)
+target_include_directories(${CUSTOM_API_JSON_TEST_EXEC_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/src)
+target_link_libraries(${CUSTOM_API_JSON_TEST_EXEC_NAME} PRIVATE OBS::libobs)
+add_test(NAME custom-api-json-path COMMAND ${CUSTOM_API_JSON_TEST_EXEC_NAME})
+
 add_executable(${TEST_EXEC_NAME})
 
 target_sources(
