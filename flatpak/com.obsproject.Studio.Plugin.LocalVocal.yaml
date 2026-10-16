@@ -215,6 +215,38 @@ modules:
     cleanup:
       - /bin/patchelf
       - /bin
+
+  # CUDA runtime libraries (libcudart, libcublas) required by libggml-cuda.so.
+  # org.freedesktop.Platform.GL.nvidia only ships the driver stub (libcuda.so.1);
+  # the CUDA runtime toolkit libs must be bundled in the extension itself.
+  # BEGIN_CUDA_RUNTIME_MODULE
+  - name: cuda-runtime-libs
+    buildsystem: simple
+    build-commands:
+      - |
+        set -e
+        DEST="${FLATPAK_DEST}/lib/obs-plugins/obs-localvocal"
+        install -d "${DEST}"
+        cp -L cudart/lib/libcudart.so.12 "${DEST}/libcudart.so.12"
+        cp -L cublas/lib/libcublas.so.12 "${DEST}/libcublas.so.12"
+        cp -L cublas/lib/libcublasLt.so.12 "${DEST}/libcublasLt.so.12"
+    sources:
+      - type: archive
+        only-arches:
+          - x86_64
+        url: https://developer.download.nvidia.com/compute/cuda/redist/cuda_cudart/linux-x86_64/cuda_cudart-linux-x86_64-12.8.57-archive.tar.xz
+        sha256: 5bd3ac35ea8e8ab880e595d5054ee373abf6d9e53dcb8cef0a5c75358dbc0ae2
+        dest: cudart
+        strip-components: 1
+      - type: archive
+        only-arches:
+          - x86_64
+        url: https://developer.download.nvidia.com/compute/cuda/redist/libcublas/linux-x86_64/libcublas-linux-x86_64-12.8.3.14-archive.tar.xz
+        sha256: d634d545a670a43337741e1672b63ef9b989aaba15823f27ee4b4c7f43d790bb
+        dest: cublas
+        strip-components: 1
+  # END_CUDA_RUNTIME_MODULE
+
   # OBS LocalVocal - Main plugin
   - name: obs-localvocal
     buildsystem: cmake-ninja
@@ -275,6 +307,13 @@ modules:
     post-install:
       - install -Dm644 --target-directory=${FLATPAK_DEST}/share/metainfo
           ${FLATPAK_BUILDER_BUILDDIR}/com.obsproject.Studio.Plugin.LocalVocal.metainfo.xml
+      - |
+        # Patch RPATH of libggml-cuda.so so it can find libcudart/libcublas
+        # bundled alongside it in the same directory ($ORIGIN).
+        SO="${FLATPAK_DEST}/lib/obs-plugins/obs-localvocal/libggml-cuda.so"
+        if [ -f "${SO}" ]; then
+          ${FLATPAK_DEST}/bin/patchelf --set-rpath '$ORIGIN' "${SO}"
+        fi
 
 cleanup:
   - /uic-wrapper

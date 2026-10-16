@@ -242,17 +242,25 @@ else()
       set(WHISPER_CPP_HASH "dc00f91f5ddfb8271fa177b005022dc6ccc979ab669ee8e92008a7dc694295ad")
       list(APPEND WHISPER_RUNTIME_MODULES GGMLCUDA)
 
-      # Find CUDA libraries and link against them
-      set(CUDAToolkit_ROOT /usr/local/cuda-12.8/)
-      find_package(CUDAToolkit REQUIRED)
-      list(
-        APPEND
-        WHISPER_DEPENDENCY_LIBRARIES
-        CUDA::cudart
-        CUDA::cublas
-        CUDA::cublasLt
-        CUDA::cuda_driver
-        CUDA::OpenCL)
+      # Find CUDA libraries and link against them. In sandboxed builds (e.g. Flatpak) CUDA is absent at compile time;
+      # libggml-cuda.so from the prebuilt tarball resolves its own CUDA dependencies at runtime via
+      # org.freedesktop.Platform.GL.nvidia.
+      if(NOT DEFINED CUDAToolkit_ROOT AND EXISTS /usr/local/cuda-12.8)
+        set(CUDAToolkit_ROOT /usr/local/cuda-12.8/)
+      endif()
+      find_package(CUDAToolkit QUIET)
+      if(CUDAToolkit_FOUND)
+        list(
+          APPEND
+          WHISPER_DEPENDENCY_LIBRARIES
+          CUDA::cudart
+          CUDA::cublas
+          CUDA::cublasLt
+          CUDA::cuda_driver
+          CUDA::OpenCL)
+      else()
+        message(STATUS "CUDAToolkit not found at build time – libggml-cuda.so will resolve CUDA at runtime")
+      endif()
     else()
       message(
         FATAL_ERROR

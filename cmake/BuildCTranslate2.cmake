@@ -58,7 +58,7 @@ else()
       target_link_libraries(ct2 INTERFACE ${CPU_FEATURES_LIBRARY})
     endif()
     target_link_libraries(ct2 INTERFACE ${BLAS_LIBRARIES})
-    target_include_directories(ct2 INTERFACE ${CT2_INCLUDE_DIR})
+    target_include_directories(ct2 SYSTEM INTERFACE ${CT2_INCLUDE_DIR})
   else()
     message(STATUS "Building CTranslate2 from source")
     # Enable ccache if available
